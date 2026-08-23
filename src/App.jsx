@@ -12,6 +12,7 @@ import {
   setDoc, 
   onSnapshot 
 } from 'firebase/firestore';
+import logoImg from './logo.png';
 
 const style = document.createElement('style');
 style.innerHTML = `
@@ -590,17 +591,24 @@ function TelaLogin({ onLoginSucesso }) {
 
   return (
     <div style={{ backgroundColor: '#121212', color: '#fff', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: 'sans-serif' }}>
-      <form onSubmit={handleLogin} style={{ background: '#1e1e1e', padding: '30px', borderRadius: '8px', width: '340px', boxShadow: '0 4px 10px rgba(0,0,0,0.5)' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>InfraManager POP</h2>
-        {erro && <p style={{ color: '#ff6b6b', fontSize: '14px', marginBottom: '15px' }}>{erro}</p>}
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', fontSize: '12px', marginBottom: '5px' }}>E-mail</label>
+      <form onSubmit={handleLogin} style={{ background: '#1e1e1e', padding: '30px', borderRadius: '8px', width: '340px', boxShadow: '0 4px 10px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        
+        <img src={logoImg} alt="Logo" style={{ width: '180px', marginBottom: '20px', objectFit: 'contain' }} />
+
+        <h2 style={{ textAlign: 'center', marginBottom: '20px', fontSize: '18px' }}>InfraManager POP</h2>
+        
+        {erro && <p style={{ color: '#ff6b6b', fontSize: '14px', marginBottom: '15px', width: '100%', textAlign: 'center' }}>{erro}</p>}
+        
+        <div style={{ marginBottom: '15px', width: '100%' }}>
+          <label style={{ display: 'block', fontSize: '12px', marginBottom: '5px' }}>Email</label>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #444', background: '#2d2d2d', color: '#fff', boxSizing: 'border-box' }} />
         </div>
-        <div style={{ marginBottom: '20px' }}>
+        
+        <div style={{ marginBottom: '20px', width: '100%' }}>
           <label style={{ display: 'block', fontSize: '12px', marginBottom: '5px' }}>Senha</label>
           <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #444', background: '#2d2d2d', color: '#fff', boxSizing: 'border-box' }} />
         </div>
+        
         <button type="submit" style={{ width: '100%', padding: '12px', background: '#007bff', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}>Entrar</button>
       </form>
     </div>
@@ -932,7 +940,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
     alert("Status dos ativos e observações salvos com sucesso!");
   };
 
-  const gerarEBaixarPdf = async () => {
+  const finalizarInspecao = async () => {
     let dataInspecaoFinal = '';
     let dataProxStr = '';
     let forcarCheckin = false;
@@ -997,90 +1005,6 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
       dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
     }
 
-    const htmlConteudo = `
-      <!DOCTYPE html>
-      <html lang="pt-BR">
-      <head>
-        <meta charset="UTF-8">
-        <title>Relatório de Inspeção - ${pop.nome.toUpperCase()}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 30px; color: #333; line-height: 1.5; background: #fff; }
-          h2 { color: #0056b3; border-bottom: 2px solid #0056b3; padding-bottom: 8px; margin-bottom: 15px; }
-          h3 { margin-top: 20px; color: #333; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
-          .section { margin-bottom: 15px; }
-          .item { margin-bottom: 6px; }
-        </style>
-      </head>
-      <body>
-        <h2>RELATÓRIO DE INSPEÇÃO DE POP</h2>
-        <p><strong>POP:</strong> ${pop.nome.toUpperCase()} (ID: ${pop.id})</p>
-        <p><strong>Endereço:</strong> ${pop.endereco}</p>
-        <p><strong>${cargoLabel} Responsável:</strong> ${nomeTecnico}</p>
-        <p><strong>Check-in / Data:</strong> ${dataInspecaoFinal}</p>
-        <p><strong>Próxima Inspeção (Previsão):</strong> ${dataProxStr}</p>
-        
-        <div class="section">
-          <h3>Status dos Ativos:</h3>
-          ${Object.entries(statusAtivos).map(([ativo, st]) => {
-            const presente = ativosPresentes[ativo];
-            if (!presente) return `<div class="item">- ${ativo}: <em>Não disponível neste POP</em></div>`;
-            let txt = `<div class="item">- ${ativo}: <strong>${st}</strong></div>`;
-            if (st === 'Incidente') {
-              txt += `<div style="margin-left: 20px; color: #dc3545;">-> Detalhe: ${detalhesIncidentes[ativo] || 'Sem descrição'}</div>`;
-            }
-            return txt;
-          }).join('')}
-        </div>
-
-        <div class="section">
-          <h3>Bancos de Baterias:</h3>
-          ${Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
-            const bModel = bancosBateria[banco] || { dataFabricacao: '', voltagens: ['', '', '', ''] };
-            const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao);
-            const resSub = statusData(proxSub);
-            const vencidoSub = resSub && resSub.status === 'vencido';
-            const diasVencido = vencidoSub ? resSub.dias : 0;
-            return `
-              <div style="margin-bottom: 8px; border-left: 3px solid ${vencidoSub ? '#ff4d4d' : '#0056b3'}; padding-left: 8px;">
-                <strong>Banco ${getLetra(banco)}</strong><br/>
-                - Data de Fabricação: ${bModel.dataFabricacao || 'Não informada'}<br/>
-                - Próxima Substituição: ${proxSub || 'Not calculated'}
-                ${vencidoSub ? `<br/><span style="color: #ff4d4d; font-weight: bold;">⚠️ AVISO: BANCO DE BATERIA EXPIRADO HÁ ${diasVencido} DIAS!</span>` : ''}<br/>
-                - Voltagens: ${bModel.voltagens.map((v, vIdx) => `Bat ${vIdx + 1}: ${v || 'N/I'}V`).join(' | ')}
-              </div>
-            `;
-          }).join('')}
-        </div>
-
-        <div class="section">
-          <h3>Centrais de Ar:</h3>
-          ${Array.from({ length: qtdAr }, (_, i) => i + 1).map((idx) => {
-            const ar = centraisAr[idx] || { modelo: '', btu: '', dataInstalacao: '', dataUltimaLimpeza: '' };
-            const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
-            const resLimp = statusData(proxLimp);
-            const vencidoLimp = resLimp && resLimp.status === 'vencido';
-            const diasVencidoLimp = vencidoLimp ? resLimp.dias : 0;
-            return `
-              <div style="margin-bottom: 8px; border-left: 3px solid ${vencidoLimp ? '#ff4d4d' : '#28a745'}; padding-left: 8px;">
-                <strong>Central ${getLetra(idx)}</strong> (${ar.modelo || 'Modelo N/I'} - ${ar.btu || 'N/I'} BTUs)<br/>
-                - Instalação: ${ar.dataInstalacao || 'N/I'} | Última Limpeza: ${ar.dataUltimaLimpeza || 'N/I'}<br/>
-                - Próxima Limpeza: ${proxLimp || 'Não calculada'}
-                ${vencidoLimp ? `<br/><span style="color: #ff4d4d; font-weight: bold;">⚠️ AVISO: LIMPEZA DE AR EXPIRADA HÁ ${diasVencidoLimp} DIAS!</span>` : ''}
-              </div>
-            `;
-          }).join('')}
-        </div>
-
-        <div class="section">
-          <h3>Observações e Notas:</h3>
-          <p><strong>Situação da Limpeza:</strong> ${precisaLimpeza ? 'Limpeza Necessária' : 'Área Limpa / OK'}</p>
-          <p><strong>Incidentes Gerais:</strong> ${incidentesGerais || 'Nenhum incidente relatado'}</p>
-          <p><strong>Anotações Extras:</strong> ${anotacoes || 'Nenhuma anotação'}</p>
-        </div>
-      </body>
-      </html>
-    `;
-
     try {
       await salvarNoFirebase({
         statusAtivos,
@@ -1107,15 +1031,8 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
 
       await onCheckInRealizado(novoRegistro, forcarCheckin);
 
-      const janelaPdf = window.open('', '_blank');
-      if (janelaPdf) {
-        janelaPdf.document.write(htmlConteudo);
-        janelaPdf.document.close();
-        janelaPdf.focus();
-        setTimeout(() => janelaPdf.print(), 500);
-      } else {
-        alert("O navegador bloqueou a abertura da janela. Permita pop-ups para este site.");
-      }
+      alert("Check-in e dados de inspeção salvos com sucesso!");
+      onBack();
 
     } catch (error) {
       alert("Erro ao registrar o check-in: " + error.message);
@@ -1315,8 +1232,8 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
 
           <textarea placeholder="Anotações Extras" rows="3" value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '20px', background: '#2d2d2d', border: '1px solid #444', color: '#fff', boxSizing: 'border-box' }} />
 
-          <button onClick={gerarEBaixarPdf} style={{ width: '100%', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', cursor: 'pointer' }}>
-            Gerar, Abrir e Salvar Relatório PDF
+          <button onClick={finalizarInspecao} style={{ width: '100%', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', cursor: 'pointer' }}>
+            Finalizar e Salvar Inspeção
           </button>
         </div>
       </div>
