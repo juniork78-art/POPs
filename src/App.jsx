@@ -126,7 +126,6 @@ export default function App() {
   const [ultimosCheckIns, setUltimosCheckIns] = useState([]);
   const [cronogramaLimpezas, setCronogramaLimpezas] = useState([]);
   const [cronogramaBaterias, setCronogramaBaterias] = useState([]);
-  const [mapaPopsDados, setMapaPopsDados] = useState({});
   const [loadingAuth, setLoadingAuth] = useState(true);
 
   const [drawerAberto, setDrawerAberto] = useState(false);
@@ -150,67 +149,37 @@ export default function App() {
     let vencidos = [];
     let amanha = [];
 
-    const processarItem = (nomePop, msgVencido, msgAmanha, dataStr) => {
+    const processarItem = (nomePop, baseMsg, dataStr) => {
       const res = statusData(dataStr);
       if (nomePop && res && popPertenceAoUsuario(nomePop)) {
         if (res.status === 'vencido') {
           const diasTxt = res.dias === 1 ? '1 dia' : `${res.dias} dias`;
-          vencidos.push(`${msgVencido} (Expirado há ${diasTxt})`);
+          vencidos.push(`${baseMsg} (Expirado há ${diasTxt})`);
         } else if (res.status === 'amanha' || res.status === 'hoje') {
           const tempoTxt = res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã';
-          amanha.push(`${msgAmanha} (${tempoTxt})`);
+          amanha.push(`${baseMsg} (${tempoTxt})`);
         }
       }
     };
 
-    if (listaPops) {
-      listaPops.forEach(pop => {
-        const dadosPop = mapaPopsDados[pop.nome.toLowerCase()] || {};
-        const ultimaData = dadosPop.ultimaDataInspecao;
-        
-        if (ultimaData) {
-          try {
-            const parts = ultimaData.split('/');
-            if (parts.length === 3) {
-              const day = parseInt(parts[0], 10);
-              const month = parseInt(parts[1], 10) - 1;
-              const year = parseInt(parts[2], 10);
-              const dataInspecao = new Date(year, month, day);
-              const dataProx = new Date(dataInspecao);
-              dataProx.setDate(dataProx.getDate() + 90);
-              const dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
-              
-              processarItem(
-                pop.nome, 
-                `POP: ${pop.nome.toUpperCase()} - Inspeção vencida`, 
-                `POP: ${pop.nome.toUpperCase()} - Prazo de inspeção vencendo`, 
-                dataProxStr
-              );
-            }
-          } catch (e) {}
+    if (ultimosCheckIns) {
+      ultimosCheckIns.forEach(c => {
+        const nomePop = c.popNome || c.pop || c.nomePop || c.nome_pop || c.nome;
+        if (nomePop) {
+          processarItem(nomePop, `POP: ${nomePop.toUpperCase()} - Data de inspeção expirada`, c.proximaInspecao);
         }
       });
     }
 
     if (cronogramaLimpezas) {
       cronogramaLimpezas.forEach(l => {
-        processarItem(
-          l.popNome, 
-          `POP: ${l.popNome.toUpperCase()} - Limpeza de ar (${l.central}) vencida`, 
-          `POP: ${l.popNome.toUpperCase()} - Limpeza de ar (${l.central}) vencendo`, 
-          l.proximaLimpeza
-        );
+        processarItem(l.popNome, `POP: ${l.popNome.toUpperCase()} - Limpeza de ar (${l.central}) expirada`, l.proximaLimpeza);
       });
     }
 
     if (cronogramaBaterias) {
       cronogramaBaterias.forEach(b => {
-        processarItem(
-          b.popNome, 
-          `POP: ${b.popNome.toUpperCase()} - Banco de Bateria (${b.banco}) vencido`, 
-          `POP: ${b.popNome.toUpperCase()} - Banco de Bateria (${b.banco}) vencendo`, 
-          b.proximaSubstituicao
-        );
+        processarItem(b.popNome, `POP: ${b.popNome.toUpperCase()} - Banco de Bateria (${b.banco}) expirado`, b.proximaSubstituicao);
       });
     }
 
@@ -240,7 +209,7 @@ export default function App() {
         sessionStorage.setItem('avisoMostrado', 'true');
       }
     }
-  }, [usuarioLogado, dadosCarregados, mapaPopsDados, cronogramaLimpezas, cronogramaBaterias]);
+  }, [usuarioLogado, dadosCarregados, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -280,12 +249,10 @@ export default function App() {
       const unsubPopsDados = onSnapshot(collection(db, "pops_dados"), (snapshot) => {
         const listaLimpezasTemp = [];
         const listaBateriasTemp = [];
-        const mapaTemp = {};
 
         snapshot.forEach((d) => {
           const popNome = d.id;
           const data = d.data();
-          mapaTemp[popNome.toLowerCase()] = data;
           
           const qtdAr = data.qtdAr || 0;
           const intervaloAr = (popNome.toLowerCase() === 'helius' || popNome.toLowerCase() === 'limos') ? 5 : 8;
@@ -317,7 +284,6 @@ export default function App() {
           }
         });
 
-        setMapaPopsDados(mapaTemp);
         setCronogramaLimpezas(listaLimpezasTemp);
         setCronogramaBaterias(listaBateriasTemp);
         setDadosCarregados(true);
@@ -430,7 +396,6 @@ export default function App() {
         ultimosCheckIns={ultimosCheckIns}
         cronogramaLimpezas={cronogramaLimpezas}
         cronogramaBaterias={cronogramaBaterias}
-        mapaPopsDados={mapaPopsDados}
         onPopClick={(pop) => setPopSelecionado(pop)} 
         onOpenDrawer={() => setDrawerAberto(true)}
         onOpenGerenciarPops={() => setTelaGerenciarPopsAberta(true)}
@@ -442,19 +407,19 @@ export default function App() {
       />
 
       {showAvisoGlobal && (vencidos.length > 0 || amanha.length > 0) && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <div style={{ background: '#1e1e1e', padding: '30px', borderRadius: '12px', border: '2px solid #ff4d4d', maxWidth: '450px', width: '90%', boxSizing: 'border-box' }}>
-            <h2 style={{ color: '#ff4d4d', marginTop: 0, fontSize: '18px', textAlign: 'center' }}>⚠️ Atenção: Prazos e Vencimentos</h2>
-            <p style={{ color: '#ccc', fontSize: '13px', marginBottom: '15px', textAlign: 'center' }}>Acompanhe os itens que exigem atenção:</p>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px', boxSizing: 'border-box' }}>
+          <div style={{ background: '#1e1e1e', padding: '20px', borderRadius: '12px', border: '2px solid #ff4d4d', width: '100%', maxWidth: '450px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+            <h2 style={{ color: '#ff4d4d', marginTop: 0, fontSize: '16px', textAlign: 'center' }}>⚠️ Atenção: Prazos e Vencimentos</h2>
+            <p style={{ color: '#ccc', fontSize: '12px', marginBottom: '10px', textAlign: 'center' }}>Acompanhe os itens que exigem atenção:</p>
             
-            <div style={{ margin: '15px 0', maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ margin: '10px 0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, paddingRight: '4px' }}>
               {vencidos.length > 0 && (
                 <div>
-                  <h4 style={{ color: '#ff4d4d', fontSize: '12px', margin: '0 0 6px 0', textTransform: 'uppercase', borderBottom: '1px solid #ff4d4d', paddingBottom: '3px' }}>🔴 Itens Vencidos</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <h4 style={{ color: '#ff4d4d', fontSize: '11px', margin: '0 0 4px 0', textTransform: 'uppercase', borderBottom: '1px solid #ff4d4d', paddingBottom: '2px' }}>🔴 Itens Vencidos</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     {vencidos.map((msg, i) => (
-                      <div key={i} style={{ background: '#252525', padding: '10px', borderRadius: '6px', borderLeft: '3px solid #ff4d4d' }}>
-                        <p className="alerta-vencido" style={{ margin: 0, fontSize: '12px', lineHeight: '1.4' }}>{msg}</p>
+                      <div key={i} style={{ background: '#252525', padding: '8px', borderRadius: '6px', borderLeft: '3px solid #ff4d4d' }}>
+                        <p className="alerta-vencido" style={{ margin: 0, fontSize: '11px', lineHeight: '1.4' }}>{msg}</p>
                       </div>
                     ))}
                   </div>
@@ -463,11 +428,11 @@ export default function App() {
 
               {amanha.length > 0 && (
                 <div>
-                  <h4 style={{ color: '#ff9800', fontSize: '12px', margin: '10px 0 6px 0', textTransform: 'uppercase', borderBottom: '1px solid #ff9800', paddingBottom: '3px' }}>🟠 Vencem Hoje / Amanhã</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <h4 style={{ color: '#ff9800', fontSize: '11px', margin: '8px 0 4px 0', textTransform: 'uppercase', borderBottom: '1px solid #ff9800', paddingBottom: '2px' }}>🟠 Vencem Hoje / Amanhã</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     {amanha.map((msg, i) => (
-                      <div key={i} style={{ background: '#252525', padding: '10px', borderRadius: '6px', borderLeft: '3px solid #ff9800' }}>
-                        <p className="alerta-amanha" style={{ margin: 0, fontSize: '12px', lineHeight: '1.4' }}>{msg}</p>
+                      <div key={i} style={{ background: '#252525', padding: '8px', borderRadius: '6px', borderLeft: '3px solid #ff9800' }}>
+                        <p className="alerta-amanha" style={{ margin: 0, fontSize: '11px', lineHeight: '1.4' }}>{msg}</p>
                       </div>
                     ))}
                   </div>
@@ -477,7 +442,7 @@ export default function App() {
 
             <button 
               onClick={() => setShowAvisoGlobal(false)} 
-              style={{ width: '100%', padding: '12px', background: '#ff4d4d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', marginTop: '10px' }}>
+              style={{ width: '100%', padding: '10px', background: '#ff4d4d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', marginTop: '10px', flexShrink: 0 }}>
               Entendido
             </button>
           </div>
@@ -642,7 +607,7 @@ function TelaLogin({ onLoginSucesso }) {
   );
 }
 
-function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias, mapaPopsDados, onPopClick, onOpenDrawer, onOpenGerenciarPops, onLogout }) {
+function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias, onPopClick, onOpenDrawer, onOpenGerenciarPops, onLogout }) {
   const [busca, setBusca] = useState('');
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
@@ -661,29 +626,13 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
 
   const getNotificacoes = () => {
     let alertas = [];
-
-    if (listaPops) {
-      listaPops.forEach(pop => {
-        const dadosPop = mapaPopsDados[pop.nome.toLowerCase()] || {};
-        const ultimaData = dadosPop.ultimaDataInspecao;
-        if (ultimaData && popPertenceAoUsuario(pop.nome)) {
-          try {
-            const parts = ultimaData.split('/');
-            if (parts.length === 3) {
-              const day = parseInt(parts[0], 10);
-              const month = parseInt(parts[1], 10) - 1;
-              const year = parseInt(parts[2], 10);
-              const dataInspecao = new Date(year, month, day);
-              const dataProx = new Date(dataInspecao);
-              dataProx.setDate(dataProx.getDate() + 90);
-              const dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
-              const resSt = statusData(dataProxStr);
-              if (resSt) {
-                if (resSt.status === 'vencido') alertas.push(`POP: ${pop.nome.toUpperCase()} - Inspeção vencida há ${resSt.dias} dias`);
-                else if (resSt.status === 'amanha' || resSt.status === 'hoje') alertas.push(`POP: ${pop.nome.toUpperCase()} - Inspeção vence ${resSt.status === 'hoje' ? 'hoje' : 'amanhã'}`);
-              }
-            }
-          } catch (e) {}
+    if (ultimosCheckIns) {
+      ultimosCheckIns.forEach(c => {
+        const nomePop = c.popNome || c.pop || c.nomePop || c.nome_pop || c.nome;
+        const resSt = statusData(c.proximaInspecao);
+        if (nomePop && resSt && popPertenceAoUsuario(nomePop)) {
+          if (resSt.status === 'vencido') alertas.push(`POP: ${nomePop.toUpperCase()} - Inspeção expirada há ${resSt.dias} dias`);
+          else if (resSt.status === 'amanha' || resSt.status === 'hoje') alertas.push(`POP: ${nomePop.toUpperCase()} - Inspeção vence ${resSt.status === 'hoje' ? 'hoje' : 'amanhã'}`);
         }
       });
     }
@@ -692,7 +641,7 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
       cronogramaLimpezas.forEach(l => {
         const resSt = statusData(l.proximaLimpeza);
         if (l.popNome && resSt && popPertenceAoUsuario(l.popNome)) {
-          if (resSt.status === 'vencido') alertas.push(`POP: ${l.popNome.toUpperCase()} - Limpeza de ar (${l.central}) vencida há ${resSt.dias} dias`);
+          if (resSt.status === 'vencido') alertas.push(`POP: ${l.popNome.toUpperCase()} - Limpeza de ar (${l.central}) expirada há ${resSt.dias} dias`);
           else if (resSt.status === 'amanha' || resSt.status === 'hoje') alertas.push(`POP: ${l.popNome.toUpperCase()} - Limpeza de ar (${l.central}) vence ${resSt.status === 'hoje' ? 'hoje' : 'amanhã'}`);
         }
       });
@@ -702,7 +651,7 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
       cronogramaBaterias.forEach(b => {
         const resSt = statusData(b.proximaSubstituicao);
         if (b.popNome && resSt && popPertenceAoUsuario(b.popNome)) {
-          if (resSt.status === 'vencido') alertas.push(`POP: ${b.popNome.toUpperCase()} - Banco de Bateria (${b.banco}) vencido há ${resSt.dias} dias`);
+          if (resSt.status === 'vencido') alertas.push(`POP: ${b.popNome.toUpperCase()} - Banco de Bateria (${b.banco}) expirado há ${resSt.dias} dias`);
           else if (resSt.status === 'amanha' || resSt.status === 'hoje') alertas.push(`POP: ${b.popNome.toUpperCase()} - Troca do Banco (${b.banco}) vence ${resSt.status === 'hoje' ? 'hoje' : 'amanhã'}`);
         }
       });
@@ -983,7 +932,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
     alert("Status dos ativos e observações salvos com sucesso!");
   };
 
-  const gerarEBaixarPdf = async () => {
+  const finalizarInspecao = async () => {
     let dataInspecaoFinal = '';
     let dataProxStr = '';
     let forcarCheckin = false;
@@ -1048,90 +997,6 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
       dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
     }
 
-    const htmlConteudo = `
-      <!DOCTYPE html>
-      <html lang="pt-BR">
-      <head>
-        <meta charset="UTF-8">
-        <title>Relatório de Inspeção - ${pop.nome.toUpperCase()}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 30px; color: #333; line-height: 1.5; background: #fff; }
-          h2 { color: #0056b3; border-bottom: 2px solid #0056b3; padding-bottom: 8px; margin-bottom: 15px; }
-          h3 { margin-top: 20px; color: #333; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
-          .section { margin-bottom: 15px; }
-          .item { margin-bottom: 6px; }
-        </style>
-      </head>
-      <body>
-        <h2>RELATÓRIO DE INSPEÇÃO DE POP</h2>
-        <p><strong>POP:</strong> ${pop.nome.toUpperCase()} (ID: ${pop.id})</p>
-        <p><strong>Endereço:</strong> ${pop.endereco}</p>
-        <p><strong>${cargoLabel} Responsável:</strong> ${nomeTecnico}</p>
-        <p><strong>Check-in / Data:</strong> ${dataInspecaoFinal}</p>
-        <p><strong>Próxima Inspeção (Previsão):</strong> ${dataProxStr}</p>
-        
-        <div class="section">
-          <h3>Status dos Ativos:</h3>
-          ${Object.entries(statusAtivos).map(([ativo, st]) => {
-            const presente = ativosPresentes[ativo];
-            if (!presente) return `<div class="item">- ${ativo}: <em>Não disponível neste POP</em></div>`;
-            let txt = `<div class="item">- ${ativo}: <strong>${st}</strong></div>`;
-            if (st === 'Incidente') {
-              txt += `<div style="margin-left: 20px; color: #dc3545;">-> Detalhe: ${detalhesIncidentes[ativo] || 'Sem descrição'}</div>`;
-            }
-            return txt;
-          }).join('')}
-        </div>
-
-        <div class="section">
-          <h3>Bancos de Baterias:</h3>
-          ${Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
-            const bModel = bancosBateria[banco] || { dataFabricacao: '', voltagens: ['', '', '', ''] };
-            const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao);
-            const resSub = statusData(proxSub);
-            const vencidoSub = resSub && resSub.status === 'vencido';
-            const diasVencido = vencidoSub ? resSub.dias : 0;
-            return `
-              <div style="margin-bottom: 8px; border-left: 3px solid ${vencidoSub ? '#ff4d4d' : '#0056b3'}; padding-left: 8px;">
-                <strong>Banco ${getLetra(banco)}</strong><br/>
-                - Data de Fabricação: ${bModel.dataFabricacao || 'Não informada'}<br/>
-                - Próxima Substituição: ${proxSub || 'Not calculated'}
-                ${vencidoSub ? `<br/><span style="color: #ff4d4d; font-weight: bold;">⚠️ AVISO: BANCO DE BATERIA EXPIRADO HÁ ${diasVencido} DIAS!</span>` : ''}<br/>
-                - Voltagens: ${bModel.voltagens.map((v, vIdx) => `Bat ${vIdx + 1}: ${v || 'N/I'}V`).join(' | ')}
-              </div>
-            `;
-          }).join('')}
-        </div>
-
-        <div class="section">
-          <h3>Centrais de Ar:</h3>
-          ${Array.from({ length: qtdAr }, (_, i) => i + 1).map((idx) => {
-            const ar = centraisAr[idx] || { modelo: '', btu: '', dataInstalacao: '', dataUltimaLimpeza: '' };
-            const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
-            const resLimp = statusData(proxLimp);
-            const vencidoLimp = resLimp && resLimp.status === 'vencido';
-            const diasVencidoLimp = vencidoLimp ? resLimp.dias : 0;
-            return `
-              <div style="margin-bottom: 8px; border-left: 3px solid ${vencidoLimp ? '#ff4d4d' : '#28a745'}; padding-left: 8px;">
-                <strong>Central ${getLetra(idx)}</strong> (${ar.modelo || 'Modelo N/I'} - ${ar.btu || 'N/I'} BTUs)<br/>
-                - Instalação: ${ar.dataInstalacao || 'N/I'} | Última Limpeza: ${ar.dataUltimaLimpeza || 'N/I'}<br/>
-                - Próxima Limpeza: ${proxLimp || 'Não calculada'}
-                ${vencidoLimp ? `<br/><span style="color: #ff4d4d; font-weight: bold;">⚠️ AVISO: LIMPEZA DE AR EXPIRADA HÁ ${diasVencidoLimp} DIAS!</span>` : ''}
-              </div>
-            `;
-          }).join('')}
-        </div>
-
-        <div class="section">
-          <h3>Observações e Notas:</h3>
-          <p><strong>Situação da Limpeza:</strong> ${precisaLimpeza ? 'Limpeza Necessária' : 'Área Limpa / OK'}</p>
-          <p><strong>Incidentes Gerais:</strong> ${incidentesGerais || 'Nenhum incidente relatado'}</p>
-          <p><strong>Anotações Extras:</strong> ${anotacoes || 'Nenhuma anotação'}</p>
-        </div>
-      </body>
-      </html>
-    `;
-
     try {
       await salvarNoFirebase({
         statusAtivos,
@@ -1158,15 +1023,8 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
 
       await onCheckInRealizado(novoRegistro, forcarCheckin);
 
-      const janelaPdf = window.open('', '_blank');
-      if (janelaPdf) {
-        janelaPdf.document.write(htmlConteudo);
-        janelaPdf.document.close();
-        janelaPdf.focus();
-        setTimeout(() => janelaPdf.print(), 500);
-      } else {
-        alert("O navegador bloqueou a abertura da janela. Permita pop-ups para este site.");
-      }
+      alert("Check-in e dados de inspeção salvos com sucesso!");
+      onBack();
 
     } catch (error) {
       alert("Erro ao registrar o check-in: " + error.message);
@@ -1366,8 +1224,8 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
 
           <textarea placeholder="Anotações Extras" rows="3" value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '20px', background: '#2d2d2d', border: '1px solid #444', color: '#fff', boxSizing: 'border-box' }} />
 
-          <button onClick={gerarEBaixarPdf} style={{ width: '100%', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', cursor: 'pointer' }}>
-            Gerar, Abrir e Salvar Relatório PDF
+          <button onClick={finalizarInspecao} style={{ width: '100%', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', cursor: 'pointer' }}>
+            Finalizar e Salvar Inspeção
           </button>
         </div>
       </div>
