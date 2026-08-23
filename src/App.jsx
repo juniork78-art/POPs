@@ -37,6 +37,26 @@ style.innerHTML = `
     .no-print {
       display: none !important;
     }
+    .relatorio-container {
+      padding: 20px;
+      font-family: Arial, sans-serif;
+    }
+    .relatorio-titulo {
+      font-size: 20px;
+      font-weight: bold;
+      color: #0056b3;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+    .relatorio-secao {
+      margin-top: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #ccc;
+    }
+    .texto-destaque-vermelho {
+      color: #d9534f !important;
+      font-weight: bold !important;
+    }
   }
 `;
 document.head.appendChild(style);
@@ -801,9 +821,20 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
       await onCheckInRealizado(novoRegistro, forcarCheckin);
 
       alert("Check-in e dados de inspeção salvos com sucesso!");
-      
-      // Dispara a impressão/PDF logo após salvar no mesmo fluxo unificado
-      window.print();
+
+      // Abre em uma nova guia/janela de forma limpa para PDF/Impressão
+      const conteudoHtml = document.documentElement.outerHTML;
+      const janelaPdf = window.open('', '_blank');
+      if (janelaPdf) {
+        janelaPdf.document.write('<!DOCTYPE html><html><head><title>Relatório - ' + pop.nome.toUpperCase() + '</title></head><body>' + document.body.innerHTML + '</body></html>');
+        janelaPdf.document.close();
+        janelaPdf.focus();
+        setTimeout(() => {
+          janelaPdf.print();
+        }, 500);
+      } else {
+        window.print();
+      }
 
       onBack();
 
@@ -822,7 +853,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
       </div>
       
       <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
-        <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', marginTop: 0 }}>Inspeção: {pop.nome}</h2>
+        <h2 className="relatorio-titulo" style={{ textTransform: 'uppercase', color: '#4dabf7', marginTop: 0 }}>Inspeção: {pop.nome}</h2>
         <p style={{ color: theme.textMuted, fontSize: '13px', marginBottom: '20px' }}>{pop.endereco}</p>
 
         <p style={{ color: theme.textMain, fontSize: '15px', fontWeight: 'bold', marginBottom: '15px' }}>{cargoLabel}: {nomeTecnico}</p>
@@ -846,7 +877,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
           )}
         </div>
 
-        <h3>Status dos Ativos no POP</h3>
+        <h3 className="relatorio-secao">Status dos Ativos no POP</h3>
         {Object.keys(statusAtivos).map((ativo) => {
           const presente = ativosPresentes[ativo];
           return (
@@ -875,7 +906,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
         </button>
 
         <div style={{ marginTop: '20px' }}>
-          <h3>Bancos de Baterias</h3>
+          <h3 className="relatorio-secao">Bancos de Baterias</h3>
           <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
             {[1, 2, 3, 4].map((num) => (
               <button key={num} type="button" onClick={() => { setQtdBancos(num); salvarNoFirebase({ qtdBancos: num }); }} style={{ padding: '6px 12px', background: qtdBancos === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer' }}>{num}</button>
@@ -916,7 +947,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
                   }} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
                 </div>
                 
-                <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoSub ? undefined : '#4dabf7', margin: '0 0 8px 0' }}>
+                <p className={vencidoSub ? 'alerta-vencido texto-destaque-vermelho' : 'texto-destaque-vermelho'} style={{ fontSize: '12px', color: vencidoSub ? undefined : '#d9534f', fontWeight: 'bold', margin: '0 0 8px 0' }}>
                   Próxima Substituição (+2 anos): {proxSub || 'Preencha a data'} {vencidoSub && `(Exp. há ${resSub.dias}d)`}
                 </p>
 
@@ -944,7 +975,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
         </div>
 
         <div style={{ marginTop: '20px' }}>
-          <h3>Centrais de Ar</h3>
+          <h3 className="relatorio-secao">Centrais de Ar</h3>
           <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
             {[1, 2, 3, 4].map((num) => (
               <button key={num} type="button" onClick={() => { setQtdAr(num); salvarNoFirebase({ qtdAr: num }); }} style={{ padding: '6px 12px', background: qtdAr === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer' }}>{num}</button>
@@ -992,7 +1023,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
                   <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data da Última Limpeza (dd/MM/aaaa)</label>
                   <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataUltimaLimpeza: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
                 </div>
-                <p className={vencidoLimp ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoLimp ? undefined : '#4dabf7', margin: '6px 0 8px 0' }}>
+                <p className={vencidoLimp ? 'alerta-vencido texto-destaque-vermelho' : 'texto-destaque-vermelho'} style={{ fontSize: '12px', color: vencidoLimp ? undefined : '#d9534f', fontWeight: 'bold', margin: '6px 0 8px 0' }}>
                   Próxima Limpeza ({intervaloAr} meses): {proxLimp || 'Preencha a última limpeza'} {vencidoLimp && `(Exp. há ${resLimp.dias}d)`}
                 </p>
               </div>
