@@ -486,7 +486,7 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
         {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
       </button>
       <form onSubmit={handleLogin} style={{ background: theme.cardBg, color: theme.textMain, padding: '30px', borderRadius: '8px', width: '340px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
-        <img src="https://i.imgur.com/8Km9t26.png" alt="Logo Fibralink" style={{ width: '160px', marginBottom: '15px', objectFit: 'contain' }} />
+        <img src="/logo.png" alt="Logo Fibralink" style={{ width: '150px', marginBottom: '15px', objectFit: 'contain' }} />
         <h2 style={{ marginBottom: '20px', fontSize: '18px' }}>InfraManager POP</h2>
         {erro && <p style={{ color: '#ff6b6b', fontSize: '14px' }}>{erro}</p>}
         <input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', padding: '10px', marginBottom: '15px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
@@ -508,8 +508,8 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${theme.border}`, paddingBottom: '15px', flexWrap: 'wrap', gap: '15px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <button onClick={onOpenDrawer} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>☰ Menu</button>
-          <img src="https://i.imgur.com/8Km9t26.png" alt="Logo Fibralink" style={{ width: '110px', objectFit: 'contain' }} />
-          <h1 style={{ margin: 0, fontSize: '18px' }}>Olá, {tecnico.split('@')[0].toUpperCase()}</h1>
+          <img src="/logo.png" alt="Logo Fibralink" style={{ width: '100px', objectFit: 'contain' }} />
+          <h1 style={{ margin: 0, fontSize: '16px' }}>| Olá, {tecnico.split('@')[0].toUpperCase()}</h1>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button onClick={() => setShowPasswordDialog(true)} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>Gerenciar POPs</button>
@@ -825,7 +825,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
           <body>
             <div class="header-rel">
               <h1>Relatório de Inspeção - POP: ${pop.nome.toUpperCase()}</h1>
-              <img src="https://i.imgur.com/8Km9t26.png" alt="Logo" style="width: 120px; object-fit: contain;" />
+              <img src="/logo.png" alt="Logo" style="width: 120px; object-fit: contain;" />
             </div>
             <p><span class="negrito">Endereço:</span> ${pop.endereco}</p>
             <p><span class="negrito">${cargoLabel}:</span> ${nomeTecnico}</p>
@@ -921,7 +921,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
       <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '15px' }}>
           <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', margin: 0 }}>Inspeção: {pop.nome}</h2>
-          <img src="https://i.imgur.com/8Km9t26.png" alt="Logo" style={{ width: '100px', objectFit: 'contain' }} />
+          <img src="/logo.png" alt="Logo" style={{ width: '100px', objectFit: 'contain' }} />
         </div>
         <p style={{ color: theme.textMuted, fontSize: '13px', marginBottom: '20px' }}>{pop.endereco}</p>
 
