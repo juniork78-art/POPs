@@ -407,19 +407,19 @@ export default function App() {
       />
 
       {showAvisoGlobal && (vencidos.length > 0 || amanha.length > 0) && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <div style={{ background: '#1e1e1e', padding: '30px', borderRadius: '12px', border: '2px solid #ff4d4d', maxWidth: '450px', width: '90%', boxSizing: 'border-box' }}>
-            <h2 style={{ color: '#ff4d4d', marginTop: 0, fontSize: '18px', textAlign: 'center' }}>⚠️ Atenção: Prazos e Vencimentos</h2>
-            <p style={{ color: '#ccc', fontSize: '13px', marginBottom: '15px', textAlign: 'center' }}>Acompanhe os itens que exigem atenção:</p>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px', boxSizing: 'border-box' }}>
+          <div style={{ background: '#1e1e1e', padding: '20px', borderRadius: '12px', border: '2px solid #ff4d4d', width: '100%', maxWidth: '450px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+            <h2 style={{ color: '#ff4d4d', marginTop: 0, fontSize: '16px', textAlign: 'center' }}>⚠️ Atenção: Prazos e Vencimentos</h2>
+            <p style={{ color: '#ccc', fontSize: '12px', marginBottom: '10px', textAlign: 'center' }}>Acompanhe os itens que exigem atenção:</p>
             
-            <div style={{ margin: '15px 0', maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ margin: '10px 0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, paddingRight: '4px' }}>
               {vencidos.length > 0 && (
                 <div>
-                  <h4 style={{ color: '#ff4d4d', fontSize: '12px', margin: '0 0 6px 0', textTransform: 'uppercase', borderBottom: '1px solid #ff4d4d', paddingBottom: '3px' }}>🔴 Itens Vencidos</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <h4 style={{ color: '#ff4d4d', fontSize: '11px', margin: '0 0 4px 0', textTransform: 'uppercase', borderBottom: '1px solid #ff4d4d', paddingBottom: '2px' }}>🔴 Itens Vencidos</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     {vencidos.map((msg, i) => (
-                      <div key={i} style={{ background: '#252525', padding: '10px', borderRadius: '6px', borderLeft: '3px solid #ff4d4d' }}>
-                        <p className="alerta-vencido" style={{ margin: 0, fontSize: '12px', lineHeight: '1.4' }}>{msg}</p>
+                      <div key={i} style={{ background: '#252525', padding: '8px', borderRadius: '6px', borderLeft: '3px solid #ff4d4d' }}>
+                        <p className="alerta-vencido" style={{ margin: 0, fontSize: '11px', lineHeight: '1.4' }}>{msg}</p>
                       </div>
                     ))}
                   </div>
@@ -428,11 +428,11 @@ export default function App() {
 
               {amanha.length > 0 && (
                 <div>
-                  <h4 style={{ color: '#ff9800', fontSize: '12px', margin: '10px 0 6px 0', textTransform: 'uppercase', borderBottom: '1px solid #ff9800', paddingBottom: '3px' }}>🟠 Vencem Hoje / Amanhã</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <h4 style={{ color: '#ff9800', fontSize: '11px', margin: '8px 0 4px 0', textTransform: 'uppercase', borderBottom: '1px solid #ff9800', paddingBottom: '2px' }}>🟠 Vencem Hoje / Amanhã</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     {amanha.map((msg, i) => (
-                      <div key={i} style={{ background: '#252525', padding: '10px', borderRadius: '6px', borderLeft: '3px solid #ff9800' }}>
-                        <p className="alerta-amanha" style={{ margin: 0, fontSize: '12px', lineHeight: '1.4' }}>{msg}</p>
+                      <div key={i} style={{ background: '#252525', padding: '8px', borderRadius: '6px', borderLeft: '3px solid #ff9800' }}>
+                        <p className="alerta-amanha" style={{ margin: 0, fontSize: '11px', lineHeight: '1.4' }}>{msg}</p>
                       </div>
                     ))}
                   </div>
@@ -442,7 +442,7 @@ export default function App() {
 
             <button 
               onClick={() => setShowAvisoGlobal(false)} 
-              style={{ width: '100%', padding: '12px', background: '#ff4d4d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', marginTop: '10px' }}>
+              style={{ width: '100%', padding: '10px', background: '#ff4d4d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', marginTop: '10px', flexShrink: 0 }}>
               Entendido
             </button>
           </div>
