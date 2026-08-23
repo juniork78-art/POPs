@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { auth, db } from './firebase';
 import { 
   signInWithEmailAndPassword, 
@@ -28,6 +28,15 @@ style.innerHTML = `
   .alerta-amanha {
     color: #ff9800 !important;
     font-weight: bold;
+  }
+  @media print {
+    body {
+      background: #ffffff !important;
+      color: #000000 !important;
+    }
+    .no-print {
+      display: none !important;
+    }
   }
 `;
 document.head.appendChild(style);
@@ -126,13 +135,48 @@ export default function App() {
   const [ultimosCheckIns, setUltimosCheckIns] = useState([]);
   const [cronogramaLimpezas, setCronogramaLimpezas] = useState([]);
   const [cronogramaBaterias, setCronogramaBaterias] = useState([]);
-  const [mapaPopsDados, setMapaPopsDados] = useState({});
   const [loadingAuth, setLoadingAuth] = useState(true);
 
   const [drawerAberto, setDrawerAberto] = useState(false);
   const [abaDrawer, setAbaDrawer] = useState('checkins');
   const [showAvisoGlobal, setShowAvisoGlobal] = useState(false);
   const [dadosCarregados, setDadosCarregados] = useState(false);
+
+  // Gerenciamento de Tema persistente
+  const [darkMode, setDarkMode] = useState(() => {
+    try {
+      const salvo = localStorage.getItem('darkMode_pops');
+      if (salvo !== null) {
+        return JSON.parse(salvo);
+      }
+    } catch (e) {
+      console.error("Erro ao ler localStorage", e);
+    }
+    return true;
+  });
+
+  const alternarTema = () => {
+    setDarkMode(prev => {
+      const novoTema = !prev;
+      try {
+        localStorage.setItem('darkMode_pops', JSON.stringify(novoTema));
+      } catch (e) {
+        console.error("Erro ao salvar localStorage", e);
+      }
+      return novoTema;
+    });
+  };
+
+  const theme = {
+    bg: darkMode ? '#121212' : '#eef2f5',
+    cardBg: darkMode ? '#1e1e1e' : '#ffffff',
+    cardInner: darkMode ? '#252525' : '#f8f9fa',
+    textMain: darkMode ? '#fff' : '#212529',
+    textMuted: darkMode ? '#aaa' : '#555555',
+    border: darkMode ? '#333' : '#d0d7de',
+    inputBg: darkMode ? '#2d2d2d' : '#ffffff',
+    inputText: darkMode ? '#fff' : '#212529'
+  };
 
   const popPertenceAoUsuario = (nomePop) => {
     if (!usuarioLogado) return true;
@@ -150,67 +194,37 @@ export default function App() {
     let vencidos = [];
     let amanha = [];
 
-    const processarItem = (nomePop, msgVencido, msgAmanha, dataStr) => {
+    const processarItem = (nomePop, baseMsg, dataStr) => {
       const res = statusData(dataStr);
       if (nomePop && res && popPertenceAoUsuario(nomePop)) {
         if (res.status === 'vencido') {
           const diasTxt = res.dias === 1 ? '1 dia' : `${res.dias} dias`;
-          vencidos.push(`${msgVencido} (Expirado há ${diasTxt})`);
+          vencidos.push(`${baseMsg} (Expirado há ${diasTxt})`);
         } else if (res.status === 'amanha' || res.status === 'hoje') {
           const tempoTxt = res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã';
-          amanha.push(`${msgAmanha} (${tempoTxt})`);
+          amanha.push(`${baseMsg} (${tempoTxt})`);
         }
       }
     };
 
-    if (listaPops) {
-      listaPops.forEach(pop => {
-        const dadosPop = mapaPopsDados[pop.nome.toLowerCase()] || {};
-        const ultimaData = dadosPop.ultimaDataInspecao;
-        
-        if (ultimaData) {
-          try {
-            const parts = ultimaData.split('/');
-            if (parts.length === 3) {
-              const day = parseInt(parts[0], 10);
-              const month = parseInt(parts[1], 10) - 1;
-              const year = parseInt(parts[2], 10);
-              const dataInspecao = new Date(year, month, day);
-              const dataProx = new Date(dataInspecao);
-              dataProx.setDate(dataProx.getDate() + 90);
-              const dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
-              
-              processarItem(
-                pop.nome, 
-                `POP: ${pop.nome.toUpperCase()} - Inspeção vencida`, 
-                `POP: ${pop.nome.toUpperCase()} - Prazo de inspeção vencendo`, 
-                dataProxStr
-              );
-            }
-          } catch (e) {}
+    if (ultimosCheckIns) {
+      ultimosCheckIns.forEach(c => {
+        const nomePop = c.popNome || c.pop || c.nomePop || c.nome_pop || c.nome;
+        if (nomePop) {
+          processarItem(nomePop, `POP: ${nomePop.toUpperCase()} - Data de inspeção expirada`, c.proximaInspecao);
         }
       });
     }
 
     if (cronogramaLimpezas) {
       cronogramaLimpezas.forEach(l => {
-        processarItem(
-          l.popNome, 
-          `POP: ${l.popNome.toUpperCase()} - Limpeza de ar (${l.central}) vencida`, 
-          `POP: ${l.popNome.toUpperCase()} - Limpeza de ar (${l.central}) vencendo`, 
-          l.proximaLimpeza
-        );
+        processarItem(l.popNome, `POP: ${l.popNome.toUpperCase()} - Limpeza de ar (${l.central}) expirada`, l.proximaLimpeza);
       });
     }
 
     if (cronogramaBaterias) {
       cronogramaBaterias.forEach(b => {
-        processarItem(
-          b.popNome, 
-          `POP: ${b.popNome.toUpperCase()} - Banco de Bateria (${b.banco}) vencido`, 
-          `POP: ${b.popNome.toUpperCase()} - Banco de Bateria (${b.banco}) vencendo`, 
-          b.proximaSubstituicao
-        );
+        processarItem(b.popNome, `POP: ${b.popNome.toUpperCase()} - Banco de Bateria (${b.banco}) expirado`, b.proximaSubstituicao);
       });
     }
 
@@ -240,7 +254,7 @@ export default function App() {
         sessionStorage.setItem('avisoMostrado', 'true');
       }
     }
-  }, [usuarioLogado, dadosCarregados, mapaPopsDados, cronogramaLimpezas, cronogramaBaterias]);
+  }, [usuarioLogado, dadosCarregados, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -280,12 +294,10 @@ export default function App() {
       const unsubPopsDados = onSnapshot(collection(db, "pops_dados"), (snapshot) => {
         const listaLimpezasTemp = [];
         const listaBateriasTemp = [];
-        const mapaTemp = {};
 
         snapshot.forEach((d) => {
           const popNome = d.id;
           const data = d.data();
-          mapaTemp[popNome.toLowerCase()] = data;
           
           const qtdAr = data.qtdAr || 0;
           const intervaloAr = (popNome.toLowerCase() === 'helius' || popNome.toLowerCase() === 'limos') ? 5 : 8;
@@ -317,7 +329,6 @@ export default function App() {
           }
         });
 
-        setMapaPopsDados(mapaTemp);
         setCronogramaLimpezas(listaLimpezasTemp);
         setCronogramaBaterias(listaBateriasTemp);
         setDadosCarregados(true);
@@ -370,11 +381,11 @@ export default function App() {
   };
 
   if (loadingAuth) {
-    return <div style={{ color: '#fff', textAlign: 'center', marginTop: '20vh', fontFamily: 'sans-serif' }}>Carregando InfraManager...</div>;
+    return <div style={{ color: theme.textMain, backgroundColor: theme.bg, textAlign: 'center', marginTop: '20vh', fontFamily: 'sans-serif', minHeight: '100vh' }}>Carregando InfraManager...</div>;
   }
 
   if (!usuarioLogado) {
-    return <TelaLogin onLoginSucesso={(email) => setUsuarioLogado(email)} />;
+    return <TelaLogin onLoginSucesso={(email) => setUsuarioLogado(email)} darkMode={darkMode} setDarkMode={alternarTema} theme={theme} />;
   }
 
   if (telaGerenciarPopsAberta) {
@@ -385,6 +396,7 @@ export default function App() {
           setTelaGerenciarPopsAberta(false);
           window.history.back();
         }} 
+        theme={theme}
       />
     );
   }
@@ -416,6 +428,9 @@ export default function App() {
           setUltimosCheckIns(novaLista);
           await setDoc(doc(db, "historico_global", "checkins"), { lista: novaLista });
         }}
+        darkMode={darkMode}
+        setDarkMode={alternarTema}
+        theme={theme}
       />
     );
   }
@@ -423,14 +438,13 @@ export default function App() {
   const { vencidos, amanha } = verificarAlertasGlobaisDetalhados();
 
   return (
-    <>
+    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', transition: 'background-color 0.2s, color 0.2s' }}>
       <TelaListaPops 
         tecnico={usuarioLogado} 
         listaPops={listaPops} 
         ultimosCheckIns={ultimosCheckIns}
         cronogramaLimpezas={cronogramaLimpezas}
         cronogramaBaterias={cronogramaBaterias}
-        mapaPopsDados={mapaPopsDados}
         onPopClick={(pop) => setPopSelecionado(pop)} 
         onOpenDrawer={() => setDrawerAberto(true)}
         onOpenGerenciarPops={() => setTelaGerenciarPopsAberta(true)}
@@ -439,22 +453,25 @@ export default function App() {
           signOut(auth); 
           setUsuarioLogado(null); 
         }} 
+        darkMode={darkMode}
+        setDarkMode={alternarTema}
+        theme={theme}
       />
 
       {showAvisoGlobal && (vencidos.length > 0 || amanha.length > 0) && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <div style={{ background: '#1e1e1e', padding: '30px', borderRadius: '12px', border: '2px solid #ff4d4d', maxWidth: '450px', width: '90%', boxSizing: 'border-box' }}>
-            <h2 style={{ color: '#ff4d4d', marginTop: 0, fontSize: '18px', textAlign: 'center' }}>⚠️ Atenção: Prazos e Vencimentos</h2>
-            <p style={{ color: '#ccc', fontSize: '13px', marginBottom: '15px', textAlign: 'center' }}>Acompanhe os itens que exigem atenção:</p>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px', boxSizing: 'border-box' }}>
+          <div style={{ background: theme.cardBg, color: theme.textMain, padding: '20px', borderRadius: '12px', border: '2px solid #ff4d4d', width: '100%', maxWidth: '450px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+            <h2 style={{ color: '#ff4d4d', marginTop: 0, fontSize: '16px', textAlign: 'center' }}>⚠️ Atenção: Prazos e Vencimentos</h2>
+            <p style={{ color: theme.textMuted, fontSize: '12px', marginBottom: '10px', textAlign: 'center' }}>Acompanhe os itens que exigem atenção:</p>
             
-            <div style={{ margin: '15px 0', maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ margin: '10px 0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, paddingRight: '4px' }}>
               {vencidos.length > 0 && (
                 <div>
-                  <h4 style={{ color: '#ff4d4d', fontSize: '12px', margin: '0 0 6px 0', textTransform: 'uppercase', borderBottom: '1px solid #ff4d4d', paddingBottom: '3px' }}>🔴 Itens Vencidos</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <h4 style={{ color: '#ff4d4d', fontSize: '11px', margin: '0 0 4px 0', textTransform: 'uppercase', borderBottom: '1px solid #ff4d4d', paddingBottom: '2px' }}>🔴 Itens Vencidos</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     {vencidos.map((msg, i) => (
-                      <div key={i} style={{ background: '#252525', padding: '10px', borderRadius: '6px', borderLeft: '3px solid #ff4d4d' }}>
-                        <p className="alerta-vencido" style={{ margin: 0, fontSize: '12px', lineHeight: '1.4' }}>{msg}</p>
+                      <div key={i} style={{ background: theme.cardInner, padding: '8px', borderRadius: '6px', borderLeft: '3px solid #ff4d4d' }}>
+                        <p className="alerta-vencido" style={{ margin: 0, fontSize: '11px', lineHeight: '1.4' }}>{msg}</p>
                       </div>
                     ))}
                   </div>
@@ -463,11 +480,11 @@ export default function App() {
 
               {amanha.length > 0 && (
                 <div>
-                  <h4 style={{ color: '#ff9800', fontSize: '12px', margin: '10px 0 6px 0', textTransform: 'uppercase', borderBottom: '1px solid #ff9800', paddingBottom: '3px' }}>🟠 Vencem Hoje / Amanhã</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <h4 style={{ color: '#ff9800', fontSize: '11px', margin: '8px 0 4px 0', textTransform: 'uppercase', borderBottom: '1px solid #ff9800', paddingBottom: '2px' }}>🟠 Vencem Hoje / Amanhã</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     {amanha.map((msg, i) => (
-                      <div key={i} style={{ background: '#252525', padding: '10px', borderRadius: '6px', borderLeft: '3px solid #ff9800' }}>
-                        <p className="alerta-amanha" style={{ margin: 0, fontSize: '12px', lineHeight: '1.4' }}>{msg}</p>
+                      <div key={i} style={{ background: theme.cardInner, padding: '8px', borderRadius: '6px', borderLeft: '3px solid #ff9800' }}>
+                        <p className="alerta-amanha" style={{ margin: 0, fontSize: '11px', lineHeight: '1.4' }}>{msg}</p>
                       </div>
                     ))}
                   </div>
@@ -477,7 +494,7 @@ export default function App() {
 
             <button 
               onClick={() => setShowAvisoGlobal(false)} 
-              style={{ width: '100%', padding: '12px', background: '#ff4d4d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', marginTop: '10px' }}>
+              style={{ width: '100%', padding: '10px', background: '#ff4d4d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', marginTop: '10px', flexShrink: 0 }}>
               Entendido
             </button>
           </div>
@@ -486,22 +503,22 @@ export default function App() {
 
       {drawerAberto && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex' }}>
-          <div style={{ width: '320px', background: '#1e1e1e', height: '100%', padding: '20px', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ width: '320px', background: theme.cardBg, color: theme.textMain, height: '100%', padding: '20px', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column', borderRight: `1px solid ${theme.border}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-              <h3 style={{ margin: 0, color: '#fff' }}>Menu do Sistema</h3>
-              <button onClick={() => setDrawerAberto(false)} style={{ background: 'transparent', border: 'none', color: '#aaa', fontSize: '18px', cursor: 'pointer' }}>✕</button>
+              <h3 style={{ margin: 0, color: theme.textMain }}>Menu do Sistema</h3>
+              <button onClick={() => setDrawerAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, fontSize: '18px', cursor: 'pointer' }}>✕</button>
             </div>
 
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
-              <button onClick={() => setAbaDrawer('checkins')} style={{ flex: 1, padding: '8px 4px', background: abaDrawer === 'checkins' ? '#007bff' : '#333', border: 'none', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}>Check-ins</button>
-              <button onClick={() => setAbaDrawer('limpezas')} style={{ flex: 1, padding: '8px 4px', background: abaDrawer === 'limpezas' ? '#007bff' : '#333', border: 'none', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}>Limpezas Ar</button>
-              <button onClick={() => setAbaDrawer('baterias')} style={{ flex: 1, padding: '8px 4px', background: abaDrawer === 'baterias' ? '#007bff' : '#333', border: 'none', color: '#fff', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}>Baterias</button>
+              <button onClick={() => setAbaDrawer('checkins')} style={{ flex: 1, padding: '8px 4px', background: abaDrawer === 'checkins' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}>Check-ins</button>
+              <button onClick={() => setAbaDrawer('limpezas')} style={{ flex: 1, padding: '8px 4px', background: abaDrawer === 'limpezas' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}>Limpezas Ar</button>
+              <button onClick={() => setAbaDrawer('baterias')} style={{ flex: 1, padding: '8px 4px', background: abaDrawer === 'baterias' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}>Baterias</button>
             </div>
 
             {abaDrawer === 'checkins' ? (
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #333', paddingBottom: '6px', marginBottom: '10px' }}>
-                  <h4 style={{ color: '#aaa', fontSize: '14px', margin: 0 }}>Últimos Check-ins</h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px', marginBottom: '10px' }}>
+                  <h4 style={{ color: theme.textMuted, fontSize: '14px', margin: 0 }}>Últimos Check-ins</h4>
                   {ultimosCheckIns.length > 0 && (
                     <div style={{ display: 'flex', gap: '5px' }}>
                       <button 
@@ -519,7 +536,7 @@ export default function App() {
                 </div>
 
                 {ultimosCheckIns.length === 0 ? (
-                  <p style={{ color: '#777', fontSize: '13px' }}>Nenhum check-in registrado.</p>
+                  <p style={{ color: theme.textMuted, fontSize: '13px' }}>Nenhum check-in registrado.</p>
                 ) : (
                   ultimosCheckIns.map((item, idx) => {
                     const nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || 'Não Informado');
@@ -534,12 +551,12 @@ export default function App() {
                     const labelCargoRegistro = isDuandysRegistro ? 'Gestor' : 'Técnico';
                     
                     return (
-                      <div key={idx} style={{ background: '#252525', padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px' }}>
+                      <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
                         <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>
                           POP: {nomeDoPop}
                         </p>
-                        <p style={{ margin: '0 0 3px 0', color: '#ccc' }}>{labelCargoRegistro}: {nomeTecnicoStr || 'N/I'}</p>
-                        <p style={{ margin: '0 0 3px 0', color: '#aaa' }}>Data: {item.dataHora || 'N/I'}</p>
+                        <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>{labelCargoRegistro}: {nomeTecnicoStr || 'N/I'}</p>
+                        <p style={{ margin: '0 0 3px 0', color: theme.textMuted }}>Data: {item.dataHora || 'N/I'}</p>
                         
                         <p className={estaVencido || estaQuaseVencendo ? 'alerta-vencido' : ''} style={{ margin: '0 0 6px 0', color: (estaVencido || estaQuaseVencendo) ? undefined : '#28a745' }}>
                           Próx. Insp: {item.proximaInspecao || 'Não informada'} 
@@ -556,18 +573,18 @@ export default function App() {
               </div>
             ) : abaDrawer === 'limpezas' ? (
               <div>
-                <h4 style={{ color: '#aaa', fontSize: '14px', borderBottom: '1.5px solid #333', paddingBottom: '6px' }}>Cronograma Limpezas de Ar</h4>
+                <h4 style={{ color: theme.textMuted, fontSize: '14px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px' }}>Cronograma Limpezas de Ar</h4>
                 {cronogramaLimpezas.length === 0 ? (
-                  <p style={{ color: '#777', fontSize: '13px' }}>Nenhuma limpeza registrada.</p>
+                  <p style={{ color: theme.textMuted, fontSize: '13px' }}>Nenhuma limpeza registrada.</p>
                 ) : (
                   cronogramaLimpezas.map((item, idx) => {
                     if (!popPertenceAoUsuario(item.popNome)) return null;
                     const resSt = statusData(item.proximaLimpeza);
                     const vencido = resSt && resSt.status === 'vencido';
                     return (
-                      <div key={idx} style={{ background: '#252525', padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px' }}>
+                      <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
                         <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>{item.popNome} ({item.central})</p>
-                        <p style={{ margin: '0 0 3px 0', color: '#ccc' }}>Última: {item.ultimaLimpeza}</p>
+                        <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Última: {item.ultimaLimpeza}</p>
                         <p className={vencido ? 'alerta-vencido' : ''} style={{ margin: 0, color: vencido ? undefined : '#28a745' }}>
                           Próxima: {item.proximaLimpeza} {vencido && `(Exp. há ${resSt.dias}d)`}
                         </p>
@@ -578,18 +595,18 @@ export default function App() {
               </div>
             ) : (
               <div>
-                <h4 style={{ color: '#aaa', fontSize: '14px', borderBottom: '1.5px solid #333', paddingBottom: '6px' }}>Cronograma de Baterias</h4>
+                <h4 style={{ color: theme.textMuted, fontSize: '14px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px' }}>Cronograma de Baterias</h4>
                 {cronogramaBaterias.length === 0 ? (
-                  <p style={{ color: '#777', fontSize: '13px' }}>Nenhuma bateria registrada.</p>
+                  <p style={{ color: theme.textMuted, fontSize: '13px' }}>Nenhuma bateria registrada.</p>
                 ) : (
                   cronogramaBaterias.map((item, idx) => {
                     if (!popPertenceAoUsuario(item.popNome)) return null;
                     const resSt = statusData(item.proximaSubstituicao);
                     const vencido = resSt && resSt.status === 'vencido';
                     return (
-                      <div key={idx} style={{ background: '#252525', padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px' }}>
+                      <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
                         <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>{item.popNome} ({item.banco})</p>
-                        <p style={{ margin: '0 0 3px 0', color: '#ccc' }}>Fabricação: {item.fabricacao}</p>
+                        <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Fabricação: {item.fabricacao}</p>
                         <p className={vencido ? 'alerta-vencido' : ''} style={{ margin: 0, color: vencido ? undefined : '#28a745' }}>
                           Troca: {item.proximaSubstituicao} {vencido && `(Exp. há ${resSt.dias}d)`}
                         </p>
@@ -603,11 +620,11 @@ export default function App() {
           <div style={{ flex: 1 }} onClick={() => setDrawerAberto(false)}></div>
         </div>
       )}
-    </>
+    </div>
   );
 }
 
-function TelaLogin({ onLoginSucesso }) {
+function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
@@ -624,17 +641,25 @@ function TelaLogin({ onLoginSucesso }) {
   };
 
   return (
-    <div style={{ backgroundColor: '#121212', color: '#fff', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: 'sans-serif' }}>
-      <form onSubmit={handleLogin} style={{ background: '#1e1e1e', padding: '30px', borderRadius: '8px', width: '340px', boxShadow: '0 4px 10px rgba(0,0,0,0.5)' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>InfraManager POP</h2>
+    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: 'sans-serif', padding: '15px', position: 'relative', boxSizing: 'border-box' }}>
+      <button 
+        type="button"
+        onClick={setDarkMode}
+        style={{ position: 'absolute', top: '15px', right: '15px', background: theme.cardBg, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
+      >
+        {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
+      </button>
+
+      <form onSubmit={handleLogin} style={{ background: theme.cardBg, color: theme.textMain, padding: '30px', borderRadius: '8px', width: '340px', boxShadow: '0 4px 10px rgba(0,0,0,0.3)', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+        <h2 style={{ textAlign: 'center', marginBottom: '20px', color: theme.textMain }}>InfraManager POP</h2>
         {erro && <p style={{ color: '#ff6b6b', fontSize: '14px', marginBottom: '15px' }}>{erro}</p>}
         <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', fontSize: '12px', marginBottom: '5px' }}>E-mail</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #444', background: '#2d2d2d', color: '#fff', boxSizing: 'border-box' }} />
+          <label style={{ display: 'block', fontSize: '12px', marginBottom: '5px', color: theme.textMuted }}>E-mail</label>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.inputText, boxSizing: 'border-box' }} />
         </div>
         <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', fontSize: '12px', marginBottom: '5px' }}>Senha</label>
-          <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #444', background: '#2d2d2d', color: '#fff', boxSizing: 'border-box' }} />
+          <label style={{ display: 'block', fontSize: '12px', marginBottom: '5px', color: theme.textMuted }}>Senha</label>
+          <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.inputText, boxSizing: 'border-box' }} />
         </div>
         <button type="submit" style={{ width: '100%', padding: '12px', background: '#007bff', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}>Entrar</button>
       </form>
@@ -642,7 +667,7 @@ function TelaLogin({ onLoginSucesso }) {
   );
 }
 
-function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias, mapaPopsDados, onPopClick, onOpenDrawer, onOpenGerenciarPops, onLogout }) {
+function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias, onPopClick, onOpenDrawer, onOpenGerenciarPops, onLogout, darkMode, setDarkMode, theme }) {
   const [busca, setBusca] = useState('');
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
@@ -661,29 +686,13 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
 
   const getNotificacoes = () => {
     let alertas = [];
-
-    if (listaPops) {
-      listaPops.forEach(pop => {
-        const dadosPop = mapaPopsDados[pop.nome.toLowerCase()] || {};
-        const ultimaData = dadosPop.ultimaDataInspecao;
-        if (ultimaData && popPertenceAoUsuario(pop.nome)) {
-          try {
-            const parts = ultimaData.split('/');
-            if (parts.length === 3) {
-              const day = parseInt(parts[0], 10);
-              const month = parseInt(parts[1], 10) - 1;
-              const year = parseInt(parts[2], 10);
-              const dataInspecao = new Date(year, month, day);
-              const dataProx = new Date(dataInspecao);
-              dataProx.setDate(dataProx.getDate() + 90);
-              const dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
-              const resSt = statusData(dataProxStr);
-              if (resSt) {
-                if (resSt.status === 'vencido') alertas.push(`POP: ${pop.nome.toUpperCase()} - Inspeção vencida há ${resSt.dias} dias`);
-                else if (resSt.status === 'amanha' || resSt.status === 'hoje') alertas.push(`POP: ${pop.nome.toUpperCase()} - Inspeção vence ${resSt.status === 'hoje' ? 'hoje' : 'amanhã'}`);
-              }
-            }
-          } catch (e) {}
+    if (ultimosCheckIns) {
+      ultimosCheckIns.forEach(c => {
+        const nomePop = c.popNome || c.pop || c.nomePop || c.nome_pop || c.nome;
+        const resSt = statusData(c.proximaInspecao);
+        if (nomePop && resSt && popPertenceAoUsuario(nomePop)) {
+          if (resSt.status === 'vencido') alertas.push(`POP: ${nomePop.toUpperCase()} - Inspeção expirada há ${resSt.dias} dias`);
+          else if (resSt.status === 'amanha' || resSt.status === 'hoje') alertas.push(`POP: ${nomePop.toUpperCase()} - Inspeção vence ${resSt.status === 'hoje' ? 'hoje' : 'amanhã'}`);
         }
       });
     }
@@ -692,7 +701,7 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
       cronogramaLimpezas.forEach(l => {
         const resSt = statusData(l.proximaLimpeza);
         if (l.popNome && resSt && popPertenceAoUsuario(l.popNome)) {
-          if (resSt.status === 'vencido') alertas.push(`POP: ${l.popNome.toUpperCase()} - Limpeza de ar (${l.central}) vencida há ${resSt.dias} dias`);
+          if (resSt.status === 'vencido') alertas.push(`POP: ${l.popNome.toUpperCase()} - Limpeza de ar (${l.central}) expirada há ${resSt.dias} dias`);
           else if (resSt.status === 'amanha' || resSt.status === 'hoje') alertas.push(`POP: ${l.popNome.toUpperCase()} - Limpeza de ar (${l.central}) vence ${resSt.status === 'hoje' ? 'hoje' : 'amanhã'}`);
         }
       });
@@ -702,7 +711,7 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
       cronogramaBaterias.forEach(b => {
         const resSt = statusData(b.proximaSubstituicao);
         if (b.popNome && resSt && popPertenceAoUsuario(b.popNome)) {
-          if (resSt.status === 'vencido') alertas.push(`POP: ${b.popNome.toUpperCase()} - Banco de Bateria (${b.banco}) vencido há ${resSt.dias} dias`);
+          if (resSt.status === 'vencido') alertas.push(`POP: ${b.popNome.toUpperCase()} - Banco de Bateria (${b.banco}) expirado há ${resSt.dias} dias`);
           else if (resSt.status === 'amanha' || resSt.status === 'hoje') alertas.push(`POP: ${b.popNome.toUpperCase()} - Troca do Banco (${b.banco}) vence ${resSt.status === 'hoje' ? 'hoje' : 'amanhã'}`);
         }
       });
@@ -721,18 +730,18 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
   });
 
   return (
-    <div style={{ backgroundColor: '#121212', color: '#fff', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #333', paddingBottom: '15px' }}>
+    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${theme.border}`, paddingBottom: '15px', flexWrap: 'wrap', gap: '15px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <button onClick={onOpenDrawer} style={{ background: '#333', border: '1px solid #555', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '16px' }}>☰ Menu</button>
+          <button onClick={onOpenDrawer} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '16px' }}>☰ Menu</button>
           <h1 style={{ margin: 0, fontSize: '18px' }}>Olá, {nomeFormatado}</h1>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <div style={{ position: 'relative' }}>
             <button 
               onClick={() => setShowNotificacoes(!showNotificacoes)} 
-              style={{ background: '#333', border: '1px solid #555', color: '#fff', padding: '8px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               title="Notificações"
             >
               🔔
@@ -744,18 +753,18 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
             </button>
 
             {showNotificacoes && (
-              <div style={{ position: 'absolute', top: '40px', right: 0, width: '280px', background: '#1e1e1e', border: '1px solid #444', padding: '15px', borderRadius: '8px', zIndex: 2000, boxShadow: '0 4px 15px rgba(0,0,0,0.7)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', paddingBottom: '8px', marginBottom: '10px' }}>
-                  <h4 style={{ margin: 0, color: '#fff', fontSize: '14px' }}>Notificações de Alerta</h4>
-                  <button onClick={() => setShowNotificacoes(false)} style={{ background: 'transparent', border: 'none', color: '#aaa', cursor: 'pointer', fontSize: '14px' }}>✕</button>
+              <div style={{ position: 'absolute', top: '40px', right: 0, width: '280px', background: theme.cardBg, border: `1px solid ${theme.border}`, padding: '15px', borderRadius: '8px', zIndex: 2000, boxShadow: '0 4px 15px rgba(0,0,0,0.3)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${theme.border}`, paddingBottom: '8px', marginBottom: '10px' }}>
+                  <h4 style={{ margin: 0, color: theme.textMain, fontSize: '14px' }}>Notificações de Alerta</h4>
+                  <button onClick={() => setShowNotificacoes(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '14px' }}>✕</button>
                 </div>
 
                 {notificacoes.length === 0 ? (
-                  <p style={{ color: '#777', fontSize: '12px', margin: 0 }}>Nenhuma pendência ou prazo próximo.</p>
+                  <p style={{ color: theme.textMuted, fontSize: '12px', margin: 0 }}>Nenhuma pendência ou prazo próximo.</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '250px', overflowY: 'auto' }}>
                     {notificacoes.map((notif, idx) => (
-                      <div key={idx} style={{ background: '#252525', padding: '8px', borderRadius: '4px', borderLeft: '3px solid #ff4d4d' }}>
+                      <div key={idx} style={{ background: theme.cardInner, padding: '8px', borderRadius: '4px', borderLeft: '3px solid #ff4d4d' }}>
                         <p style={{ margin: 0, fontSize: '11px', color: '#ff4d4d', lineHeight: '1.4' }}>{notif}</p>
                       </div>
                     ))}
@@ -765,18 +774,27 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
             )}
           </div>
 
-          <button onClick={() => setShowPasswordDialog(true)} style={{ background: '#333', border: '1px solid #555', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>Gerenciar POPs</button>
+          <button onClick={() => setShowPasswordDialog(true)} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>Gerenciar POPs</button>
+          
+          <button 
+            type="button"
+            onClick={setDarkMode}
+            style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
+          >
+            {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
+          </button>
+
           <button onClick={onLogout} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>Sair</button>
         </div>
       </header>
 
       {showPasswordDialog && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100 }}>
-          <div style={{ background: '#1e1e1e', padding: '25px', borderRadius: '8px', width: '300px' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px' }}>
+          <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '300px', border: `1px solid ${theme.border}` }}>
             <h3>Senha Necessária</h3>
-            <input type="password" placeholder="Senha do Sistema" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} style={{ width: '100%', padding: '8px', margin: '15px 0', background: '#2d2d2d', border: '1px solid #444', color: '#fff', boxSizing: 'border-box' }} />
+            <input type="password" placeholder="Senha do Sistema" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} style={{ width: '100%', padding: '8px', margin: '15px 0', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button onClick={() => setShowPasswordDialog(false)} style={{ background: 'transparent', border: 'none', color: '#aaa', cursor: 'pointer' }}>Cancelar</button>
+              <button onClick={() => setShowPasswordDialog(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer' }}>Cancelar</button>
               <button onClick={() => {
                 if (passwordInput === "@fibralink00") {
                   setShowPasswordDialog(false);
@@ -792,13 +810,13 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
         </div>
       )}
 
-      <input type="text" placeholder="Pesquisar POP (Nome ou Endereço)" value={busca} onChange={(e) => setBusca(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #444', background: '#1e1e1e', color: '#fff', marginBottom: '20px', boxSizing: 'border-box' }} />
+      <input type="text" placeholder="Pesquisar POP (Nome ou Endereço)" value={busca} onChange={(e) => setBusca(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.inputText, marginBottom: '20px', boxSizing: 'border-box' }} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px' }}>
         {popsFiltrados.map((pop) => (
-          <div key={pop.id} onClick={() => onPopClick(pop)} style={{ background: '#1e1e1e', padding: '15px', borderRadius: '8px', border: '1px solid #333', cursor: 'pointer' }}>
+          <div key={pop.id} onClick={() => onPopClick(pop)} style={{ background: theme.cardBg, padding: '15px', borderRadius: '8px', border: `1px solid ${theme.border}`, cursor: 'pointer', transition: 'border-color 0.2s' }}>
             <h3 style={{ margin: '0 0 8px 0', color: '#4dabf7', textTransform: 'uppercase' }}>{pop.nome}</h3>
-            <p style={{ margin: 0, color: '#aaa', fontSize: '13px' }}>{pop.endereco}</p>
+            <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{pop.endereco}</p>
           </div>
         ))}
       </div>
@@ -806,7 +824,7 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
   );
 }
 
-function TelaGerenciarPops({ listaPops, onBack }) {
+function TelaGerenciarPops({ listaPops, onBack, theme }) {
   const [showDialog, setShowDialog] = useState(false);
   const [popEdicao, setPopEdicao] = useState(null);
   const [nome, setNome] = useState('');
@@ -829,21 +847,21 @@ function TelaGerenciarPops({ listaPops, onBack }) {
   };
 
   return (
-    <div style={{ backgroundColor: '#121212', color: '#fff', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <button onClick={onBack} style={{ background: 'transparent', border: '1px solid #777', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>← Voltar</button>
-        <h2>Gerenciar POPs</h2>
+    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto', boxSizing: 'border-box' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+        <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>← Voltar</button>
+        <h2 style={{ margin: 0 }}>Gerenciar POPs</h2>
         <button onClick={() => { setPopEdicao({ id: Date.now(), nome: '', endereco: '' }); setNome(''); setEndereco(''); setShowDialog(true); }} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>+ Novo POP</button>
       </div>
 
       {showDialog && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100 }}>
-          <div style={{ background: '#1e1e1e', padding: '25px', borderRadius: '8px', width: '350px' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px' }}>
+          <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '350px', border: `1px solid ${theme.border}` }}>
             <h3>{nome ? 'Editar POP' : 'Novo POP'}</h3>
-            <input type="text" placeholder="Nome do POP" value={nome} onChange={(e) => setNome(e.target.value)} style={{ width: '100%', padding: '8px', margin: '10px 0', background: '#2d2d2d', border: '1px solid #444', color: '#fff', boxSizing: 'border-box' }} />
-            <input type="text" placeholder="Endereço" value={endereco} onChange={(e) => setEndereco(e.target.value)} style={{ width: '100%', padding: '8px', margin: '10px 0 20px', background: '#2d2d2d', border: '1px solid #444', color: '#fff', boxSizing: 'border-box' }} />
+            <input type="text" placeholder="Nome do POP" value={nome} onChange={(e) => setNome(e.target.value)} style={{ width: '100%', padding: '8px', margin: '10px 0', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+            <input type="text" placeholder="Endereço" value={endereco} onChange={(e) => setEndereco(e.target.value)} style={{ width: '100%', padding: '8px', margin: '10px 0 20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button onClick={() => setShowDialog(false)} style={{ background: 'transparent', border: 'none', color: '#aaa', cursor: 'pointer' }}>Cancelar</button>
+              <button onClick={() => setShowDialog(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer' }}>Cancelar</button>
               <button onClick={salvarPop} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>Salvar</button>
             </div>
           </div>
@@ -852,12 +870,12 @@ function TelaGerenciarPops({ listaPops, onBack }) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {listaPops.map((pop) => (
-          <div key={pop.id} style={{ background: '#1e1e1e', padding: '15px', borderRadius: '8px', border: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div key={pop.id} style={{ background: theme.cardBg, color: theme.textMain, padding: '15px', borderRadius: '8px', border: `1px solid ${theme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
             <div>
               <h4 style={{ margin: '0 0 5px 0', color: '#4dabf7', textTransform: 'uppercase' }}>[ID: {pop.id}] {pop.nome}</h4>
-              <p style={{ margin: 0, color: '#aaa', fontSize: '13px' }}>{pop.endereco}</p>
+              <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{pop.endereco}</p>
             </div>
-            <button onClick={() => { setPopEdicao(pop); setNome(pop.nome); setEndereco(pop.endereco); setShowDialog(true); }} style={{ background: '#333', border: '1px solid #555', color: '#fff', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer' }}>Editar</button>
+            <button onClick={() => { setPopEdicao(pop); setNome(pop.nome); setEndereco(pop.endereco); setShowDialog(true); }} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '6px 10px', borderRadius: '4px', cursor: 'pointer' }}>Editar</button>
           </div>
         ))}
       </div>
@@ -865,7 +883,7 @@ function TelaGerenciarPops({ listaPops, onBack }) {
   );
 }
 
-function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
+function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setDarkMode, theme }) {
   const isDuandys = tecnico.toLowerCase().includes('duandys');
   const cargoLabel = isDuandys ? "Gestor" : "Técnico";
 
@@ -983,7 +1001,12 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
     alert("Status dos ativos e observações salvos com sucesso!");
   };
 
-  const gerarEBaixarPdf = async () => {
+  const exportarPDF = (e) => {
+    e.preventDefault();
+    window.print();
+  };
+
+  const finalizarInspecao = async () => {
     let dataInspecaoFinal = '';
     let dataProxStr = '';
     let forcarCheckin = false;
@@ -1048,90 +1071,6 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
       dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
     }
 
-    const htmlConteudo = `
-      <!DOCTYPE html>
-      <html lang="pt-BR">
-      <head>
-        <meta charset="UTF-8">
-        <title>Relatório de Inspeção - ${pop.nome.toUpperCase()}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 30px; color: #333; line-height: 1.5; background: #fff; }
-          h2 { color: #0056b3; border-bottom: 2px solid #0056b3; padding-bottom: 8px; margin-bottom: 15px; }
-          h3 { margin-top: 20px; color: #333; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
-          .section { margin-bottom: 15px; }
-          .item { margin-bottom: 6px; }
-        </style>
-      </head>
-      <body>
-        <h2>RELATÓRIO DE INSPEÇÃO DE POP</h2>
-        <p><strong>POP:</strong> ${pop.nome.toUpperCase()} (ID: ${pop.id})</p>
-        <p><strong>Endereço:</strong> ${pop.endereco}</p>
-        <p><strong>${cargoLabel} Responsável:</strong> ${nomeTecnico}</p>
-        <p><strong>Check-in / Data:</strong> ${dataInspecaoFinal}</p>
-        <p><strong>Próxima Inspeção (Previsão):</strong> ${dataProxStr}</p>
-        
-        <div class="section">
-          <h3>Status dos Ativos:</h3>
-          ${Object.entries(statusAtivos).map(([ativo, st]) => {
-            const presente = ativosPresentes[ativo];
-            if (!presente) return `<div class="item">- ${ativo}: <em>Não disponível neste POP</em></div>`;
-            let txt = `<div class="item">- ${ativo}: <strong>${st}</strong></div>`;
-            if (st === 'Incidente') {
-              txt += `<div style="margin-left: 20px; color: #dc3545;">-> Detalhe: ${detalhesIncidentes[ativo] || 'Sem descrição'}</div>`;
-            }
-            return txt;
-          }).join('')}
-        </div>
-
-        <div class="section">
-          <h3>Bancos de Baterias:</h3>
-          ${Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
-            const bModel = bancosBateria[banco] || { dataFabricacao: '', voltagens: ['', '', '', ''] };
-            const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao);
-            const resSub = statusData(proxSub);
-            const vencidoSub = resSub && resSub.status === 'vencido';
-            const diasVencido = vencidoSub ? resSub.dias : 0;
-            return `
-              <div style="margin-bottom: 8px; border-left: 3px solid ${vencidoSub ? '#ff4d4d' : '#0056b3'}; padding-left: 8px;">
-                <strong>Banco ${getLetra(banco)}</strong><br/>
-                - Data de Fabricação: ${bModel.dataFabricacao || 'Não informada'}<br/>
-                - Próxima Substituição: ${proxSub || 'Not calculated'}
-                ${vencidoSub ? `<br/><span style="color: #ff4d4d; font-weight: bold;">⚠️ AVISO: BANCO DE BATERIA EXPIRADO HÁ ${diasVencido} DIAS!</span>` : ''}<br/>
-                - Voltagens: ${bModel.voltagens.map((v, vIdx) => `Bat ${vIdx + 1}: ${v || 'N/I'}V`).join(' | ')}
-              </div>
-            `;
-          }).join('')}
-        </div>
-
-        <div class="section">
-          <h3>Centrais de Ar:</h3>
-          ${Array.from({ length: qtdAr }, (_, i) => i + 1).map((idx) => {
-            const ar = centraisAr[idx] || { modelo: '', btu: '', dataInstalacao: '', dataUltimaLimpeza: '' };
-            const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
-            const resLimp = statusData(proxLimp);
-            const vencidoLimp = resLimp && resLimp.status === 'vencido';
-            const diasVencidoLimp = vencidoLimp ? resLimp.dias : 0;
-            return `
-              <div style="margin-bottom: 8px; border-left: 3px solid ${vencidoLimp ? '#ff4d4d' : '#28a745'}; padding-left: 8px;">
-                <strong>Central ${getLetra(idx)}</strong> (${ar.modelo || 'Modelo N/I'} - ${ar.btu || 'N/I'} BTUs)<br/>
-                - Instalação: ${ar.dataInstalacao || 'N/I'} | Última Limpeza: ${ar.dataUltimaLimpeza || 'N/I'}<br/>
-                - Próxima Limpeza: ${proxLimp || 'Não calculada'}
-                ${vencidoLimp ? `<br/><span style="color: #ff4d4d; font-weight: bold;">⚠️ AVISO: LIMPEZA DE AR EXPIRADA HÁ ${diasVencidoLimp} DIAS!</span>` : ''}
-              </div>
-            `;
-          }).join('')}
-        </div>
-
-        <div class="section">
-          <h3>Observações e Notas:</h3>
-          <p><strong>Situação da Limpeza:</strong> ${precisaLimpeza ? 'Limpeza Necessária' : 'Área Limpa / OK'}</p>
-          <p><strong>Incidentes Gerais:</strong> ${incidentesGerais || 'Nenhum incidente relatado'}</p>
-          <p><strong>Anotações Extras:</strong> ${anotacoes || 'Nenhuma anotação'}</p>
-        </div>
-      </body>
-      </html>
-    `;
-
     try {
       await salvarNoFirebase({
         statusAtivos,
@@ -1158,15 +1097,8 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
 
       await onCheckInRealizado(novoRegistro, forcarCheckin);
 
-      const janelaPdf = window.open('', '_blank');
-      if (janelaPdf) {
-        janelaPdf.document.write(htmlConteudo);
-        janelaPdf.document.close();
-        janelaPdf.focus();
-        setTimeout(() => janelaPdf.print(), 500);
-      } else {
-        alert("O navegador bloqueou a abertura da janela. Permita pop-ups para este site.");
-      }
+      alert("Check-in e dados de inspeção salvos com sucesso!");
+      onBack();
 
     } catch (error) {
       alert("Erro ao registrar o check-in: " + error.message);
@@ -1174,18 +1106,32 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
   };
 
   return (
-    <div style={{ backgroundColor: '#121212', color: '#fff', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif', maxWidth: '750px', margin: '0 auto', boxSizing: 'border-box' }}>
-      <button onClick={onBack} style={{ background: 'transparent', border: '1px solid #777', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', marginBottom: '20px' }}>← Voltar</button>
+    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif', maxWidth: '750px', margin: '0 auto', boxSizing: 'border-box' }}>
+      <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+        <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>← Voltar</button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button type="button" onClick={exportarPDF} style={{ background: '#17a2b8', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
+            📄 Salvar Relatório em PDF
+          </button>
+          <button 
+            type="button"
+            onClick={setDarkMode}
+            style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+          >
+            {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
+          </button>
+        </div>
+      </div>
       
-      <div style={{ background: '#1e1e1e', padding: '25px', borderRadius: '8px', border: '1px solid #333', boxSizing: 'border-box' }}>
+      <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
         <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', marginTop: 0 }}>Inspeção: {pop.nome}</h2>
-        <p style={{ color: '#aaa', fontSize: '13px', marginBottom: '20px' }}>{pop.endereco}</p>
+        <p style={{ color: theme.textMuted, fontSize: '13px', marginBottom: '20px' }}>{pop.endereco}</p>
 
-        <p style={{ color: '#ccc', fontSize: '15px', fontWeight: 'bold', marginBottom: '15px' }}>{cargoLabel}: {nomeTecnico}</p>
+        <p style={{ color: theme.textMain, fontSize: '15px', fontWeight: 'bold', marginBottom: '15px' }}>{cargoLabel}: {nomeTecnico}</p>
         
-        <div style={{ marginBottom: '20px', background: '#252525', padding: '12px', borderRadius: '6px' }}>
-          <label style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '6px' }}>Tipo de Data da Inspeção</label>
-          <div style={{ display: 'flex', gap: '15px', marginBottom: '10px' }}>
+        <div className="no-print" style={{ marginBottom: '20px', background: theme.cardInner, padding: '12px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
+          <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '6px' }}>Tipo de Data da Inspeção</label>
+          <div style={{ display: 'flex', gap: '15px', marginBottom: '10px', flexWrap: 'wrap' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '13px' }}>
               <input type="radio" name="tipoData" checked={tipoData === 'atual'} onChange={() => setTipoData('atual')} /> Data Atual + GPS
             </label>
@@ -1196,8 +1142,8 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
 
           {tipoData === 'manual' && (
             <div>
-              <label style={{ display: 'block', fontSize: '11px', color: '#aaa', marginBottom: '3px' }}>Informe a data que foi feita a inspeção</label>
-              <input type="text" value={dataManualInspecao} onChange={(e) => setDataManualInspecao(e.target.value)} placeholder="ex: 20/08/2026" style={{ width: '100%', padding: '8px', background: '#1e1e1e', border: '1px solid #444', color: '#fff', boxSizing: 'border-box' }} />
+              <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>Informe a data que foi feita a inspeção</label>
+              <input type="text" value={dataManualInspecao} onChange={(e) => setDataManualInspecao(e.target.value)} placeholder="ex: 20/08/2026" style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
             </div>
           )}
         </div>
@@ -1206,35 +1152,35 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
         {Object.keys(statusAtivos).map((ativo) => {
           const presente = ativosPresentes[ativo];
           return (
-            <div key={ativo} style={{ background: '#252525', padding: '12px', borderRadius: '6px', marginBottom: '10px', boxSizing: 'border-box' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div key={ativo} style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                   <input type="checkbox" checked={presente} onChange={(e) => setAtivosPresentes({ ...ativosPresentes, [ativo]: e.target.checked })} />
                   {ativo}
                 </label>
                 {presente && (
-                  <div style={{ display: 'flex', gap: '5px' }}>
-                    <button onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'OK' })} style={{ background: statusAtivos[ativo] === 'OK' ? '#28a745' : '#444', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}>OK</button>
-                    <button onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'Incidente' })} style={{ background: statusAtivos[ativo] === 'Incidente' ? '#dc3545' : '#444', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}>Incidente</button>
+                  <div className="no-print" style={{ display: 'flex', gap: '5px' }}>
+                    <button type="button" onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'OK' })} style={{ background: statusAtivos[ativo] === 'OK' ? '#28a745' : theme.cardBg, border: `1px solid ${theme.border}`, color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}>OK</button>
+                    <button type="button" onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'Incidente' })} style={{ background: statusAtivos[ativo] === 'Incidente' ? '#dc3545' : theme.cardBg, border: `1px solid ${theme.border}`, color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}>Incidente</button>
                   </div>
                 )}
               </div>
               {presente && statusAtivos[ativo] === 'Incidente' && (
-                <input type="text" placeholder={`Relatar incidente em ${ativo}`} value={detalhesIncidentes[ativo] || ''} onChange={(e) => setDetalhesIncidentes({ ...detalhesIncidentes, [ativo]: e.target.value })} style={{ width: '100%', marginTop: '8px', padding: '6px', background: '#1e1e1e', border: '1px solid #555', color: '#fff', boxSizing: 'border-box' }} />
+                <input type="text" placeholder={`Relatar incidente em ${ativo}`} value={detalhesIncidentes[ativo] || ''} onChange={(e) => setDetalhesIncidentes({ ...detalhesIncidentes, [ativo]: e.target.value })} style={{ width: '100%', marginTop: '8px', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
               )}
             </div>
           );
         })}
 
-        <button onClick={salvarStatusAtivosFirebase} style={{ width: '100%', padding: '10px', background: '#17a2b8', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', marginTop: '10px', marginBottom: '20px' }}>
+        <button type="button" onClick={salvarStatusAtivosFirebase} className="no-print" style={{ width: '100%', padding: '10px', background: '#17a2b8', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', marginTop: '10px', marginBottom: '20px' }}>
           Salvar Status dos Ativos
         </button>
 
         <div style={{ marginTop: '20px' }}>
           <h3>Bancos de Baterias</h3>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
+          <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
             {[1, 2, 3, 4].map((num) => (
-              <button key={num} onClick={() => { setQtdBancos(num); salvarNoFirebase({ qtdBancos: num }); }} style={{ padding: '6px 12px', background: qtdBancos === num ? '#007bff' : '#333', border: 'none', color: '#fff', borderRadius: '4px', cursor: 'pointer' }}>{num}</button>
+              <button key={num} type="button" onClick={() => { setQtdBancos(num); salvarNoFirebase({ qtdBancos: num }); }} style={{ padding: '6px 12px', background: qtdBancos === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer' }}>{num}</button>
             ))}
           </div>
           {Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
@@ -1244,10 +1190,10 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
             const vencidoSub = resSub && resSub.status === 'vencido';
 
             return (
-              <div key={banco} style={{ background: '#252525', padding: '12px', borderRadius: '6px', marginBottom: '15px', boxSizing: 'border-box' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <div key={banco} style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '15px', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '10px' }}>
                   <h4 style={{ margin: 0 }}>Banco {getLetra(banco)}</h4>
-                  <button onClick={() => {
+                  <button type="button" onClick={() => {
                     const novoSalvo = !bModel.salvo;
                     const novoEstado = { ...bancosBateria, [banco]: { ...bModel, salvo: novoSalvo } };
                     setBancosBateria(novoEstado);
@@ -1259,24 +1205,24 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
                       [`bat_${banco}_v4`]: bModel.voltagens[3],
                       [`bat_${banco}_salvo`]: novoSalvo 
                     });
-                  }} style={{ background: bModel.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
+                  }} className="no-print" style={{ background: bModel.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
                     {bModel.salvo ? 'Editar Banco' : 'Salvar Banco'}
                   </button>
                 </div>
 
                 <div style={{ marginBottom: '8px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '3px' }}>Data de Fabricação (dd/MM/aaaa)</label>
+                  <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '3px' }}>Data de Fabricação (dd/MM/aaaa)</label>
                   <input type="text" disabled={bModel.salvo} placeholder="dd/MM/aaaa" value={bModel.dataFabricacao} onChange={(e) => {
                     const novoVal = e.target.value;
                     setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, dataFabricacao: novoVal } });
-                  }} style={{ width: '100%', padding: '6px', background: '#1e1e1e', border: '1px solid #444', color: '#fff', boxSizing: 'border-box' }} />
+                  }} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
                 </div>
                 
                 <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoSub ? undefined : '#4dabf7', margin: '0 0 8px 0' }}>
                   Próxima Substituição (+2 anos): {proxSub || 'Preencha a data'} {vencidoSub && `(Exp. há ${resSub.dias}d)`}
                 </p>
 
-                <div style={{ fontSize: '12px', color: '#ccc', marginBottom: '5px' }}>Voltagem das 4 Baterias do Banco:</div>
+                <div style={{ fontSize: '12px', color: theme.textMuted, marginBottom: '5px' }}>Voltagem das 4 Baterias do Banco:</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', boxSizing: 'border-box' }}>
                   {[0, 1, 2, 3].map((vIdx) => (
                     <input 
@@ -1290,7 +1236,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
                         novasVols[vIdx] = e.target.value;
                         setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, voltagens: novasVols } });
                       }} 
-                      style={{ width: '100%', padding: '6px', background: '#1e1e1e', border: '1px solid #444', color: '#fff', boxSizing: 'border-box', textAlign: 'center' }} 
+                      style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', textAlign: 'center' }} 
                     />
                   ))}
                 </div>
@@ -1301,9 +1247,9 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
 
         <div style={{ marginTop: '20px' }}>
           <h3>Centrais de Ar</h3>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
+          <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
             {[1, 2, 3, 4].map((num) => (
-              <button key={num} onClick={() => { setQtdAr(num); salvarNoFirebase({ qtdAr: num }); }} style={{ padding: '6px 12px', background: qtdAr === num ? '#007bff' : '#333', border: 'none', color: '#fff', borderRadius: '4px', cursor: 'pointer' }}>{num}</button>
+              <button key={num} type="button" onClick={() => { setQtdAr(num); salvarNoFirebase({ qtdAr: num }); }} style={{ padding: '6px 12px', background: qtdAr === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer' }}>{num}</button>
             ))}
           </div>
           {Array.from({ length: qtdAr }, (_, i) => i + 1).map((idx) => {
@@ -1313,10 +1259,10 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
             const vencidoLimp = resLimp && resLimp.status === 'vencido';
 
             return (
-              <div key={idx} style={{ background: '#252525', padding: '12px', borderRadius: '6px', marginBottom: '10px', boxSizing: 'border-box' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div key={idx} style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <h4>Central {getLetra(idx)}</h4>
-                  <button onClick={() => {
+                  <button type="button" onClick={() => {
                     const novoSalvo = !ar.salvo;
                     setCentraisAr({ ...centraisAr, [idx]: { ...ar, salvo: novoSalvo } });
                     salvarNoFirebase({ 
@@ -1326,27 +1272,27 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
                       [`ar_${idx}_limp`]: ar.dataUltimaLimpeza, 
                       [`ar_${idx}_salvo`]: novoSalvo 
                     });
-                  }} style={{ background: ar.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
+                  }} className="no-print" style={{ background: ar.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
                     {ar.salvo ? 'Editar Central' : 'Salvar Central'}
                   </button>
                 </div>
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', marginTop: '8px', boxSizing: 'border-box' }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', fontSize: '11px', color: '#aaa', marginBottom: '2px' }}>Modelo</label>
-                    <input type="text" disabled={ar.salvo} placeholder="Modelo" value={ar.modelo} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, modelo: e.target.value } })} style={{ width: '100%', padding: '6px', background: '#1e1e1e', border: '1px solid #444', color: '#fff', boxSizing: 'border-box' }} />
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', marginTop: '8px', boxSizing: 'border-box', flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: '130px' }}>
+                    <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Modelo</label>
+                    <input type="text" disabled={ar.salvo} placeholder="Modelo" value={ar.modelo} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, modelo: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', fontSize: '11px', color: '#aaa', marginBottom: '2px' }}>BTU</label>
-                    <input type="text" disabled={ar.salvo} placeholder="BTU" value={ar.btu} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, btu: e.target.value } })} style={{ width: '100%', padding: '6px', background: '#1e1e1e', border: '1px solid #444', color: '#fff', boxSizing: 'border-box' }} />
+                  <div style={{ flex: 1, minWidth: '130px' }}>
+                    <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>BTU</label>
+                    <input type="text" disabled={ar.salvo} placeholder="BTU" value={ar.btu} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, btu: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
                   </div>
                 </div>
                 <div style={{ marginBottom: '8px' }}>
-                  <label style={{ display: 'block', fontSize: '11px', color: '#aaa', marginBottom: '2px' }}>Data de Instalação (dd/MM/aaaa)</label>
-                  <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataInstalacao} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataInstalacao: e.target.value } })} style={{ width: '100%', padding: '6px', background: '#1e1e1e', border: '1px solid #444', color: '#fff', boxSizing: 'border-box' }} />
+                  <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data de Instalação (dd/MM/aaaa)</label>
+                  <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataInstalacao} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataInstalacao: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
                 </div>
                 <div style={{ marginBottom: '4px' }}>
-                  <label style={{ display: 'block', fontSize: '11px', color: '#aaa', marginBottom: '2px' }}>Data da Última Limpeza (dd/MM/aaaa)</label>
-                  <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataUltimaLimpeza: e.target.value } })} style={{ width: '100%', padding: '6px', background: '#1e1e1e', border: '1px solid #444', color: '#fff', boxSizing: 'border-box' }} />
+                  <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data da Última Limpeza (dd/MM/aaaa)</label>
+                  <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataUltimaLimpeza: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
                 </div>
                 <p className={vencidoLimp ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoLimp ? undefined : '#4dabf7', margin: '6px 0 8px 0' }}>
                   Próxima Limpeza ({intervaloAr} meses): {proxLimp || 'Preencha a última limpeza'} {vencidoLimp && `(Exp. há ${resLimp.dias}d)`}
@@ -1357,17 +1303,17 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado }) {
         </div>
 
         <div style={{ marginTop: '20px' }}>
-          <input type="text" placeholder="Relatar Incidentes Gerais" value={incidentesGerais} onChange={(e) => setIncidentesGerais(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '15px', background: '#2d2d2d', border: '1px solid #444', color: '#fff', boxSizing: 'border-box' }} />
+          <input type="text" placeholder="Relatar Incidentes Gerais" value={incidentesGerais} onChange={(e) => setIncidentesGerais(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '15px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
             <input type="checkbox" checked={precisaLimpeza} onChange={(e) => setPrecisaLimpeza(e.target.checked)} id="limpCheck" />
             <label htmlFor="limpCheck">Limpeza Necessária</label>
           </div>
 
-          <textarea placeholder="Anotações Extras" rows="3" value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '20px', background: '#2d2d2d', border: '1px solid #444', color: '#fff', boxSizing: 'border-box' }} />
+          <textarea placeholder="Anotações Extras" rows="3" value5={anotacoes} value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
 
-          <button onClick={gerarEBaixarPdf} style={{ width: '100%', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', cursor: 'pointer' }}>
-            Gerar, Abrir e Salvar Relatório PDF
+          <button type="button" onClick={finalizarInspecao} className="no-print" style={{ width: '100%', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', cursor: 'pointer' }}>
+            Finalizar e Salvar Inspeção
           </button>
         </div>
       </div>
