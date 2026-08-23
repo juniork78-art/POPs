@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { auth, db } from './firebase';
 import { 
   signInWithEmailAndPassword, 
@@ -142,16 +142,11 @@ export default function App() {
   const [showAvisoGlobal, setShowAvisoGlobal] = useState(false);
   const [dadosCarregados, setDadosCarregados] = useState(false);
 
-  // Gerenciamento de Tema persistente
   const [darkMode, setDarkMode] = useState(() => {
     try {
       const salvo = localStorage.getItem('darkMode_pops');
-      if (salvo !== null) {
-        return JSON.parse(salvo);
-      }
-    } catch (e) {
-      console.error("Erro ao ler localStorage", e);
-    }
+      if (salvo !== null) return JSON.parse(salvo);
+    } catch (e) {}
     return true;
   });
 
@@ -160,9 +155,7 @@ export default function App() {
       const novoTema = !prev;
       try {
         localStorage.setItem('darkMode_pops', JSON.stringify(novoTema));
-      } catch (e) {
-        console.error("Erro ao salvar localStorage", e);
-      }
+      } catch (e) {}
       return novoTema;
     });
   };
@@ -182,60 +175,43 @@ export default function App() {
     if (!usuarioLogado) return true;
     const isPedro = usuarioLogado.toLowerCase().includes('pedro');
     if (!isPedro) return true;
-
     const popObj = listaPops.find(p => p.nome.toLowerCase() === nomePop.toLowerCase());
-    if (popObj) {
-      return popObj.endereco.toLowerCase().endsWith('- pbs');
-    }
+    if (popObj) return popObj.endereco.toLowerCase().endsWith('- pbs');
     return false;
   };
 
   const verificarAlertasGlobaisDetalhados = () => {
     let vencidos = [];
     let amanha = [];
-
     const processarItem = (nomePop, baseMsg, dataStr) => {
       const res = statusData(dataStr);
       if (nomePop && res && popPertenceAoUsuario(nomePop)) {
         if (res.status === 'vencido') {
-          const diasTxt = res.dias === 1 ? '1 dia' : `${res.dias} dias`;
-          vencidos.push(`${baseMsg} (Expirado há ${diasTxt})`);
+          vencidos.push(`${baseMsg} (Expirado há ${res.dias} dias)`);
         } else if (res.status === 'amanha' || res.status === 'hoje') {
-          const tempoTxt = res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã';
-          amanha.push(`${baseMsg} (${tempoTxt})`);
+          amanha.push(`${baseMsg} (${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})`);
         }
       }
     };
-
     if (ultimosCheckIns) {
       ultimosCheckIns.forEach(c => {
         const nomePop = c.popNome || c.pop || c.nomePop || c.nome_pop || c.nome;
-        if (nomePop) {
-          processarItem(nomePop, `POP: ${nomePop.toUpperCase()} - Data de inspeção expirada`, c.proximaInspecao);
-        }
+        if (nomePop) processarItem(nomePop, `POP: ${nomePop.toUpperCase()} - Data de inspeção expirada`, c.proximaInspecao);
       });
     }
-
     if (cronogramaLimpezas) {
-      cronogramaLimpezas.forEach(l => {
-        processarItem(l.popNome, `POP: ${l.popNome.toUpperCase()} - Limpeza de ar (${l.central}) expirada`, l.proximaLimpeza);
-      });
+      cronogramaLimpezas.forEach(l => processarItem(l.popNome, `POP: ${l.popNome.toUpperCase()} - Limpeza de ar (${l.central}) expirada`, l.proximaLimpeza));
     }
-
     if (cronogramaBaterias) {
-      cronogramaBaterias.forEach(b => {
-        processarItem(b.popNome, `POP: ${b.popNome.toUpperCase()} - Banco de Bateria (${b.banco}) expirado`, b.proximaSubstituicao);
-      });
+      cronogramaBaterias.forEach(b => processarItem(b.popNome, `POP: ${b.popNome.toUpperCase()} - Banco de Bateria (${b.banco}) expirado`, b.proximaSubstituicao));
     }
-
     return { vencidos, amanha };
   };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUsuarioLogado(user.email);
-      } else {
+      if (user) setUsuarioLogado(user.email);
+      else {
         setUsuarioLogado(null);
         setDadosCarregados(false);
         setShowAvisoGlobal(false);
@@ -258,77 +234,50 @@ export default function App() {
 
   useEffect(() => {
     const handlePopState = () => {
-      if (popSelecionado) {
-        setPopSelecionado(null);
-      } else if (telaGerenciarPopsAberta) {
-        setTelaGerenciarPopsAberta(false);
-      }
+      if (popSelecionado) setPopSelecionado(null);
+      else if (telaGerenciarPopsAberta) setTelaGerenciarPopsAberta(false);
     };
-
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [popSelecionado, telaGerenciarPopsAberta]);
 
   useEffect(() => {
-    if (popSelecionado || telaGerenciarPopsAberta) {
-      window.history.pushState(null, '', window.location.pathname);
-    }
+    if (popSelecionado || telaGerenciarPopsAberta) window.history.pushState(null, '', window.location.pathname);
   }, [popSelecionado, telaGerenciarPopsAberta]);
 
   useEffect(() => {
     if (usuarioLogado) {
       const unsubPops = onSnapshot(doc(db, "config", "lista_pops"), (snap) => {
-        if (snap.exists() && snap.data().pops) {
-          setListaPops(snap.data().pops);
-        } else {
-          setDoc(doc(db, "config", "lista_pops"), { pops: popsIniciaisPadrao });
-        }
+        if (snap.exists() && snap.data().pops) setListaPops(snap.data().pops);
+        else setDoc(doc(db, "config", "lista_pops"), { pops: popsIniciaisPadrao });
       });
 
       const unsubCheckins = onSnapshot(doc(db, "historico_global", "checkins"), (snap) => {
-        if (snap.exists() && snap.data().lista) {
-          setUltimosCheckIns(snap.data().lista);
-        }
+        if (snap.exists() && snap.data().lista) setUltimosCheckIns(snap.data().lista);
       });
 
       const unsubPopsDados = onSnapshot(collection(db, "pops_dados"), (snapshot) => {
         const listaLimpezasTemp = [];
         const listaBateriasTemp = [];
-
         snapshot.forEach((d) => {
           const popNome = d.id;
           const data = d.data();
-          
           const qtdAr = data.qtdAr || 0;
           const intervaloAr = (popNome.toLowerCase() === 'helius' || popNome.toLowerCase() === 'limos') ? 5 : 8;
           for (let i = 1; i <= qtdAr; i++) {
             const ultimaLimp = data[`ar_${i}_limp`] || '';
             if (ultimaLimp) {
-              const proximaLimp = calcularProximaLimpezaAr(ultimaLimp, intervaloAr);
-              listaLimpezasTemp.push({
-                popNome,
-                central: `Central ${getLetra(i)}`,
-                ultimaLimpeza: ultimaLimp,
-                proximaLimpeza: proximaLimp
-              });
+              listaLimpezasTemp.push({ popNome, central: `Central ${getLetra(i)}`, ultimaLimpeza: ultimaLimp, proximaLimpeza: calcularProximaLimpezaAr(ultimaLimp, intervaloAr) });
             }
           }
-
           const qtdBancos = data.qtdBancos || 1;
           for (let i = 1; i <= qtdBancos; i++) {
             const fab = data[`bat_${i}_fab`] || '';
             if (fab) {
-              const proxSub = calcularProximaSubstituicaoBateria(fab);
-              listaBateriasTemp.push({
-                popNome,
-                banco: `Banco ${getLetra(i)}`,
-                fabricacao: fab,
-                proximaSubstituicao: proxSub
-              });
+              listaBateriasTemp.push({ popNome, banco: `Banco ${getLetra(i)}`, fabricacao: fab, proximaSubstituicao: calcularProximaSubstituicaoBateria(fab) });
             }
           }
         });
-
         setCronogramaLimpezas(listaLimpezasTemp);
         setCronogramaBaterias(listaBateriasTemp);
         setDadosCarregados(true);
@@ -345,10 +294,8 @@ export default function App() {
   const apagarCheckinsAntigos = async () => {
     const confirmacao = window.confirm('Deseja apagar os check-ins mais antigos, mantendo apenas o mais recente de cada POP?');
     if (!confirmacao) return;
-
     const vistos = new Set();
     const novaLista = [];
-
     for (const item of ultimosCheckIns) {
       const nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '').toLowerCase().trim();
       if (nomeDoPop && !vistos.has(nomeDoPop)) {
@@ -356,7 +303,6 @@ export default function App() {
         novaLista.push(item);
       }
     }
-
     setUltimosCheckIns(novaLista);
     await setDoc(doc(db, "historico_global", "checkins"), { lista: novaLista });
   };
@@ -367,10 +313,8 @@ export default function App() {
       if (senhaDigitada !== null) alert('Senha incorreta! Ação cancelada.');
       return;
     }
-
     const confirmacao = window.confirm('TEM CERTEZA? Isso apagará TODOS os registros de check-in do sistema permanentemente.');
     if (!confirmacao) return;
-
     try {
       await setDoc(doc(db, "historico_global", "checkins"), { lista: [] });
       setUltimosCheckIns([]);
@@ -380,51 +324,22 @@ export default function App() {
     }
   };
 
-  if (loadingAuth) {
-    return <div style={{ color: theme.textMain, backgroundColor: theme.bg, textAlign: 'center', marginTop: '20vh', fontFamily: 'sans-serif', minHeight: '100vh' }}>Carregando InfraManager...</div>;
-  }
-
-  if (!usuarioLogado) {
-    return <TelaLogin onLoginSucesso={(email) => setUsuarioLogado(email)} darkMode={darkMode} setDarkMode={alternarTema} theme={theme} />;
-  }
-
-  if (telaGerenciarPopsAberta) {
-    return (
-      <TelaGerenciarPops 
-        listaPops={listaPops} 
-        onBack={() => {
-          setTelaGerenciarPopsAberta(false);
-          window.history.back();
-        }} 
-        theme={theme}
-      />
-    );
-  }
-
+  if (loadingAuth) return <div style={{ color: theme.textMain, backgroundColor: theme.bg, textAlign: 'center', marginTop: '20vh', fontFamily: 'sans-serif', minHeight: '100vh' }}>Carregando InfraManager...</div>;
+  if (!usuarioLogado) return <TelaLogin onLoginSucesso={(email) => setUsuarioLogado(email)} darkMode={darkMode} setDarkMode={alternarTema} theme={theme} />;
+  if (telaGerenciarPopsAberta) return <TelaGerenciarPops listaPops={listaPops} onBack={() => { setTelaGerenciarPopsAberta(false); window.history.back(); }} theme={theme} />;
   if (popSelecionado) {
     return (
       <TelaInspecao 
         pop={popSelecionado} 
         tecnico={usuarioLogado} 
-        onBack={() => {
-          setPopSelecionado(null);
-          window.history.back();
-        }} 
+        onBack={() => { setPopSelecionado(null); window.history.back(); }} 
         onCheckInRealizado={async (novoRegistro, forcarCheckin) => {
           let novaLista = [...ultimosCheckIns];
-          
-          if (forcarCheckin) {
-            novaLista = [novoRegistro, ...ultimosCheckIns];
-          } else {
-            const indexExistente = novaLista.findIndex(item => 
-              (item.popNome || item.pop || '').toLowerCase() === novoRegistro.popName?.toLowerCase() &&
-              item.dataHora === novoRegistro.dataHora
-            );
-            if (indexExistente === -1) {
-              novaLista = [novoRegistro, ...ultimosCheckIns];
-            }
+          if (forcarCheckin) novaLista = [novoRegistro, ...ultimosCheckIns];
+          else {
+            const idx = novaLista.findIndex(item => (item.popNome || item.pop || '').toLowerCase() === novoRegistro.popName?.toLowerCase() && item.dataHora === novoRegistro.dataHora);
+            if (idx === -1) novaLista = [novoRegistro, ...ultimosCheckIns];
           }
-
           setUltimosCheckIns(novaLista);
           await setDoc(doc(db, "historico_global", "checkins"), { lista: novaLista });
         }}
@@ -438,7 +353,7 @@ export default function App() {
   const { vencidos, amanha } = verificarAlertasGlobaisDetalhados();
 
   return (
-    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', transition: 'background-color 0.2s, color 0.2s' }}>
+    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh' }}>
       <TelaListaPops 
         tecnico={usuarioLogado} 
         listaPops={listaPops} 
@@ -448,11 +363,7 @@ export default function App() {
         onPopClick={(pop) => setPopSelecionado(pop)} 
         onOpenDrawer={() => setDrawerAberto(true)}
         onOpenGerenciarPops={() => setTelaGerenciarPopsAberta(true)}
-        onLogout={() => { 
-          sessionStorage.removeItem('avisoMostrado');
-          signOut(auth); 
-          setUsuarioLogado(null); 
-        }} 
+        onLogout={() => { sessionStorage.removeItem('avisoMostrado'); signOut(auth); setUsuarioLogado(null); }} 
         darkMode={darkMode}
         setDarkMode={alternarTema}
         theme={theme}
@@ -460,57 +371,21 @@ export default function App() {
 
       {showAvisoGlobal && (vencidos.length > 0 || amanha.length > 0) && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px', boxSizing: 'border-box' }}>
-<<<<<<< HEAD
-          <div style={{ background: '#1e1e1e', padding: '20px', borderRadius: '12px', border: '2px solid #ff4d4d', width: '100%', maxWidth: '450px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+          <div style={{ background: theme.cardBg, color: theme.textMain, padding: '20px', borderRadius: '12px', border: '2px solid #ff4d4d', width: '100%', maxWidth: '450px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
             <h2 style={{ color: '#ff4d4d', marginTop: 0, fontSize: '16px', textAlign: 'center' }}>⚠️ Atenção: Prazos e Vencimentos</h2>
-            <p style={{ color: '#ccc', fontSize: '12px', marginBottom: '10px', textAlign: 'center' }}>Acompanhe os itens que exigem atenção:</p>
-=======
-          <div style={{ background: theme.cardBg, color: theme.textMain, padding: '20px', borderRadius: '12px', border: '2px solid #ff4d4d', width: '100%', maxWidth: '450px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
-            <h2 style={{ color: '#ff4d4d', marginTop: 0, fontSize: '16px', textAlign: 'center' }}>⚠️ Atenção: Prazos e Vencimentos</h2>
-            <p style={{ color: theme.textMuted, fontSize: '12px', marginBottom: '10px', textAlign: 'center' }}>Acompanhe os itens que exigem atenção:</p>
->>>>>>> cc1c045c73f545e61f2f284bc482f68e15ed055f
-            
-            <div style={{ margin: '10px 0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, paddingRight: '4px' }}>
-              {vencidos.length > 0 && (
-                <div>
-                  <h4 style={{ color: '#ff4d4d', fontSize: '11px', margin: '0 0 4px 0', textTransform: 'uppercase', borderBottom: '1px solid #ff4d4d', paddingBottom: '2px' }}>🔴 Itens Vencidos</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    {vencidos.map((msg, i) => (
-<<<<<<< HEAD
-                      <div key={i} style={{ background: '#252525', padding: '8px', borderRadius: '6px', borderLeft: '3px solid #ff4d4d' }}>
-=======
-                      <div key={i} style={{ background: theme.cardInner, padding: '8px', borderRadius: '6px', borderLeft: '3px solid #ff4d4d' }}>
->>>>>>> cc1c045c73f545e61f2f284bc482f68e15ed055f
-                        <p className="alerta-vencido" style={{ margin: 0, fontSize: '11px', lineHeight: '1.4' }}>{msg}</p>
-                      </div>
-                    ))}
-                  </div>
+            <div style={{ margin: '10px 0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
+              {vencidos.length > 0 && vencidos.map((msg, i) => (
+                <div key={i} style={{ background: theme.cardInner, padding: '8px', borderRadius: '6px', borderLeft: '3px solid #ff4d4d' }}>
+                  <p className="alerta-vencido" style={{ margin: 0, fontSize: '11px' }}>{msg}</p>
                 </div>
-              )}
-
-              {amanha.length > 0 && (
-                <div>
-                  <h4 style={{ color: '#ff9800', fontSize: '11px', margin: '8px 0 4px 0', textTransform: 'uppercase', borderBottom: '1px solid #ff9800', paddingBottom: '2px' }}>🟠 Vencem Hoje / Amanhã</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    {amanha.map((msg, i) => (
-<<<<<<< HEAD
-                      <div key={i} style={{ background: '#252525', padding: '8px', borderRadius: '6px', borderLeft: '3px solid #ff9800' }}>
-=======
-                      <div key={i} style={{ background: theme.cardInner, padding: '8px', borderRadius: '6px', borderLeft: '3px solid #ff9800' }}>
->>>>>>> cc1c045c73f545e61f2f284bc482f68e15ed055f
-                        <p className="alerta-amanha" style={{ margin: 0, fontSize: '11px', lineHeight: '1.4' }}>{msg}</p>
-                      </div>
-                    ))}
-                  </div>
+              ))}
+              {amanha.length > 0 && amanha.map((msg, i) => (
+                <div key={i} style={{ background: theme.cardInner, padding: '8px', borderRadius: '6px', borderLeft: '3px solid #ff9800' }}>
+                  <p className="alerta-amanha" style={{ margin: 0, fontSize: '11px' }}>{msg}</p>
                 </div>
-              )}
+              ))}
             </div>
-
-            <button 
-              onClick={() => setShowAvisoGlobal(false)} 
-              style={{ width: '100%', padding: '10px', background: '#ff4d4d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', marginTop: '10px', flexShrink: 0 }}>
-              Entendido
-            </button>
+            <button onClick={() => setShowAvisoGlobal(false)} style={{ width: '100%', padding: '10px', background: '#ff4d4d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer', marginTop: '10px' }}>Entendido</button>
           </div>
         </div>
       )}
@@ -519,10 +394,9 @@ export default function App() {
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex' }}>
           <div style={{ width: '320px', background: theme.cardBg, color: theme.textMain, height: '100%', padding: '20px', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column', borderRight: `1px solid ${theme.border}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-              <h3 style={{ margin: 0, color: theme.textMain }}>Menu do Sistema</h3>
+              <h3 style={{ margin: 0 }}>Menu do Sistema</h3>
               <button onClick={() => setDrawerAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, fontSize: '18px', cursor: 'pointer' }}>✕</button>
             </div>
-
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
               <button onClick={() => setAbaDrawer('checkins')} style={{ flex: 1, padding: '8px 4px', background: abaDrawer === 'checkins' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}>Check-ins</button>
               <button onClick={() => setAbaDrawer('limpezas')} style={{ flex: 1, padding: '8px 4px', background: abaDrawer === 'limpezas' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}>Limpezas Ar</button>
@@ -535,51 +409,23 @@ export default function App() {
                   <h4 style={{ color: theme.textMuted, fontSize: '14px', margin: 0 }}>Últimos Check-ins</h4>
                   {ultimosCheckIns.length > 0 && (
                     <div style={{ display: 'flex', gap: '5px' }}>
-                      <button 
-                        onClick={apagarCheckinsAntigos}
-                        style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '4px 6px', borderRadius: '4px', cursor: 'pointer', fontSize: '9px', fontWeight: 'bold' }}>
-                        Apagar Antigos
-                      </button>
-                      <button 
-                        onClick={limparTodosOsCheckIns}
-                        style={{ background: '#b02a37', border: 'none', color: '#fff', padding: '4px 6px', borderRadius: '4px', cursor: 'pointer', fontSize: '9px', fontWeight: 'bold' }}>
-                        Limpar Tudo
-                      </button>
+                      <button onClick={apagarCheckinsAntigos} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '4px 6px', borderRadius: '4px', cursor: 'pointer', fontSize: '9px', fontWeight: 'bold' }}>Apagar Antigos</button>
+                      <button onClick={limparTodosOsCheckIns} style={{ background: '#b02a37', border: 'none', color: '#fff', padding: '4px 6px', borderRadius: '4px', cursor: 'pointer', fontSize: '9px', fontWeight: 'bold' }}>Limpar Tudo</button>
                     </div>
                   )}
                 </div>
-
                 {ultimosCheckIns.length === 0 ? (
                   <p style={{ color: theme.textMuted, fontSize: '13px' }}>Nenhum check-in registrado.</p>
                 ) : (
                   ultimosCheckIns.map((item, idx) => {
-                    const nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || 'Não Informado');
+                    const nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '');
                     if (!popPertenceAoUsuario(nomeDoPop)) return null;
-                    
-                    const resSt = statusData(item.proximaInspecao);
-                    const estaVencido = resSt && resSt.status === 'vencido';
-                    const estaQuaseVencendo = resSt && (resSt.status === 'amanha' || resSt.status === 'hoje');
-                    
-                    const nomeTecnicoStr = item.tecnico || '';
-                    const isDuandysRegistro = nomeTecnicoStr.toLowerCase().includes('duandys');
-                    const labelCargoRegistro = isDuandysRegistro ? 'Gestor' : 'Técnico';
-                    
                     return (
                       <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
-                        <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                          POP: {nomeDoPop}
-                        </p>
-                        <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>{labelCargoRegistro}: {nomeTecnicoStr || 'N/I'}</p>
-                        <p style={{ margin: '0 0 3px 0', color: theme.textMuted }}>Data: {item.dataHora || 'N/I'}</p>
-                        
-                        <p className={estaVencido || estaQuaseVencendo ? 'alerta-vencido' : ''} style={{ margin: '0 0 6px 0', color: (estaVencido || estaQuaseVencendo) ? undefined : '#28a745' }}>
-                          Próx. Insp: {item.proximaInspecao || 'Não informada'} 
-                          {estaVencido && ` (Exp. há ${resSt.dias}d)`}
-                          {resSt && resSt.status === 'hoje' && ` (Vence HOJE)`}
-                          {resSt && resSt.status === 'amanha' && ` (Vence amanhã)`}
-                        </p>
-
-                        <span style={{ color: '#28a745', fontSize: '11px', display: 'block' }}>✔ Check-in registrado com sucesso</span>
+                        <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>POP: {nomeDoPop}</p>
+                        <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Técnico: {item.tecnico}</p>
+                        <p style={{ margin: '0 0 3px 0', color: theme.textMuted }}>Data: {item.dataHora}</p>
+                        <p style={{ margin: 0, color: '#28a745' }}>Próx. Insp: {item.proximaInspecao}</p>
                       </div>
                     );
                   })
@@ -588,46 +434,30 @@ export default function App() {
             ) : abaDrawer === 'limpezas' ? (
               <div>
                 <h4 style={{ color: theme.textMuted, fontSize: '14px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px' }}>Cronograma Limpezas de Ar</h4>
-                {cronogramaLimpezas.length === 0 ? (
-                  <p style={{ color: theme.textMuted, fontSize: '13px' }}>Nenhuma limpeza registrada.</p>
-                ) : (
-                  cronogramaLimpezas.map((item, idx) => {
-                    if (!popPertenceAoUsuario(item.popNome)) return null;
-                    const resSt = statusData(item.proximaLimpeza);
-                    const vencido = resSt && resSt.status === 'vencido';
-                    return (
-                      <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
-                        <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>{item.popNome} ({item.central})</p>
-                        <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Última: {item.ultimaLimpeza}</p>
-                        <p className={vencido ? 'alerta-vencido' : ''} style={{ margin: 0, color: vencido ? undefined : '#28a745' }}>
-                          Próxima: {item.proximaLimpeza} {vencido && `(Exp. há ${resSt.dias}d)`}
-                        </p>
-                      </div>
-                    );
-                  })
-                )}
+                {cronogramaLimpezas.map((item, idx) => {
+                  if (!popPertenceAoUsuario(item.popNome)) return null;
+                  return (
+                    <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
+                      <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>{item.popNome} ({item.central})</p>
+                      <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Última: {item.ultimaLimpeza}</p>
+                      <p style={{ margin: 0, color: '#28a745' }}>Próxima: {item.proximaLimpeza}</p>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div>
                 <h4 style={{ color: theme.textMuted, fontSize: '14px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px' }}>Cronograma de Baterias</h4>
-                {cronogramaBaterias.length === 0 ? (
-                  <p style={{ color: theme.textMuted, fontSize: '13px' }}>Nenhuma bateria registrada.</p>
-                ) : (
-                  cronogramaBaterias.map((item, idx) => {
-                    if (!popPertenceAoUsuario(item.popNome)) return null;
-                    const resSt = statusData(item.proximaSubstituicao);
-                    const vencido = resSt && resSt.status === 'vencido';
-                    return (
-                      <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
-                        <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>{item.popNome} ({item.banco})</p>
-                        <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Fabricação: {item.fabricacao}</p>
-                        <p className={vencido ? 'alerta-vencido' : ''} style={{ margin: 0, color: vencido ? undefined : '#28a745' }}>
-                          Troca: {item.proximaSubstituicao} {vencido && `(Exp. há ${resSt.dias}d)`}
-                        </p>
-                      </div>
-                    );
-                  })
-                )}
+                {cronogramaBaterias.map((item, idx) => {
+                  if (!popPertenceAoUsuario(item.popNome)) return null;
+                  return (
+                    <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
+                      <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>{item.popNome} ({item.banco})</p>
+                      <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Fabricação: {item.fabricacao}</p>
+                      <p style={{ margin: 0, color: '#28a745' }}>Troca: {item.proximaSubstituicao}</p>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -642,170 +472,49 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
-
   const handleLogin = async (e) => {
     e.preventDefault();
     setErro('');
     try {
-      const result = await signInWithEmailAndPassword(auth, email, senha);
-      onLoginSucesso(result.user.email);
-    } catch (e) {
-      setErro(`Erro: ${e.message}`);
-    }
+      const res = await signInWithEmailAndPassword(auth, email, senha);
+      onLoginSucesso(res.user.email);
+    } catch (e) { setErro(`Erro: ${e.message}`); }
   };
-
   return (
-    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: 'sans-serif', padding: '15px', position: 'relative', boxSizing: 'border-box' }}>
-      <button 
-        type="button"
-        onClick={setDarkMode}
-        style={{ position: 'absolute', top: '15px', right: '15px', background: theme.cardBg, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
-      >
+    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px', position: 'relative' }}>
+      <button type="button" onClick={setDarkMode} style={{ position: 'absolute', top: '15px', right: '15px', background: theme.cardBg, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
         {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
       </button>
-
-      <form onSubmit={handleLogin} style={{ background: theme.cardBg, color: theme.textMain, padding: '30px', borderRadius: '8px', width: '340px', boxShadow: '0 4px 10px rgba(0,0,0,0.3)', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '20px', color: theme.textMain }}>InfraManager POP</h2>
-        {erro && <p style={{ color: '#ff6b6b', fontSize: '14px', marginBottom: '15px' }}>{erro}</p>}
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', fontSize: '12px', marginBottom: '5px', color: theme.textMuted }}>E-mail</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.inputText, boxSizing: 'border-box' }} />
-        </div>
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', fontSize: '12px', marginBottom: '5px', color: theme.textMuted }}>Senha</label>
-          <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.inputText, boxSizing: 'border-box' }} />
-        </div>
+      <form onSubmit={handleLogin} style={{ background: theme.cardBg, color: theme.textMain, padding: '30px', borderRadius: '8px', width: '340px', border: `1px solid ${theme.border}` }}>
+        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>InfraManager POP</h2>
+        {erro && <p style={{ color: '#ff6b6b', fontSize: '14px' }}>{erro}</p>}
+        <input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', padding: '10px', marginBottom: '15px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+        <input type="password" placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} required style={{ width: '100%', padding: '10px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
         <button type="submit" style={{ width: '100%', padding: '12px', background: '#007bff', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}>Entrar</button>
       </form>
     </div>
   );
 }
 
-<<<<<<< HEAD
-function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias, onPopClick, onOpenDrawer, onOpenGerenciarPops, onLogout }) {
-=======
 function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias, onPopClick, onOpenDrawer, onOpenGerenciarPops, onLogout, darkMode, setDarkMode, theme }) {
->>>>>>> cc1c045c73f545e61f2f284bc482f68e15ed055f
   const [busca, setBusca] = useState('');
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
-  const [showNotificacoes, setShowNotificacoes] = useState(false);
-
-  const popPertenceAoUsuario = (nomePop) => {
-    const isPedro = tecnico.toLowerCase().includes('pedro');
-    if (!isPedro) return true;
-
-    const popObj = listaPops.find(p => p.nome.toLowerCase() === nomePop.toLowerCase());
-    if (popObj) {
-      return popObj.endereco.toLowerCase().endsWith('- pbs');
-    }
-    return false;
-  };
-
-  const getNotificacoes = () => {
-    let alertas = [];
-    if (ultimosCheckIns) {
-      ultimosCheckIns.forEach(c => {
-        const nomePop = c.popNome || c.pop || c.nomePop || c.nome_pop || c.nome;
-        const resSt = statusData(c.proximaInspecao);
-        if (nomePop && resSt && popPertenceAoUsuario(nomePop)) {
-          if (resSt.status === 'vencido') alertas.push(`POP: ${nomePop.toUpperCase()} - Inspeção expirada há ${resSt.dias} dias`);
-          else if (resSt.status === 'amanha' || resSt.status === 'hoje') alertas.push(`POP: ${nomePop.toUpperCase()} - Inspeção vence ${resSt.status === 'hoje' ? 'hoje' : 'amanhã'}`);
-        }
-      });
-    }
-
-    if (cronogramaLimpezas) {
-      cronogramaLimpezas.forEach(l => {
-        const resSt = statusData(l.proximaLimpeza);
-        if (l.popNome && resSt && popPertenceAoUsuario(l.popNome)) {
-          if (resSt.status === 'vencido') alertas.push(`POP: ${l.popNome.toUpperCase()} - Limpeza de ar (${l.central}) expirada há ${resSt.dias} dias`);
-          else if (resSt.status === 'amanha' || resSt.status === 'hoje') alertas.push(`POP: ${l.popNome.toUpperCase()} - Limpeza de ar (${l.central}) vence ${resSt.status === 'hoje' ? 'hoje' : 'amanhã'}`);
-        }
-      });
-    }
-
-    if (cronogramaBaterias) {
-      cronogramaBaterias.forEach(b => {
-        const resSt = statusData(b.proximaSubstituicao);
-        if (b.popNome && resSt && popPertenceAoUsuario(b.popNome)) {
-          if (resSt.status === 'vencido') alertas.push(`POP: ${b.popNome.toUpperCase()} - Banco de Bateria (${b.banco}) expirado há ${resSt.dias} dias`);
-          else if (resSt.status === 'amanha' || resSt.status === 'hoje') alertas.push(`POP: ${b.popNome.toUpperCase()} - Troca do Banco (${b.banco}) vence ${resSt.status === 'hoje' ? 'hoje' : 'amanhã'}`);
-        }
-      });
-    }
-    return alertas;
-  };
-
-  const notificacoes = getNotificacoes();
-  const nomeFormatado = tecnico.split('@')[0].replace('.', ' ').toUpperCase();
   const isPedro = tecnico.toLowerCase().includes('pedro');
-
-  const popsFiltrados = listaPops.filter((pop) => {
-    const atendeFiltroPedro = isPedro ? pop.endereco.toLowerCase().endsWith('- pbs') : true;
-    const atendeBusca = pop.nome.toLowerCase().includes(busca.toLowerCase()) || pop.endereco.toLowerCase().includes(busca.toLowerCase());
-    return atendeFiltroPedro && atendeBusca;
-  });
-
+  const popsFiltrados = listaPops.filter(p => (isPedro ? p.endereco.toLowerCase().endsWith('- pbs') : true) && (p.nome.toLowerCase().includes(busca.toLowerCase()) || p.endereco.toLowerCase().includes(busca.toLowerCase())));
   return (
-    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
+    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', padding: '20px' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${theme.border}`, paddingBottom: '15px', flexWrap: 'wrap', gap: '15px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <button onClick={onOpenDrawer} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '16px' }}>☰ Menu</button>
-          <h1 style={{ margin: 0, fontSize: '18px' }}>Olá, {nomeFormatado}</h1>
+          <button onClick={onOpenDrawer} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>☰ Menu</button>
+          <h1 style={{ margin: 0, fontSize: '18px' }}>Olá, {tecnico.split('@')[0].toUpperCase()}</h1>
         </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative' }}>
-            <button 
-              onClick={() => setShowNotificacoes(!showNotificacoes)} 
-              style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              title="Notificações"
-            >
-              🔔
-              {notificacoes.length > 0 && (
-                <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#dc3545', color: '#fff', fontSize: '10px', fontWeight: 'bold', padding: '2px 5px', borderRadius: '50%' }}>
-                  {notificacoes.length}
-                </span>
-              )}
-            </button>
-
-            {showNotificacoes && (
-              <div style={{ position: 'absolute', top: '40px', right: 0, width: '280px', background: theme.cardBg, border: `1px solid ${theme.border}`, padding: '15px', borderRadius: '8px', zIndex: 2000, boxShadow: '0 4px 15px rgba(0,0,0,0.3)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${theme.border}`, paddingBottom: '8px', marginBottom: '10px' }}>
-                  <h4 style={{ margin: 0, color: theme.textMain, fontSize: '14px' }}>Notificações de Alerta</h4>
-                  <button onClick={() => setShowNotificacoes(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '14px' }}>✕</button>
-                </div>
-
-                {notificacoes.length === 0 ? (
-                  <p style={{ color: theme.textMuted, fontSize: '12px', margin: 0 }}>Nenhuma pendência ou prazo próximo.</p>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '250px', overflowY: 'auto' }}>
-                    {notificacoes.map((notif, idx) => (
-                      <div key={idx} style={{ background: theme.cardInner, padding: '8px', borderRadius: '4px', borderLeft: '3px solid #ff4d4d' }}>
-                        <p style={{ margin: 0, fontSize: '11px', color: '#ff4d4d', lineHeight: '1.4' }}>{notif}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button onClick={() => setShowPasswordDialog(true)} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>Gerenciar POPs</button>
-          
-          <button 
-            type="button"
-            onClick={setDarkMode}
-            style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
-          >
-            {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
-          </button>
-
+          <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>{darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}</button>
           <button onClick={onLogout} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>Sair</button>
         </div>
       </header>
-
       {showPasswordDialog && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '300px', border: `1px solid ${theme.border}` }}>
@@ -814,25 +523,17 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               <button onClick={() => setShowPasswordDialog(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer' }}>Cancelar</button>
               <button onClick={() => {
-                if (passwordInput === "@fibralink00") {
-                  setShowPasswordDialog(false);
-                  setPasswordInput('');
-                  onOpenGerenciarPops();
-                } else {
-                  alert('Senha incorreta!');
-                  setPasswordInput('');
-                }
+                if (passwordInput === "@fibralink00") { setShowPasswordDialog(false); setPasswordInput(''); onOpenGerenciarPops(); }
+                else { alert('Senha incorreta!'); setPasswordInput(''); }
               }} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>Confirmar</button>
             </div>
           </div>
         </div>
       )}
-
-      <input type="text" placeholder="Pesquisar POP (Nome ou Endereço)" value={busca} onChange={(e) => setBusca(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.inputText, marginBottom: '20px', boxSizing: 'border-box' }} />
-
+      <input type="text" placeholder="Pesquisar POP" value={busca} onChange={(e) => setBusca(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.inputText, marginBottom: '20px', boxSizing: 'border-box' }} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px' }}>
         {popsFiltrados.map((pop) => (
-          <div key={pop.id} onClick={() => onPopClick(pop)} style={{ background: theme.cardBg, padding: '15px', borderRadius: '8px', border: `1px solid ${theme.border}`, cursor: 'pointer', transition: 'border-color 0.2s' }}>
+          <div key={pop.id} onClick={() => onPopClick(pop)} style={{ background: theme.cardBg, padding: '15px', borderRadius: '8px', border: `1px solid ${theme.border}`, cursor: 'pointer' }}>
             <h3 style={{ margin: '0 0 8px 0', color: '#4dabf7', textTransform: 'uppercase' }}>{pop.nome}</h3>
             <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{pop.endereco}</p>
           </div>
@@ -847,36 +548,27 @@ function TelaGerenciarPops({ listaPops, onBack, theme }) {
   const [popEdicao, setPopEdicao] = useState(null);
   const [nome, setNome] = useState('');
   const [endereco, setEndereco] = useState('');
-
   const salvarPop = async () => {
     if (!nome.trim()) return;
     const novaLista = [...listaPops];
     const index = novaLista.findIndex(p => p.id === popEdicao.id);
-    
-    if (index !== -1) {
-      novaLista[index] = { ...popEdicao, nome: nome.toLowerCase().trim(), endereco };
-    } else {
-      const novoId = Math.max(...novaLista.map(p => p.id), 0) + 1;
-      novaLista.push({ id: novoId, nome: nome.toLowerCase().trim(), endereco });
-    }
-
+    if (index !== -1) novaLista[index] = { ...popEdicao, nome: nome.toLowerCase().trim(), endereco };
+    else novaLista.push({ id: Date.now(), nome: nome.toLowerCase().trim(), endereco });
     await setDoc(doc(db, "config", "lista_pops"), { pops: novaLista });
     setShowDialog(false);
   };
-
   return (
-    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto', boxSizing: 'border-box' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>← Voltar</button>
-        <h2 style={{ margin: 0 }}>Gerenciar POPs</h2>
-        <button onClick={() => { setPopEdicao({ id: Date.now(), nome: '', endereco: '' }); setNome(''); setEndereco(''); setShowDialog(true); }} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>+ Novo POP</button>
+        <h2>Gerenciar POPs</h2>
+        <button onClick={() => { setPopEdicao({ id: Date.now() }); setNome(''); setEndereco(''); setShowDialog(true); }} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>+ Novo POP</button>
       </div>
-
       {showDialog && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '350px', border: `1px solid ${theme.border}` }}>
-            <h3>{nome ? 'Editar POP' : 'Novo POP'}</h3>
-            <input type="text" placeholder="Nome do POP" value={nome} onChange={(e) => setNome(e.target.value)} style={{ width: '100%', padding: '8px', margin: '10px 0', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+            <h3>Editar/Novo POP</h3>
+            <input type="text" placeholder="Nome" value={nome} onChange={(e) => setNome(e.target.value)} style={{ width: '100%', padding: '8px', margin: '10px 0', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
             <input type="text" placeholder="Endereço" value={endereco} onChange={(e) => setEndereco(e.target.value)} style={{ width: '100%', padding: '8px', margin: '10px 0 20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               <button onClick={() => setShowDialog(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer' }}>Cancelar</button>
@@ -885,12 +577,11 @@ function TelaGerenciarPops({ listaPops, onBack, theme }) {
           </div>
         </div>
       )}
-
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {listaPops.map((pop) => (
-          <div key={pop.id} style={{ background: theme.cardBg, color: theme.textMain, padding: '15px', borderRadius: '8px', border: `1px solid ${theme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+          <div key={pop.id} style={{ background: theme.cardBg, color: theme.textMain, padding: '15px', borderRadius: '8px', border: `1px solid ${theme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h4 style={{ margin: '0 0 5px 0', color: '#4dabf7', textTransform: 'uppercase' }}>[ID: {pop.id}] {pop.nome}</h4>
+              <h4 style={{ margin: '0 0 5px 0', color: '#4dabf7', textTransform: 'uppercase' }}>{pop.nome}</h4>
               <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{pop.endereco}</p>
             </div>
             <button onClick={() => { setPopEdicao(pop); setNome(pop.nome); setEndereco(pop.endereco); setShowDialog(true); }} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '6px 10px', borderRadius: '4px', cursor: 'pointer' }}>Editar</button>
@@ -902,41 +593,20 @@ function TelaGerenciarPops({ listaPops, onBack, theme }) {
 }
 
 function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setDarkMode, theme }) {
-  const isDuandys = tecnico.toLowerCase().includes('duandys');
-  const cargoLabel = isDuandys ? "Gestor" : "Técnico";
-
-  const nomeTecnico = tecnico.split('@')[0].replace('.', ' ').toUpperCase();
+  const nomeTecnico = tecnico.split('@')[0].toUpperCase();
   const [tipoData, setTipoData] = useState('atual');
   const [dataManualInspecao, setDataManualInspecao] = useState('');
-  const [ultimaDataSalva, setUltimaDataSalva] = useState('');
   const [incidentesGerais, setIncidentesGerais] = useState('');
   const [precisaLimpeza, setPrecisaLimpeza] = useState(false);
   const [anotacoes, setAnotacoes] = useState('');
-
-  const [statusAtivos, setStatusAtivos] = useState({
-    "Motor de Portão": "OK",
-    "Câmeras": "OK",
-    "Controle de Acesso": "OK",
-    "Sensores": "OK",
-    "Central de Alarme": "OK"
-  });
-
-  const [ativosPresentes, setAtivosPresentes] = useState({
-    "Motor de Portão": true,
-    "Câmeras": true,
-    "Controle de Acesso": true,
-    "Sensores": true,
-    "Central de Alarme": true
-  });
-
+  const [statusAtivos, setStatusAtivos] = useState({ "Motor de Portão": "OK", "Câmeras": "OK", "Controle de Acesso": "OK", "Sensores": "OK", "Central de Alarme": "OK" });
+  const [ativosPresentes, setAtivosPresentes] = useState({ "Motor de Portão": true, "Câmeras": true, "Controle de Acesso": true, "Sensores": true, "Central de Alarme": true });
   const [detalhesIncidentes, setDetalhesIncidentes] = useState({});
   const [qtdBancos, setQtdBancos] = useState(1);
   const [bancosBateria, setBancosBateria] = useState({ 1: { dataFabricacao: '', voltagens: ['', '', '', ''], salvo: false } });
-
   const intervaloAr = (pop.nome.toLowerCase() === 'helius' || pop.nome.toLowerCase() === 'limos') ? 5 : 8;
   const [qtdAr, setQtdAr] = useState(1);
   const [centraisAr, setCentraisAr] = useState({ 1: { modelo: '', btu: '', dataInstalacao: '', dataUltimaLimpeza: '', salvo: false } });
-
   const docRef = doc(db, "pops_dados", pop.nome);
 
   useEffect(() => {
@@ -945,401 +615,56 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
         const data = snap.data();
         if (data.qtdBancos) setQtdBancos(data.qtdBancos);
         if (data.qtdAr) setQtdAr(data.qtdAr);
-
-        if (data.statusAtivos) {
-          const filtrados = { ...data.statusAtivos };
-          delete filtrados["Bancos de Bateria"];
-          delete filtrados["Centrais de Ar"];
-          setStatusAtivos(filtrados);
-        }
-        if (data.ativosPresentes) {
-          const filtradosPres = { ...data.ativosPresentes };
-          delete filtradosPres["Bancos de Bateria"];
-          delete filtradosPres["Centrais de Ar"];
-          setAtivosPresentes(filtradosPres);
-        }
+        if (data.statusAtivos) setStatusAtivos(data.statusAtivos);
+        if (data.ativosPresentes) setAtivosPresentes(data.ativosPresentes);
         if (data.detalhesIncidentes) setDetalhesIncidentes(data.detalhesIncidentes);
         if (data.incidentesGerais) setIncidentesGerais(data.incidentesGerais);
         if (data.precisaLimpeza !== undefined) setPrecisaLimpeza(data.precisaLimpeza);
         if (data.anotacoes) setAnotacoes(data.anotacoes);
-
-        if (data.ultimaDataInspecao) {
-          setDataManualInspecao(data.ultimaDataInspecao);
-          setUltimaDataSalva(data.ultimaDataInspecao);
-          setTipoData('manual');
-        }
-
-        const loadedBancos = {};
-        for (let i = 1; i <= (data.qtdBancos || 1); i++) {
-          loadedBancos[i] = {
-            dataFabricacao: data[`bat_${i}_fab`] || '',
-            voltagens: [
-              data[`bat_${i}_v1`] || '',
-              data[`bat_${i}_v2`] || '',
-              data[`bat_${i}_v3`] || '',
-              data[`bat_${i}_v4`] || ''
-            ],
-            salvo: data[`bat_${i}_salvo`] || false
-          };
-        }
-        setBancosBateria(loadedBancos);
-
-        const loadedAr = {};
-        for (let i = 1; i <= (data.qtdAr || 1); i++) {
-          loadedAr[i] = {
-            modelo: data[`ar_${i}_mod`] || '',
-            btu: data[`ar_${i}_btu`] || '',
-            dataInstalacao: data[`ar_${i}_inst`] || '',
-            dataUltimaLimpeza: data[`ar_${i}_limp`] || '',
-            salvo: data[`ar_${i}_salvo`] || false
-          };
-        }
-        setCentraisAr(loadedAr);
+        if (data.ultimaDataInspecao) { setDataManualInspecao(data.ultimaDataInspecao); setTipoData('manual'); }
       }
     });
   }, [pop.nome]);
 
-  const salvarNoFirebase = async (dadosNovos) => {
-    try {
-      await setDoc(docRef, dadosNovos, { merge: true });
-    } catch (e) {
-      console.error("Erro ao salvar:", e);
-    }
-  };
+  const salvarNoFirebase = async (dados) => { await setDoc(docRef, dados, { merge: true }); };
+  const exportarPDF = (e) => { e.preventDefault(); window.print(); };
 
-  const salvarStatusAtivosFirebase = async () => {
-    await salvarNoFirebase({
-      statusAtivos,
-      ativosPresentes,
-      detalhesIncidentes,
-      incidentesGerais,
-      precisaLimpeza,
-      anotacoes
-    });
-    alert("Status dos ativos e observações salvos com sucesso!");
-  };
-
-<<<<<<< HEAD
-=======
-  const exportarPDF = (e) => {
-    e.preventDefault();
-    window.print();
-  };
-
->>>>>>> cc1c045c73f545e61f2f284bc482f68e15ed055f
   const finalizarInspecao = async () => {
-    let dataInspecaoFinal = '';
-    let dataProxStr = '';
-    let forcarCheckin = false;
-    let dataParaSalvar = '';
-
-    if (tipoData === 'manual' && dataManualInspecao.trim() !== '') {
-      const dataFormatada = dataManualInspecao.trim();
-      dataInspecaoFinal = `${dataFormatada} (Manual)`;
-      dataParaSalvar = dataFormatada;
-      
-      if (dataFormatada !== ultimaDataSalva) {
-        forcarCheckin = true;
+    let dataInspecaoFinal = '', dataProxStr = '';
+    if (tipoData === 'manual' && dataManualInspecao.trim()) {
+      dataInspecaoFinal = `${dataManualInspecao.trim()} (Manual)`;
+      const p = dataManualInspecao.trim().split('/');
+      if (p.length === 3) {
+        const d = new Date(p[2], p[1] - 1, p[0]);
+        d.setDate(d.getDate() + 90);
+        dataProxStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
       }
-
-      try {
-        const parts = dataFormatada.split('/');
-        if (parts.length === 3) {
-          const day = parseInt(parts[0], 10);
-          const month = parseInt(parts[1], 10) - 1;
-          const year = parseInt(parts[2], 10);
-          const dataProx = new Date(year, month, day);
-          dataProx.setDate(dataProx.getDate() + 90);
-          dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
-        }
-      } catch (e) {}
     } else {
-      forcarCheckin = true;
-      const obterLocalizacao = () => new Promise((resolve) => {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => resolve(`GPS: ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`),
-            () => resolve("Sem GPS"),
-            { timeout: 10000 }
-          );
-        } else {
-          resolve("Sem GPS");
-        }
-      });
-
-      const coords = await obterLocalizacao();
       const agora = new Date();
-      const diaStr = String(agora.getDate()).padStart(2, '0');
-      const mesStr = String(agora.getMonth() + 1).padStart(2, '0');
-      const anoStr = agora.getFullYear();
-      const horaStr = String(agora.getHours()).padStart(2, '0');
-      const minStr = String(agora.getMinutes()).padStart(2, '0');
-
-      const dataSimples = `${diaStr}/${mesStr}/${anoStr}`;
-      dataParaSalvar = dataSimples;
-      
-      dataInspecaoFinal = `${dataSimples} ${horaStr}:${minStr} (${coords})`;
-
-      const dataProx = new Date(agora);
-      dataProx.setDate(dataProx.getDate() + 90);
-      dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
+      dataInspecaoFinal = `${String(agora.getDate()).padStart(2, '0')}/${String(agora.getMonth() + 1).padStart(2, '0')}/${agora.getFullYear()} ${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}`;
+      const d = new Date(agora);
+      d.setDate(d.getDate() + 90);
+      dataProxStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
     }
-
-    if (!dataProxStr) {
-      const agora = new Date();
-      const dataProx = new Date(agora);
-      dataProx.setDate(dataProx.getDate() + 90);
-      dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
-    }
-
-    try {
-      await salvarNoFirebase({
-        statusAtivos,
-        ativosPresentes,
-        detalhesIncidentes,
-        incidentesGerais,
-        precisaLimpeza,
-        anotacoes,
-        ultimaDataInspecao: dataParaSalvar
-      });
-
-      setDataManualInspecao(dataParaSalvar);
-      setUltimaDataSalva(dataParaSalvar);
-      setTipoData('manual');
-
-      const novoRegistro = {
-        pop: pop.nome,
-        popName: pop.nome,
-        popNome: pop.nome,
-        dataHora: dataInspecaoFinal,
-        tecnico: nomeTecnico,
-        proximaInspecao: dataProxStr
-      };
-
-      await onCheckInRealizado(novoRegistro, forcarCheckin);
-
-      alert("Check-in e dados de inspeção salvos com sucesso!");
-      onBack();
-
-    } catch (error) {
-      alert("Erro ao registrar o check-in: " + error.message);
-    }
+    await salvarNoFirebase({ statusAtivos, ativosPresentes, detalhesIncidentes, incidentesGerais, precisaLimpeza, anotacoes });
+    await onCheckInRealizado({ pop: pop.nome, popName: pop.nome, popNome: pop.nome, dataHora: dataInspecaoFinal, tecnico: nomeTecnico, proximaInspecao: dataProxStr }, true);
+    alert("Check-in salvo com sucesso!");
+    onBack();
   };
 
   return (
-    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif', maxWidth: '750px', margin: '0 auto', boxSizing: 'border-box' }}>
-      <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
-        <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>← Voltar</button>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button type="button" onClick={exportarPDF} style={{ background: '#17a2b8', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
-            📄 Salvar Relatório em PDF
-          </button>
-          <button 
-            type="button"
-            onClick={setDarkMode}
-            style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
-          >
-            {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
-          </button>
-        </div>
+    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', padding: '20px', maxWidth: '750px', margin: '0 auto', boxSizing: 'border-box' }}>
+      <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <button type="button" onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>← Voltar</button>
+        <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}>{darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}</button>
       </div>
-      
-      <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+      <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
         <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', marginTop: 0 }}>Inspeção: {pop.nome}</h2>
         <p style={{ color: theme.textMuted, fontSize: '13px', marginBottom: '20px' }}>{pop.endereco}</p>
-
-        <p style={{ color: theme.textMain, fontSize: '15px', fontWeight: 'bold', marginBottom: '15px' }}>{cargoLabel}: {nomeTecnico}</p>
         
-        <div className="no-print" style={{ marginBottom: '20px', background: theme.cardInner, padding: '12px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
-          <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '6px' }}>Tipo de Data da Inspeção</label>
-          <div style={{ display: 'flex', gap: '15px', marginBottom: '10px', flexWrap: 'wrap' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '13px' }}>
-              <input type="radio" name="tipoData" checked={tipoData === 'atual'} onChange={() => setTipoData('atual')} /> Data Atual + GPS
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '13px' }}>
-              <input type="radio" name="tipoData" checked={tipoData === 'manual'} onChange={() => setTipoData('manual')} /> Data Manual Salva
-            </label>
-          </div>
-
-          {tipoData === 'manual' && (
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>Informe a data que foi feita a inspeção</label>
-              <input type="text" value={dataManualInspecao} onChange={(e) => setDataManualInspecao(e.target.value)} placeholder="ex: 20/08/2026" style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-            </div>
-          )}
-        </div>
-
-        <h3>Status dos Ativos no POP</h3>
-        {Object.keys(statusAtivos).map((ativo) => {
-          const presente = ativosPresentes[ativo];
-          return (
-            <div key={ativo} style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={presente} onChange={(e) => setAtivosPresentes({ ...ativosPresentes, [ativo]: e.target.checked })} />
-                  {ativo}
-                </label>
-                {presente && (
-                  <div className="no-print" style={{ display: 'flex', gap: '5px' }}>
-                    <button type="button" onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'OK' })} style={{ background: statusAtivos[ativo] === 'OK' ? '#28a745' : theme.cardBg, border: `1px solid ${theme.border}`, color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}>OK</button>
-                    <button type="button" onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'Incidente' })} style={{ background: statusAtivos[ativo] === 'Incidente' ? '#dc3545' : theme.cardBg, border: `1px solid ${theme.border}`, color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}>Incidente</button>
-                  </div>
-                )}
-              </div>
-              {presente && statusAtivos[ativo] === 'Incidente' && (
-                <input type="text" placeholder={`Relatar incidente em ${ativo}`} value={detalhesIncidentes[ativo] || ''} onChange={(e) => setDetalhesIncidentes({ ...detalhesIncidentes, [ativo]: e.target.value })} style={{ width: '100%', marginTop: '8px', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-              )}
-            </div>
-          );
-        })}
-
-        <button type="button" onClick={salvarStatusAtivosFirebase} className="no-print" style={{ width: '100%', padding: '10px', background: '#17a2b8', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', marginTop: '10px', marginBottom: '20px' }}>
-          Salvar Status dos Ativos
-        </button>
-
-        <div style={{ marginTop: '20px' }}>
-          <h3>Bancos de Baterias</h3>
-          <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
-            {[1, 2, 3, 4].map((num) => (
-              <button key={num} type="button" onClick={() => { setQtdBancos(num); salvarNoFirebase({ qtdBancos: num }); }} style={{ padding: '6px 12px', background: qtdBancos === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer' }}>{num}</button>
-            ))}
-          </div>
-          {Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
-            const bModel = bancosBateria[banco] || { dataFabricacao: '', voltagens: ['', '', '', ''], salvo: false };
-            const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao);
-            const resSub = statusData(proxSub);
-            const vencidoSub = resSub && resSub.status === 'vencido';
-
-            return (
-              <div key={banco} style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '15px', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '10px' }}>
-                  <h4 style={{ margin: 0 }}>Banco {getLetra(banco)}</h4>
-                  <button type="button" onClick={() => {
-                    const novoSalvo = !bModel.salvo;
-                    const novoEstado = { ...bancosBateria, [banco]: { ...bModel, salvo: novoSalvo } };
-                    setBancosBateria(novoEstado);
-                    salvarNoFirebase({ 
-                      [`bat_${banco}_fab`]: bModel.dataFabricacao, 
-                      [`bat_${banco}_v1`]: bModel.voltagens[0],
-                      [`bat_${banco}_v2`]: bModel.voltagens[1],
-                      [`bat_${banco}_v3`]: bModel.voltagens[2],
-                      [`bat_${banco}_v4`]: bModel.voltagens[3],
-                      [`bat_${banco}_salvo`]: novoSalvo 
-                    });
-                  }} className="no-print" style={{ background: bModel.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
-                    {bModel.salvo ? 'Editar Banco' : 'Salvar Banco'}
-                  </button>
-                </div>
-
-                <div style={{ marginBottom: '8px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '3px' }}>Data de Fabricação (dd/MM/aaaa)</label>
-                  <input type="text" disabled={bModel.salvo} placeholder="dd/MM/aaaa" value={bModel.dataFabricacao} onChange={(e) => {
-                    const novoVal = e.target.value;
-                    setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, dataFabricacao: novoVal } });
-                  }} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-                </div>
-                
-                <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoSub ? undefined : '#4dabf7', margin: '0 0 8px 0' }}>
-                  Próxima Substituição (+2 anos): {proxSub || 'Preencha a data'} {vencidoSub && `(Exp. há ${resSub.dias}d)`}
-                </p>
-
-                <div style={{ fontSize: '12px', color: theme.textMuted, marginBottom: '5px' }}>Voltagem das 4 Baterias do Banco:</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', boxSizing: 'border-box' }}>
-                  {[0, 1, 2, 3].map((vIdx) => (
-                    <input 
-                      key={vIdx} 
-                      type="text" 
-                      disabled={bModel.salvo}
-                      placeholder={`Bat ${vIdx + 1} (V)`} 
-                      value={bModel.voltagens[vIdx] || ''} 
-                      onChange={(e) => {
-                        const novasVols = [...bModel.voltagens];
-                        novasVols[vIdx] = e.target.value;
-                        setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, voltagens: novasVols } });
-                      }} 
-                      style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', textAlign: 'center' }} 
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div style={{ marginTop: '20px' }}>
-          <h3>Centrais de Ar</h3>
-          <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
-            {[1, 2, 3, 4].map((num) => (
-              <button key={num} type="button" onClick={() => { setQtdAr(num); salvarNoFirebase({ qtdAr: num }); }} style={{ padding: '6px 12px', background: qtdAr === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer' }}>{num}</button>
-            ))}
-          </div>
-          {Array.from({ length: qtdAr }, (_, i) => i + 1).map((idx) => {
-            const ar = centraisAr[idx] || { modelo: '', btu: '', dataInstalacao: '', dataUltimaLimpeza: '', salvo: false };
-            const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
-            const resLimp = statusData(proxLimp);
-            const vencidoLimp = resLimp && resLimp.status === 'vencido';
-
-            return (
-              <div key={idx} style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                  <h4>Central {getLetra(idx)}</h4>
-                  <button type="button" onClick={() => {
-                    const novoSalvo = !ar.salvo;
-                    setCentraisAr({ ...centraisAr, [idx]: { ...ar, salvo: novoSalvo } });
-                    salvarNoFirebase({ 
-                      [`ar_${idx}_mod`]: ar.modelo, 
-                      [`ar_${idx}_btu`]: ar.btu, 
-                      [`ar_${idx}_inst`]: ar.dataInstalacao, 
-                      [`ar_${idx}_limp`]: ar.dataUltimaLimpeza, 
-                      [`ar_${idx}_salvo`]: novoSalvo 
-                    });
-                  }} className="no-print" style={{ background: ar.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
-                    {ar.salvo ? 'Editar Central' : 'Salvar Central'}
-                  </button>
-                </div>
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', marginTop: '8px', boxSizing: 'border-box', flexWrap: 'wrap' }}>
-                  <div style={{ flex: 1, minWidth: '130px' }}>
-                    <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Modelo</label>
-                    <input type="text" disabled={ar.salvo} placeholder="Modelo" value={ar.modelo} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, modelo: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: '130px' }}>
-                    <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>BTU</label>
-                    <input type="text" disabled={ar.salvo} placeholder="BTU" value={ar.btu} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, btu: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-                  </div>
-                </div>
-                <div style={{ marginBottom: '8px' }}>
-                  <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data de Instalação (dd/MM/aaaa)</label>
-                  <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataInstalacao} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataInstalacao: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-                </div>
-                <div style={{ marginBottom: '4px' }}>
-                  <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data da Última Limpeza (dd/MM/aaaa)</label>
-                  <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataUltimaLimpeza: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-                </div>
-                <p className={vencidoLimp ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoLimp ? undefined : '#4dabf7', margin: '6px 0 8px 0' }}>
-                  Próxima Limpeza ({intervaloAr} meses): {proxLimp || 'Preencha a última limpeza'} {vencidoLimp && `(Exp. há ${resLimp.dias}d)`}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-
-        <div style={{ marginTop: '20px' }}>
-          <input type="text" placeholder="Relatar Incidentes Gerais" value={incidentesGerais} onChange={(e) => setIncidentesGerais(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '15px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-            <input type="checkbox" checked={precisaLimpeza} onChange={(e) => setPrecisaLimpeza(e.target.checked)} id="limpCheck" />
-            <label htmlFor="limpCheck">Limpeza Necessária</label>
-          </div>
-
-          <textarea placeholder="Anotações Extras" rows="3" value5={anotacoes} value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-
-<<<<<<< HEAD
-          <button onClick={finalizarInspecao} style={{ width: '100%', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', cursor: 'pointer' }}>
-=======
-          <button type="button" onClick={finalizarInspecao} className="no-print" style={{ width: '100%', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', cursor: 'pointer' }}>
->>>>>>> cc1c045c73f545e61f2f284bc482f68e15ed055f
-            Finalizar e Salvar Inspeção
-          </button>
+        <div className="no-print" style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
+          <button type="button" onClick={exportarPDF} style={{ flex: 1, minWidth: '200px', padding: '14px', background: '#17a2b8', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '15px', borderRadius: '4px', cursor: 'pointer' }}>📄 Salvar Relatório em PDF</button>
+          <button type="button" onClick={finalizarInspecao} style={{ flex: 1, minWidth: '200px', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '15px', borderRadius: '4px', cursor: 'pointer' }}>Finalizar e Salvar Inspeção</button>
         </div>
       </div>
     </div>
