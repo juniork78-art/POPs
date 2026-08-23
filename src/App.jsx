@@ -351,6 +351,7 @@ export default function App() {
   }
 
   const { vencidos, amanha } = verificarAlertasGlobaisDetalhados();
+  const totalAlertas = vencidos.length + amanha.length;
 
   return (
     <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh' }}>
@@ -363,27 +364,35 @@ export default function App() {
         onPopClick={(pop) => setPopSelecionado(pop)} 
         onOpenDrawer={() => setDrawerAberto(true)}
         onOpenGerenciarPops={() => setTelaGerenciarPopsAberta(true)}
+        onOpenAvisos={() => setShowAvisoGlobal(true)}
+        totalAlertas={totalAlertas}
         onLogout={() => { sessionStorage.removeItem('avisoMostrado'); signOut(auth); setUsuarioLogado(null); }} 
         darkMode={darkMode}
         setDarkMode={alternarTema}
         theme={theme}
       />
 
-      {showAvisoGlobal && (vencidos.length > 0 || amanha.length > 0) && (
+      {showAvisoGlobal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px', boxSizing: 'border-box' }}>
           <div style={{ background: theme.cardBg, color: theme.textMain, padding: '20px', borderRadius: '12px', border: '2px solid #ff4d4d', width: '100%', maxWidth: '450px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
             <h2 style={{ color: '#ff4d4d', marginTop: 0, fontSize: '16px', textAlign: 'center' }}>⚠️ Atenção: Prazos e Vencimentos</h2>
             <div style={{ margin: '10px 0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
-              {vencidos.length > 0 && vencidos.map((msg, i) => (
-                <div key={i} style={{ background: theme.cardInner, padding: '8px', borderRadius: '6px', borderLeft: '3px solid #ff4d4d' }}>
-                  <p className="alerta-vencido" style={{ margin: 0, fontSize: '11px' }}>{msg}</p>
-                </div>
-              ))}
-              {amanha.length > 0 && amanha.map((msg, i) => (
-                <div key={i} style={{ background: theme.cardInner, padding: '8px', borderRadius: '6px', borderLeft: '3px solid #ff9800' }}>
-                  <p className="alerta-amanha" style={{ margin: 0, fontSize: '11px' }}>{msg}</p>
-                </div>
-              ))}
+              {vencidos.length === 0 && amanha.length === 0 ? (
+                <p style={{ color: theme.textMuted, textAlign: 'center', fontSize: '13px' }}>Nenhum alerta pendente no momento.</p>
+              ) : (
+                <>
+                  {vencidos.map((msg, i) => (
+                    <div key={i} style={{ background: theme.cardInner, padding: '8px', borderRadius: '6px', borderLeft: '3px solid #ff4d4d' }}>
+                      <p className="alerta-vencido" style={{ margin: 0, fontSize: '11px' }}>{msg}</p>
+                    </div>
+                  ))}
+                  {amanha.map((msg, i) => (
+                    <div key={i} style={{ background: theme.cardInner, padding: '8px', borderRadius: '6px', borderLeft: '3px solid #ff9800' }}>
+                      <p className="alerta-amanha" style={{ margin: 0, fontSize: '11px' }}>{msg}</p>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
             <button onClick={() => setShowAvisoGlobal(false)} style={{ width: '100%', padding: '10px', background: '#ff4d4d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer', marginTop: '10px' }}>Entendido</button>
           </div>
@@ -497,7 +506,7 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
   );
 }
 
-function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias, onPopClick, onOpenDrawer, onOpenGerenciarPops, onLogout, darkMode, setDarkMode, theme }) {
+function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias, onPopClick, onOpenDrawer, onOpenGerenciarPops, onOpenAvisos, totalAlertas, onLogout, darkMode, setDarkMode, theme }) {
   const [busca, setBusca] = useState('');
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
@@ -511,7 +520,15 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
           <img src="/logo.png" alt="Logo Fibralink" style={{ width: '100px', objectFit: 'contain' }} />
           <h1 style={{ margin: 0, fontSize: '16px' }}>| Olá, {tecnico.split('@')[0].toUpperCase()}</h1>
         </div>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <button onClick={onOpenAvisos} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '14px' }}>
+            🔔
+            {totalAlertas > 0 && (
+              <span style={{ background: '#ff4d4d', color: '#fff', fontSize: '10px', fontWeight: 'bold', padding: '1px 5px', borderRadius: '10px' }}>
+                {totalAlertas}
+              </span>
+            )}
+          </button>
           <button onClick={() => setShowPasswordDialog(true)} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>Gerenciar POPs</button>
           <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>{darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}</button>
           <button onClick={onLogout} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>Sair</button>
