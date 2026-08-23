@@ -429,12 +429,18 @@ export default function App() {
                   ultimosCheckIns.map((item, idx) => {
                     const nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '');
                     if (!popPertenceAoUsuario(nomeDoPop)) return null;
+                    const res = statusData(item.proximaInspecao);
+                    const vencido = res && res.status === 'vencido';
+                    const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
+
                     return (
                       <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
                         <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>POP: {nomeDoPop}</p>
                         <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Técnico: {item.tecnico}</p>
                         <p style={{ margin: '0 0 3px 0', color: theme.textMuted }}>Data: {item.dataHora}</p>
-                        <p style={{ margin: 0, color: '#28a745' }}>Próx. Insp: {item.proximaInspecao}</p>
+                        <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
+                          Próx. Insp: {item.proximaInspecao} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
+                        </p>
                       </div>
                     );
                   })
@@ -445,11 +451,17 @@ export default function App() {
                 <h4 style={{ color: theme.textMuted, fontSize: '14px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px' }}>Cronograma Limpezas de Ar</h4>
                 {cronogramaLimpezas.map((item, idx) => {
                   if (!popPertenceAoUsuario(item.popNome)) return null;
+                  const res = statusData(item.proximaLimpeza);
+                  const vencido = res && res.status === 'vencido';
+                  const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
+
                   return (
                     <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
                       <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>{item.popNome} ({item.central})</p>
                       <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Última: {item.ultimaLimpeza}</p>
-                      <p style={{ margin: 0, color: '#28a745' }}>Próxima: {item.proximaLimpeza}</p>
+                      <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
+                        Próxima: {item.proximaLimpeza} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
+                      </p>
                     </div>
                   );
                 })}
@@ -459,11 +471,17 @@ export default function App() {
                 <h4 style={{ color: theme.textMuted, fontSize: '14px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px' }}>Cronograma de Baterias</h4>
                 {cronogramaBaterias.map((item, idx) => {
                   if (!popPertenceAoUsuario(item.popNome)) return null;
+                  const res = statusData(item.proximaSubstituicao);
+                  const vencido = res && res.status === 'vencido';
+                  const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
+
                   return (
                     <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
                       <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>{item.popNome} ({item.banco})</p>
                       <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Fabricação: {item.fabricacao}</p>
-                      <p style={{ margin: 0, color: '#28a745' }}>Troca: {item.proximaSubstituicao}</p>
+                      <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
+                        Troca: {item.proximaSubstituicao} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
+                      </p>
                     </div>
                   );
                 })}
@@ -1106,7 +1124,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
                   <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataInstalacao} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataInstalacao: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
                 </div>
                 <div style={{ marginBottom: '4px' }}>
-                  <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data da Última Limpeza (dd/MM/aaaa)</label>
+                  <label style={{ display: 'block', fontSize: '11px', color theme.textMuted, marginBottom: '2px' }}>Data da Última Limpeza (dd/MM/aaaa)</label>
                   <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataUltimaLimpeza: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
                 </div>
                 <p className={vencidoLimp ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoLimp ? undefined : '#4dabf7', margin: '6px 0 8px 0' }}>
