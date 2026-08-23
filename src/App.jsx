@@ -710,11 +710,6 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
     alert("Status dos ativos e observações salvos com sucesso!");
   };
 
-  const exportarPDF = (e) => {
-    e.preventDefault();
-    window.print();
-  };
-
   const finalizarInspecao = async () => {
     let dataInspecaoFinal = '';
     let dataProxStr = '';
@@ -806,6 +801,10 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
       await onCheckInRealizado(novoRegistro, forcarCheckin);
 
       alert("Check-in e dados de inspeção salvos com sucesso!");
+      
+      // Dispara a impressão/PDF logo após salvar no mesmo fluxo unificado
+      window.print();
+
       onBack();
 
     } catch (error) {
@@ -1011,14 +1010,9 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
 
           <textarea placeholder="Anotações Extras" rows="3" value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
 
-          <div className="no-print" style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
-            <button type="button" onClick={exportarPDF} style={{ flex: 1, minWidth: '200px', padding: '14px', background: '#17a2b8', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '15px', borderRadius: '4px', cursor: 'pointer' }}>
-              📄 Salvar Relatório em PDF
-            </button>
-            <button type="button" onClick={finalizarInspecao} style={{ flex: 1, minWidth: '200px', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '15px', borderRadius: '4px', cursor: 'pointer' }}>
-              Finalizar e Salvar Inspeção
-            </button>
-          </div>
+          <button type="button" onClick={finalizarInspecao} className="no-print" style={{ width: '100%', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', cursor: 'pointer' }}>
+            Finalizar e Salvar Inspeção
+          </button>
         </div>
       </div>
     </div>
