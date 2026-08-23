@@ -37,11 +37,6 @@ style.innerHTML = `
     .no-print {
       display: none !important;
     }
-    .relatorios-pagina {
-      padding: 20px;
-      font-family: Arial, sans-serif;
-      color: #000;
-    }
   }
 `;
 document.head.appendChild(style);
@@ -490,8 +485,9 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
       <button type="button" onClick={setDarkMode} style={{ position: 'absolute', top: '15px', right: '15px', background: theme.cardBg, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
         {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
       </button>
-      <form onSubmit={handleLogin} style={{ background: theme.cardBg, color: theme.textMain, padding: '30px', borderRadius: '8px', width: '340px', border: `1px solid ${theme.border}` }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>InfraManager POP</h2>
+      <form onSubmit={handleLogin} style={{ background: theme.cardBg, color: theme.textMain, padding: '30px', borderRadius: '8px', width: '340px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
+        <img src="https://i.imgur.com/8Km9t26.png" alt="Logo Fibralink" style={{ width: '160px', marginBottom: '15px', objectFit: 'contain' }} />
+        <h2 style={{ marginBottom: '20px', fontSize: '18px' }}>InfraManager POP</h2>
         {erro && <p style={{ color: '#ff6b6b', fontSize: '14px' }}>{erro}</p>}
         <input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', padding: '10px', marginBottom: '15px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
         <input type="password" placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} required style={{ width: '100%', padding: '10px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
@@ -512,6 +508,7 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${theme.border}`, paddingBottom: '15px', flexWrap: 'wrap', gap: '15px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <button onClick={onOpenDrawer} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>☰ Menu</button>
+          <img src="https://i.imgur.com/8Km9t26.png" alt="Logo Fibralink" style={{ width: '110px', objectFit: 'contain' }} />
           <h1 style={{ margin: 0, fontSize: '18px' }}>Olá, {tecnico.split('@')[0].toUpperCase()}</h1>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -807,7 +804,6 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
 
       alert("Check-in e dados de inspeção salvos com sucesso!");
 
-      // Abre uma nova guia formatada estritamente como um relatório organizado em texto e blocos
       const janelaPdf = window.open('', '_blank');
       if (janelaPdf) {
         let htmlRelatorio = `
@@ -817,16 +813,20 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
             <title>Relatório de Inspeção - ${pop.nome.toUpperCase()}</title>
             <style>
               body { font-family: Arial, sans-serif; padding: 30px; color: #000; line-height: 1.6; }
-              h1 { color: #0056b3; text-transform: uppercase; border-bottom: 2px solid #0056b3; padding-bottom: 5px; margin-bottom: 5px; }
-              h2 { font-size: 16px; color: #333; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 3px; text-transform: uppercase; }
+              .header-rel { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 15px; }
+              h1 { color: #0056b3; text-transform: uppercase; margin: 0; font-size: 22px; }
+              h2 { font-size: 15px; color: #333; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 3px; text-transform: uppercase; }
               p { margin: 6px 0; }
               .negrito { font-weight: bold; }
               .vermelho { color: #d9534f; font-weight: bold; }
-              .bloco { margin-bottom: 15px; background: #f9f9f9; padding: 10px 15px; border-left: 4px solid #0056b3; border-radius: 4px; }
+              .bloco { margin-bottom: 12px; background: #f9f9f9; padding: 10px 15px; border-left: 4px solid #0056b3; border-radius: 4px; }
             </style>
           </head>
           <body>
-            <h1>Relatório de Inspeção - POP: ${pop.nome.toUpperCase()}</h1>
+            <div class="header-rel">
+              <h1>Relatório de Inspeção - POP: ${pop.nome.toUpperCase()}</h1>
+              <img src="https://i.imgur.com/8Km9t26.png" alt="Logo" style="width: 120px; object-fit: contain;" />
+            </div>
             <p><span class="negrito">Endereço:</span> ${pop.endereco}</p>
             <p><span class="negrito">${cargoLabel}:</span> ${nomeTecnico}</p>
             <p><span class="negrito">Data da Inspeção:</span> ${dataInspecaoFinal}</p>
@@ -919,7 +919,10 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
       </div>
       
       <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
-        <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', marginTop: 0 }}>Inspeção: {pop.nome}</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '15px' }}>
+          <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', margin: 0 }}>Inspeção: {pop.nome}</h2>
+          <img src="https://i.imgur.com/8Km9t26.png" alt="Logo" style={{ width: '100px', objectFit: 'contain' }} />
+        </div>
         <p style={{ color: theme.textMuted, fontSize: '13px', marginBottom: '20px' }}>{pop.endereco}</p>
 
         <p style={{ color: theme.textMain, fontSize: '15px', fontWeight: 'bold', marginBottom: '15px' }}>{cargoLabel}: {nomeTecnico}</p>
