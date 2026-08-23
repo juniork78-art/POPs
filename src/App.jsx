@@ -12,7 +12,6 @@ import {
   setDoc, 
   onSnapshot 
 } from 'firebase/firestore';
-import logoImg from './logo.png';
 
 const style = document.createElement('style');
 style.innerHTML = `
@@ -593,7 +592,7 @@ function TelaLogin({ onLoginSucesso }) {
     <div style={{ backgroundColor: '#121212', color: '#fff', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: 'sans-serif' }}>
       <form onSubmit={handleLogin} style={{ background: '#1e1e1e', padding: '30px', borderRadius: '8px', width: '340px', boxShadow: '0 4px 10px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         
-        <img src={logoImg} alt="Logo" style={{ width: '180px', marginBottom: '20px', objectFit: 'contain' }} />
+        <img src="/logo.png" alt="Logo" style={{ width: '180px', marginBottom: '20px', objectFit: 'contain' }} />
 
         <h2 style={{ textAlign: 'center', marginBottom: '20px', fontSize: '18px' }}>InfraManager POP</h2>
         
