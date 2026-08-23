@@ -1124,7 +1124,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
                   <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataInstalacao} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataInstalacao: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
                 </div>
                 <div style={{ marginBottom: '4px' }}>
-                  <label style={{ display: 'block', fontSize: '11px', color theme.textMuted, marginBottom: '2px' }}>Data da Última Limpeza (dd/MM/aaaa)</label>
+                  <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data da Última Limpeza (dd/MM/aaaa)</label>
                   <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataUltimaLimpeza: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
                 </div>
                 <p className={vencidoLimp ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoLimp ? undefined : '#4dabf7', margin: '6px 0 8px 0' }}>
