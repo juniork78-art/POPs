@@ -37,25 +37,10 @@ style.innerHTML = `
     .no-print {
       display: none !important;
     }
-    .relatorio-container {
+    .relatorios-pagina {
       padding: 20px;
       font-family: Arial, sans-serif;
-    }
-    .relatorio-titulo {
-      font-size: 20px;
-      font-weight: bold;
-      color: #0056b3;
-      margin-bottom: 5px;
-      text-transform: uppercase;
-    }
-    .relatorio-secao {
-      margin-top: 15px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #ccc;
-    }
-    .texto-destaque-vermelho {
-      color: #d9534f !important;
-      font-weight: bold !important;
+      color: #000;
     }
   }
 `;
@@ -822,18 +807,99 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
 
       alert("Check-in e dados de inspeção salvos com sucesso!");
 
-      // Abre em uma nova guia/janela de forma limpa para PDF/Impressão
-      const conteudoHtml = document.documentElement.outerHTML;
+      // Abre uma nova guia formatada estritamente como um relatório organizado em texto e blocos
       const janelaPdf = window.open('', '_blank');
       if (janelaPdf) {
-        janelaPdf.document.write('<!DOCTYPE html><html><head><title>Relatório - ' + pop.nome.toUpperCase() + '</title></head><body>' + document.body.innerHTML + '</body></html>');
+        let htmlRelatorio = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Relatório de Inspeção - ${pop.nome.toUpperCase()}</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 30px; color: #000; line-height: 1.6; }
+              h1 { color: #0056b3; text-transform: uppercase; border-bottom: 2px solid #0056b3; padding-bottom: 5px; margin-bottom: 5px; }
+              h2 { font-size: 16px; color: #333; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 3px; text-transform: uppercase; }
+              p { margin: 6px 0; }
+              .negrito { font-weight: bold; }
+              .vermelho { color: #d9534f; font-weight: bold; }
+              .bloco { margin-bottom: 15px; background: #f9f9f9; padding: 10px 15px; border-left: 4px solid #0056b3; border-radius: 4px; }
+            </style>
+          </head>
+          <body>
+            <h1>Relatório de Inspeção - POP: ${pop.nome.toUpperCase()}</h1>
+            <p><span class="negrito">Endereço:</span> ${pop.endereco}</p>
+            <p><span class="negrito">${cargoLabel}:</span> ${nomeTecnico}</p>
+            <p><span class="negrito">Data da Inspeção:</span> ${dataInspecaoFinal}</p>
+            <p><span class="negrito">Próxima Inspeção Recomendada:</span> ${dataProxStr}</p>
+
+            <h2>Status dos Ativos no POP</h2>
+        `;
+
+        Object.keys(statusAtivos).forEach(ativo => {
+          if (ativosPresentes[ativo]) {
+            const st = statusAtivos[ativo];
+            const det = detalhesIncidentes[ativo];
+            htmlRelatorio += `<div class="bloco"><span class="negrito">${ativo}:</span> <span style="color: ${st === 'OK' ? '#28a745' : '#d9534f'}; font-weight: bold;">${st}</span>`;
+            if (st === 'Incidente' && det) {
+              htmlRelatorio += `<br><span class="vermelho">Incidente Relatado: ${det}</span>`;
+            }
+            htmlRelatorio += `</div>`;
+          }
+        });
+
+        htmlRelatorio += `<h2>Bancos de Baterias</h2>`;
+        Array.from({ length: qtdBancos }, (_, i) => i + 1).forEach(banco => {
+          const bModel = bancosBateria[banco];
+          if (bModel) {
+            const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao);
+            const resSub = statusData(proxSub);
+            const vencidoSub = resSub && resSub.status === 'vencido';
+
+            htmlRelatorio += `
+              <div class="bloco">
+                <span class="negrito">Banco ${getLetra(banco)}</span><br>
+                Data de Fabricação: ${bModel.dataFabricacao || 'Não informada'}<br>
+                <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+2 anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
+                Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]
+              </div>
+            `;
+          }
+        });
+
+        htmlRelatorio += `<h2>Centrais de Ar Condicionado</h2>`;
+        Array.from({ length: qtdAr }, (_, i) => i + 1).forEach(idx => {
+          const ar = centraisAr[idx];
+          if (ar) {
+            const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
+            const resLimp = statusData(proxLimp);
+            const vencidoLimp = resLimp && resLimp.status === 'vencido';
+
+            htmlRelatorio += `
+              <div class="bloco">
+                <span class="negrito">Central ${getLetra(idx)}</span> (${ar.modelo || 'Modelo não informado'} - ${ar.btu || 'BTU não inf.'})<br>
+                Data de Instalação: ${ar.dataInstalacao || 'N/A'}<br>
+                Data da Última Limpeza: ${ar.dataUltimaLimpeza || 'N/A'}<br>
+                <span class="${vencidoLimp ? 'vermelho' : ''}">Próxima Limpeza (${intervaloAr} meses): ${proxLimp || 'N/A'} ${vencidoLimp ? `(Expirado há ${resLimp.dias} dias)` : ''}</span>
+              </div>
+            `;
+          }
+        });
+
+        htmlRelatorio += `
+          <h2>Observações e Incidentes Gerais</h2>
+          <div class="bloco">
+            <p><span class="negrito">Incidentes Gerais:</span> ${incidentesGerais || 'Nenhum incidente relatado.'}</p>
+            <p><span class="negrito">Limpeza Necessária:</span> <span class="${precisaLimpeza ? 'vermelho' : ''}">${precisaLimpeza ? 'SIM' : 'NÃO'}</span></p>
+            <p><span class="negrito">Anotações Extras:</span> ${anotacoes || 'Nenhuma anotação.'}</p>
+          </div>
+        </body></html>`;
+
+        janelaPdf.document.write(htmlRelatorio);
         janelaPdf.document.close();
         janelaPdf.focus();
         setTimeout(() => {
           janelaPdf.print();
-        }, 500);
-      } else {
-        window.print();
+        }, 600);
       }
 
       onBack();
@@ -853,7 +919,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
       </div>
       
       <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
-        <h2 className="relatorio-titulo" style={{ textTransform: 'uppercase', color: '#4dabf7', marginTop: 0 }}>Inspeção: {pop.nome}</h2>
+        <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', marginTop: 0 }}>Inspeção: {pop.nome}</h2>
         <p style={{ color: theme.textMuted, fontSize: '13px', marginBottom: '20px' }}>{pop.endereco}</p>
 
         <p style={{ color: theme.textMain, fontSize: '15px', fontWeight: 'bold', marginBottom: '15px' }}>{cargoLabel}: {nomeTecnico}</p>
@@ -877,7 +943,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
           )}
         </div>
 
-        <h3 className="relatorio-secao">Status dos Ativos no POP</h3>
+        <h3>Status dos Ativos no POP</h3>
         {Object.keys(statusAtivos).map((ativo) => {
           const presente = ativosPresentes[ativo];
           return (
@@ -906,7 +972,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
         </button>
 
         <div style={{ marginTop: '20px' }}>
-          <h3 className="relatorio-secao">Bancos de Baterias</h3>
+          <h3>Bancos de Baterias</h3>
           <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
             {[1, 2, 3, 4].map((num) => (
               <button key={num} type="button" onClick={() => { setQtdBancos(num); salvarNoFirebase({ qtdBancos: num }); }} style={{ padding: '6px 12px', background: qtdBancos === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer' }}>{num}</button>
@@ -947,7 +1013,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
                   }} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
                 </div>
                 
-                <p className={vencidoSub ? 'alerta-vencido texto-destaque-vermelho' : 'texto-destaque-vermelho'} style={{ fontSize: '12px', color: vencidoSub ? undefined : '#d9534f', fontWeight: 'bold', margin: '0 0 8px 0' }}>
+                <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoSub ? undefined : '#4dabf7', margin: '0 0 8px 0' }}>
                   Próxima Substituição (+2 anos): {proxSub || 'Preencha a data'} {vencidoSub && `(Exp. há ${resSub.dias}d)`}
                 </p>
 
@@ -975,7 +1041,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
         </div>
 
         <div style={{ marginTop: '20px' }}>
-          <h3 className="relatorio-secao">Centrais de Ar</h3>
+          <h3>Centrais de Ar</h3>
           <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
             {[1, 2, 3, 4].map((num) => (
               <button key={num} type="button" onClick={() => { setQtdAr(num); salvarNoFirebase({ qtdAr: num }); }} style={{ padding: '6px 12px', background: qtdAr === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer' }}>{num}</button>
@@ -1023,7 +1089,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
                   <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data da Última Limpeza (dd/MM/aaaa)</label>
                   <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataUltimaLimpeza: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
                 </div>
-                <p className={vencidoLimp ? 'alerta-vencido texto-destaque-vermelho' : 'texto-destaque-vermelho'} style={{ fontSize: '12px', color: vencidoLimp ? undefined : '#d9534f', fontWeight: 'bold', margin: '6px 0 8px 0' }}>
+                <p className={vencidoLimp ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoLimp ? undefined : '#4dabf7', margin: '6px 0 8px 0' }}>
                   Próxima Limpeza ({intervaloAr} meses): {proxLimp || 'Preencha a última limpeza'} {vencidoLimp && `(Exp. há ${resLimp.dias}d)`}
                 </p>
               </div>
@@ -1042,7 +1108,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
           <textarea placeholder="Anotações Extras" rows="3" value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
 
           <button type="button" onClick={finalizarInspecao} className="no-print" style={{ width: '100%', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', cursor: 'pointer' }}>
-            Finalizar e Salvar Inspeção
+            Finalizar, Salvar e Gerar Relatório
           </button>
         </div>
       </div>
