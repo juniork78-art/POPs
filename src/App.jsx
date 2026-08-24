@@ -836,6 +836,160 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
     alert("Status dos ativos e observações salvos com sucesso!");
   };
 
+  const gerarPdfUltimaInspecao = async () => {
+    let dataInspecaoFinal = '';
+    let dataProxStr = '';
+
+    if (tipoData === 'manual' && dataManualInspecao.trim() !== '') {
+      const dataFormatada = dataManualInspecao.trim();
+      dataInspecaoFinal = `${dataFormatada} (Manual)`;
+
+      try {
+        const parts = dataFormatada.split('/');
+        if (parts.length === 3) {
+          const day = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1;
+          const year = parseInt(parts[2], 10);
+          const dataProx = new Date(year, month, day);
+          dataProx.setDate(dataProx.getDate() + 90);
+          dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
+        }
+      } catch (e) {}
+    } else {
+      const obterLocalizacao = () => new Promise((resolve) => {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => resolve(`GPS: ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`),
+            () => resolve("Sem GPS"),
+            { timeout: 10000 }
+          );
+        } else {
+          resolve("Sem GPS");
+        }
+      });
+
+      const coords = await obterLocalizacao();
+      const agora = new Date();
+      const diaStr = String(agora.getDate()).padStart(2, '0');
+      const mesStr = String(agora.getMonth() + 1).padStart(2, '0');
+      const anoStr = agora.getFullYear();
+      const horaStr = String(agora.getHours()).padStart(2, '0');
+      const minStr = String(agora.getMinutes()).padStart(2, '0');
+
+      const dataSimples = `${diaStr}/${mesStr}/${anoStr}`;
+      dataInspecaoFinal = `${dataSimples} ${horaStr}:${minStr} (${coords})`;
+
+      const dataProx = new Date(agora);
+      dataProx.setDate(dataProx.getDate() + 90);
+      dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
+    }
+
+    if (!dataProxStr) {
+      const agora = new Date();
+      const dataProx = new Date(agora);
+      dataProx.setDate(dataProx.getDate() + 90);
+      dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
+    }
+
+    const janelaPdf = window.open('', '_blank');
+    if (janelaPdf) {
+      let htmlRelatorio = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Relatório de Inspeção - ${pop.nome.toUpperCase()}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 30px; color: #000; line-height: 1.6; }
+            .header-rel { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 15px; }
+            h1 { color: #0056b3; text-transform: uppercase; margin: 0; font-size: 22px; }
+            h2 { font-size: 15px; color: #333; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 3px; text-transform: uppercase; }
+            p { margin: 6px 0; }
+            .negrito { font-weight: bold; }
+            .vermelho { color: #d9534f; font-weight: bold; }
+            .bloco { margin-bottom: 12px; background: #f9f9f9; padding: 10px 15px; border-left: 4px solid #0056b3; border-radius: 4px; }
+          </style>
+        </head>
+        <body>
+          <div class="header-rel">
+            <h1>Relatório de Inspeção - POP: ${pop.nome.toUpperCase()}</h1>
+            <img src="/logo.png" alt="Logo" style="width: 120px; object-fit: contain;" />
+          </div>
+          <p><span class="negrito">Endereço:</span> ${pop.endereco}</p>
+          <p><span class="negrito">${cargoLabel}:</span> ${nomeTecnico}</p>
+          <p><span class="negrito">Data da Inspeção:</span> ${dataInspecaoFinal}</p>
+          <p><span class="negrito">Próxima Inspeção Recomendada:</span> ${dataProxStr}</p>
+
+          <h2>Status dos Ativos no POP</h2>
+      `;
+
+      Object.keys(statusAtivos).forEach(ativo => {
+        if (ativosPresentes[ativo]) {
+          const st = statusAtivos[ativo];
+          const det = detalhesIncidentes[ativo];
+          htmlRelatorio += `<div class="bloco"><span class="negrito">${ativo}:</span> <span style="color: ${st === 'OK' ? '#28a745' : '#d9534f'}; font-weight: bold;">${st}</span>`;
+          if (st === 'Incidente' && det) {
+            htmlRelatorio += `<br><span class="vermelho">Incidente Relatado: ${det}</span>`;
+          }
+          htmlRelatorio += `</div>`;
+        }
+      });
+
+      htmlRelatorio += `<h2>Bancos de Baterias</h2>`;
+      Array.from({ length: qtdBancos }, (_, i) => i + 1).forEach(banco => {
+        const bModel = bancosBateria[banco];
+        if (bModel) {
+          const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao);
+          const resSub = statusData(proxSub);
+          const vencidoSub = resSub && resSub.status === 'vencido';
+
+          htmlRelatorio += `
+            <div class="bloco">
+              <span class="negrito">Banco ${getLetra(banco)}</span><br>
+              Data de Fabricação: ${bModel.dataFabricacao || 'Não informada'}<br>
+              <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+2 anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
+              Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]
+            </div>
+          `;
+        }
+      });
+
+      htmlRelatorio += `<h2>Centrais de Ar Condicionado</h2>`;
+      Array.from({ length: qtdAr }, (_, i) => i + 1).forEach(idx => {
+        const ar = centraisAr[idx];
+        if (ar) {
+          const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
+          const resLimp = statusData(proxLimp);
+          const vencidoLimp = resLimp && resLimp.status === 'vencido';
+
+          htmlRelatorio += `
+            <div class="bloco">
+              <span class="negrito">Central ${getLetra(idx)}</span> (${ar.modelo || 'Modelo não informado'} - ${ar.btu || 'BTU não inf.'})<br>
+              Data de Instalação: ${ar.dataInstalacao || 'N/A'}<br>
+              Data da Última Limpeza: ${ar.dataUltimaLimpeza || 'N/A'}<br>
+              <span class="${vencidoLimp ? 'vermelho' : ''}">Próxima Limpeza (${intervaloAr} meses): ${proxLimp || 'N/A'} ${vencidoLimp ? `(Expirado há ${resLimp.dias} dias)` : ''}</span>
+            </div>
+          `;
+        }
+      });
+
+      htmlRelatorio += `
+        <h2>Observações e Incidentes Gerais</h2>
+        <div class="bloco">
+          <p><span class="negrito">Incidentes Gerais:</span> ${incidentesGerais || 'Nenhum incidente relatado.'}</p>
+          <p><span class="negrito">Limpeza Necessária:</span> <span class="${precisaLimpeza ? 'vermelho' : ''}">${precisaLimpeza ? 'SIM' : 'NÃO'}</span></p>
+          <p><span class="negrito">Anotações Extras:</span> ${anotacoes || 'Nenhuma anotação.'}</p>
+        </div>
+      </body></html>`;
+
+      janelaPdf.document.write(htmlRelatorio);
+      janelaPdf.document.close();
+      janelaPdf.focus();
+      setTimeout(() => {
+        janelaPdf.print();
+      }, 600);
+    }
+  };
+
   const finalizarInspecao = async () => {
     let dataInspecaoFinal = '';
     let dataProxStr = '';
@@ -1052,7 +1206,12 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
         <p style={{ color: theme.textMain, fontSize: '15px', fontWeight: 'bold', marginBottom: '15px' }}>{cargoLabel}: {nomeTecnico}</p>
         
         <div className="no-print" style={{ marginBottom: '20px', background: theme.cardInner, padding: '12px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
-          <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '6px' }}>Tipo de Data da Inspeção</label>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '6px' }}>
+            <label style={{ fontSize: '12px', color: theme.textMuted }}>Tipo de Data da Inspeção</label>
+            <button type="button" onClick={gerarPdfUltimaInspecao} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
+              📄 Gerar PDF da Última Inspeção
+            </button>
+          </div>
           <div style={{ display: 'flex', gap: '15px', marginBottom: '10px', flexWrap: 'wrap' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '13px' }}>
               <input type="radio" name="tipoData" checked={tipoData === 'atual'} onChange={() => setTipoData('atual')} /> Data Atual + GPS
