@@ -118,11 +118,11 @@ const popsIniciaisPadrao = [
   { id: 18, nome: "telesto", endereco: "tv. Brasispampa, 272 - Escritório - sda" },
   { id: 19, nome: "tupã1", endereco: "rua Guajajaras, 55 - Centro - Escritório - xga" },
   { id: 20, nome: "terra", endereco: "Próprio R. JK, 111 - Centro, Canaã dos Carajás - PA, 68537-860 - cna" },
-  { id: 21, nome: "marduk", endereco: "v. Conselheiro Furtado, 2865 - Edifício Sintese 21, Sala 701 - Belém" },
+  { id: 21, nome: "marduk", endereco: "v. Conselheiro Furtado, 2865 - Edifício Sintese 21, Sala 701 - Belém - bel" },
   { id: 22, nome: "ceuci", endereco: "Av. Dez, 898 - Centro, Rio Maria - PA, 68530-000 - rma" },
   { id: 23, nome: "fanes", endereco: "distrito industrial - mba" },
-  { id: 24, nome: "dereter", endereco: "Avenida Castelo Branco - Centro, 68573-003, São Geraldo do Araguaia" },
-  { id: 25, nome: "neftis", endereco: "Avenida Inglaterra 333, Novo Horizonte - Parauapebas - PA, 68515-000" },
+  { id: 24, nome: "dereter", endereco: "Avenida Castelo Branco - Centro, 68573-003, São Geraldo do Araguaia - sga" },
+  { id: 25, nome: "neftis", endereco: "Avenida Inglaterra 333, Novo Horizonte - Parauapebas - PA, 68515-000 - pbs" },
   { id: 26, nome: "bastet", endereco: "apartamento - Rio Verde - pbs" },
   { id: 27, nome: "hathor", endereco: "vs10 - pbs" }
 ];
