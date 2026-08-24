@@ -837,74 +837,36 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
     alert("Status dos ativos e observações salvos com sucesso!");
   };
 
-  const obterTecnicoOriginal = () => {
+  const obterDadosCheckInOriginal = () => {
     if (ultimosCheckIns && ultimosCheckIns.length > 0) {
       const checkInPop = ultimosCheckIns.find(item => {
         const nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '').toLowerCase().trim();
         return nomeDoPop === pop.nome.toLowerCase().trim();
       });
-      if (checkInPop && checkInPop.tecnico) {
-        return checkInPop.tecnico;
+      if (checkInPop) {
+        return {
+          tecnico: checkInPop.tecnico || nomeTecnicoLogado,
+          dataHora: checkInPop.dataHora || '',
+          proximaInspecao: checkInPop.proximaInspecao || ''
+        };
       }
     }
-    return nomeTecnicoLogado;
+    const agora = new Date();
+    const dataProx = new Date(agora);
+    dataProx.setDate(dataProx.getDate() + 90);
+    const dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
+    return {
+      tecnico: nomeTecnicoLogado,
+      dataHora: ultimaDataSalva ? `${ultimaDataSalva} (Manual)` : `${String(agora.getDate()).padStart(2, '0')}/${String(agora.getMonth() + 1).padStart(2, '0')}/${agora.getFullYear()}`,
+      proximaInspecao: dataProxStr
+    };
   };
 
   const gerarPdfUltimaInspecao = async () => {
-    let dataInspecaoFinal = '';
-    let dataProxStr = '';
-    const tecnicoOriginal = obterTecnicoOriginal();
-
-    if (tipoData === 'manual' && dataManualInspecao.trim() !== '') {
-      const dataFormatada = dataManualInspecao.trim();
-      dataInspecaoFinal = `${dataFormatada} (Manual)`;
-
-      try {
-        const parts = dataFormatada.split('/');
-        if (parts.length === 3) {
-          const day = parseInt(parts[0], 10);
-          const month = parseInt(parts[1], 10) - 1;
-          const year = parseInt(parts[2], 10);
-          const dataProx = new Date(year, month, day);
-          dataProx.setDate(dataProx.getDate() + 90);
-          dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
-        }
-      } catch (e) {}
-    } else {
-      const obterLocalizacao = () => new Promise((resolve) => {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => resolve(`GPS: ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`),
-            () => resolve("Sem GPS"),
-            { timeout: 10000 }
-          );
-        } else {
-          resolve("Sem GPS");
-        }
-      });
-
-      const coords = await obterLocalizacao();
-      const agora = new Date();
-      const diaStr = String(agora.getDate()).padStart(2, '0');
-      const mesStr = String(agora.getMonth() + 1).padStart(2, '0');
-      const anoStr = agora.getFullYear();
-      const horaStr = String(agora.getHours()).padStart(2, '0');
-      const minStr = String(agora.getMinutes()).padStart(2, '0');
-
-      const dataSimples = `${diaStr}/${mesStr}/${anoStr}`;
-      dataInspecaoFinal = `${dataSimples} ${horaStr}:${minStr} (${coords})`;
-
-      const dataProx = new Date(agora);
-      dataProx.setDate(dataProx.getDate() + 90);
-      dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
-    }
-
-    if (!dataProxStr) {
-      const agora = new Date();
-      const dataProx = new Date(agora);
-      dataProx.setDate(dataProx.getDate() + 90);
-      dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
-    }
+    const dadosOriginais = obterDadosCheckInOriginal();
+    const dataInspecaoFinal = dadosOriginais.dataHora;
+    const dataProxStr = dadosOriginais.proximaInspecao;
+    const tecnicoOriginal = dadosOriginais.tecnico;
 
     const janelaPdf = window.open('', '_blank');
     if (janelaPdf) {
@@ -1391,7 +1353,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
                   <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataUltimaLimpeza: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
                 </div>
                 <p className={vencidoLimp ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoLimp ? undefined : '#4dabf7', margin: '6px 0 8px 0' }}>
-                  Próxima Limpeza ({intervaloAr} meses): {proxLimp || 'Preencha a última limpeza'} {vencidoLimp && `(Exp. há ${resLimp.dias}d)`}
+                  Próxima Limpeza (${intervaloAr} meses): {proxLimp || 'Preencha a última limpeza'} {vencidoLimp && `(Exp. há ${resLimp.dias}d)`}
                 </p>
               </div>
             );
