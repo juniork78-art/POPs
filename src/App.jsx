@@ -557,7 +557,7 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
         <div style={{ position: 'relative', marginBottom: '15px' }}>
           <input type={mostrarSenha ? "text" : "password"} placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} required style={{ width: '100%', padding: '10px', paddingRight: '40px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
           <button type="button" onClick={() => setMostrarSenha(!mostrarSenha)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '14px' }}>
-            {mostrarSenha ? '🙈' : '👁️'}
+            {mostrarSenha ? '🔓' : '🔒'}
           </button>
         </div>
 
@@ -578,13 +578,19 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
             <form onSubmit={handleTrocarSenha}>
               <input type="email" placeholder="Confirme seu E-mail" value={emailTroca} onChange={(e) => setEmailTroca(e.target.value)} required style={{ width: '100%', padding: '8px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
               
-              <input type={mostrarSenhaTroca ? "text" : "password"} placeholder="Senha Antiga" value={senhaAntiga} onChange={(e) => setSenhaAntiga(e.target.value)} required style={{ width: '100%', padding: '8px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-              
-              <input type={mostrarSenhaTroca ? "text" : "password"} placeholder="Senha Nova" value={senhaNova} onChange={(e) => setSenhaNova(e.target.value)} required style={{ width: '100%', padding: '8px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+              <div style={{ position: 'relative', marginBottom: '10px' }}>
+                <input type={mostrarSenhaTroca ? "text" : "password"} placeholder="Senha Antiga" value={senhaAntiga} onChange={(e) => setSenhaAntiga(e.target.value)} required style={{ width: '100%', padding: '8px', paddingRight: '35px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+              </div>
+
+              <div style={{ position: 'relative', marginBottom: '10px' }}>
+                <input type={mostrarSenhaTroca ? "text" : "password"} placeholder="Senha Nova" value={senhaNova} onChange={(e) => setSenhaNova(e.target.value)} required style={{ width: '100%', padding: '8px', paddingRight: '35px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+              </div>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '15px', fontSize: '12px' }}>
                 <input type="checkbox" id="chkMostrarTroca" checked={mostrarSenhaTroca} onChange={() => setMostrarSenhaTroca(!mostrarSenhaTroca)} />
-                <label htmlFor="chkMostrarTroca" style={{ cursor: 'pointer' }}>Mostrar senhas</label>
+                <label htmlFor="chkMostrarTroca" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  {mostrarSenhaTroca ? '🔓' : '🔒'} Mostrar senhas
+                </label>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
@@ -636,7 +642,7 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
             <div style={{ position: 'relative', margin: '15px 0' }}>
               <input type={mostrarSenhaGerenciar ? "text" : "password"} placeholder="Senha do Sistema" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} style={{ width: '100%', padding: '8px', paddingRight: '35px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
               <button type="button" onClick={() => setMostrarSenhaGerenciar(!mostrarSenhaGerenciar)} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '13px' }}>
-                {mostrarSenhaGerenciar ? '🙈' : '👁️'}
+                {mostrarSenhaGerenciar ? '🔓' : '🔒'}
               </button>
             </div>
 
@@ -1226,7 +1232,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
             <label htmlFor="limpCheck">Limpeza Necessária</label>
           </div>
 
-            <textarea placeholder="Anotações Extras" rows="3" value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+          <textarea placeholder="Anotações Extras" rows="3" value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
 
           <button type="button" onClick={finalizarInspecao} className="no-print" style={{ width: '100%', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', cursor: 'pointer' }}>
             Finalizar, Salvar e Gerar Relatório
