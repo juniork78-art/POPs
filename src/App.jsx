@@ -310,20 +310,19 @@ export default function App() {
     await setDoc(doc(db, "historico_global", "checkins"), { lista: novaLista });
   };
 
-  const limparTodosOsCheckIns = async () => {
-    const senhaDigitada = window.prompt('Digite a senha para confirmar a exclusão de TODOS os check-ins:');
+  const apagarCheckInIndividual = async (idxOriginal) => {
+    const senhaDigitada = window.prompt('Digite a senha para confirmar a exclusão deste check-in:');
     if (senhaDigitada !== "@fibralink00") {
       if (senhaDigitada !== null) alert('Senha incorreta! Ação cancelada.');
       return;
     }
-    const confirmacao = window.confirm('TEM CERTEZA? Isso apagará TODOS os registros de check-in do sistema permanentemente.');
-    if (!confirmacao) return;
+    const novaLista = ultimosCheckIns.filter((_, idx) => idx !== idxOriginal);
+    setUltimosCheckIns(novaLista);
     try {
-      await setDoc(doc(db, "historico_global", "checkins"), { lista: [] });
-      setUltimosCheckIns([]);
-      alert('Todos os check-ins foram removidos com sucesso!');
+      await setDoc(doc(db, "historico_global", "checkins"), { lista: novaLista });
+      alert('Check-in removido com sucesso!');
     } catch (e) {
-      alert('Erro ao limpar check-ins: ' + e.message);
+      alert('Erro ao apagar check-in: ' + e.message);
     }
   };
 
@@ -421,10 +420,7 @@ export default function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px', marginBottom: '10px' }}>
                   <h4 style={{ color: theme.textMuted, fontSize: '14px', margin: 0 }}>Últimos Check-ins</h4>
                   {ultimosCheckIns.length > 0 && (
-                    <div style={{ display: 'flex', gap: '5px' }}>
-                      <button onClick={apagarCheckinsAntigos} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '4px 6px', borderRadius: '4px', cursor: 'pointer', fontSize: '9px', fontWeight: 'bold' }}>Apagar Antigos</button>
-                      <button onClick={limparTodosOsCheckIns} style={{ background: '#b02a37', border: 'none', color: '#fff', padding: '4px 6px', borderRadius: '4px', cursor: 'pointer', fontSize: '9px', fontWeight: 'bold' }}>Limpar Tudo</button>
-                    </div>
+                    <button onClick={apagarCheckinsAntigos} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '4px 6px', borderRadius: '4px', cursor: 'pointer', fontSize: '9px', fontWeight: 'bold' }}>Apagar Antigos</button>
                   )}
                 </div>
                 {ultimosCheckIns.length === 0 ? (
@@ -438,8 +434,9 @@ export default function App() {
                     const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
 
                     return (
-                      <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
-                        <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>POP: {nomeDoPop}</p>
+                      <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}`, position: 'relative' }}>
+                        <button onClick={() => apagarCheckInIndividual(idx)} style={{ position: 'absolute', top: '8px', right: '8px', background: 'transparent', border: 'none', color: '#ff4d4d', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer' }}>✕</button>
+                        <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', paddingRight: '15px' }}>POP: {nomeDoPop}</p>
                         <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Técnico: {item.tecnico}</p>
                         <p style={{ margin: '0 0 3px 0', color: theme.textMuted }}>Data: {item.dataHora}</p>
                         <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
@@ -877,7 +874,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
           <title>Relatório de Inspeção - ${pop.nome.toUpperCase()}</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 30px; color: #000; line-height: 1.6; }
-            .header-rel { display: flex; justifyContent: space-between; align-items: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 15px; }
+            .header-rel { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 15px; }
             h1 { color: #0056b3; text-transform: uppercase; margin: 0; font-size: 22px; }
             h2 { font-size: 15px; color: #333; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 3px; text-transform: uppercase; }
             p { margin: 6px 0; }
@@ -1068,7 +1065,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
             <title>Relatório de Inspeção - ${pop.nome.toUpperCase()}</title>
             <style>
               body { font-family: Arial, sans-serif; padding: 30px; color: #000; line-height: 1.6; }
-              .header-rel { display: flex; justifyContent: space-between; align-items: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 15px; }
+              .header-rel { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 15px; }
               h1 { color: #0056b3; text-transform: uppercase; margin: 0; font-size: 22px; }
               h2 { font-size: 15px; color: #333; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 3px; text-transform: uppercase; }
               p { margin: 6px 0; }
