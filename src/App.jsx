@@ -877,7 +877,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
           <title>Relatório de Inspeção - ${pop.nome.toUpperCase()}</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 30px; color: #000; line-height: 1.6; }
-            .header-rel { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 15px; }
+            .header-rel { display: flex; justifyContent: space-between; align-items: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 15px; }
             h1 { color: #0056b3; text-transform: uppercase; margin: 0; font-size: 22px; }
             h2 { font-size: 15px; color: #333; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 3px; text-transform: uppercase; }
             p { margin: 6px 0; }
@@ -1068,7 +1068,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
             <title>Relatório de Inspeção - ${pop.nome.toUpperCase()}</title>
             <style>
               body { font-family: Arial, sans-serif; padding: 30px; color: #000; line-height: 1.6; }
-              .header-rel { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 15px; }
+              .header-rel { display: flex; justifyContent: space-between; align-items: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 15px; }
               h1 { color: #0056b3; text-transform: uppercase; margin: 0; font-size: 22px; }
               h2 { font-size: 15px; color: #333; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 3px; text-transform: uppercase; }
               p { margin: 6px 0; }
@@ -1218,8 +1218,34 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
                 </label>
                 {presente && (
                   <div className="no-print" style={{ display: 'flex', gap: '5px' }}>
-                    <button type="button" onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'OK' })} style={{ background: statusAtivos[ativo] === 'OK' ? '#28a745' : theme.cardBg, border: `1px solid ${theme.border}`, color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}>OK</button>
-                    <button type="button" onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'Incidente' })} style={{ background: statusAtivos[ativo] === 'Incidente' ? '#dc3545' : theme.cardBg, border: `1px solid ${theme.border}`, color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}>Incidente</button>
+                    <button 
+                      type="button" 
+                      onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'OK' })} 
+                      style={{ 
+                        background: statusAtivos[ativo] === 'OK' ? '#28a745' : theme.cardBg, 
+                        border: `1px solid ${theme.border}`, 
+                        color: statusAtivos[ativo] === 'OK' ? '#fff' : theme.textMain, 
+                        padding: '4px 10px', 
+                        borderRadius: '4px', 
+                        cursor: 'pointer' 
+                      }}
+                    >
+                      OK
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'Incidente' })} 
+                      style={{ 
+                        background: statusAtivos[ativo] === 'Incidente' ? '#dc3545' : theme.cardBg, 
+                        border: `1px solid ${theme.border}`, 
+                        color: statusAtivos[ativo] === 'Incidente' ? '#fff' : theme.textMain, 
+                        padding: '4px 10px', 
+                        borderRadius: '4px', 
+                        cursor: 'pointer' 
+                      }}
+                    >
+                      Incidente
+                    </button>
                   </div>
                 )}
               </div>
