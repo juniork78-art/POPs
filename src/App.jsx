@@ -3,7 +3,10 @@ import { auth, db } from './firebase';
 import { 
   signInWithEmailAndPassword, 
   signOut, 
-  onAuthStateChanged 
+  onAuthStateChanged,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword
 } from 'firebase/auth';
 import { 
   collection, 
@@ -498,7 +501,17 @@ export default function App() {
 function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState('');
+
+  const [showTrocarSenhaModal, setShowTrocarSenhaModal] = useState(false);
+  const [emailTroca, setEmailTroca] = useState('');
+  const [senhaAntiga, setSenhaAntiga] = useState('');
+  const [senhaNova, setSenhaNova] = useState('');
+  const [mostrarSenhaTroca, setMostrarSenhaTroca] = useState(false);
+  const [sucessoTroca, setSucessoTroca] = useState('');
+  const [erroTroca, setErroTroca] = useState('');
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setErro('');
@@ -507,19 +520,81 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
       onLoginSucesso(res.user.email);
     } catch (e) { setErro(`Erro: ${e.message}`); }
   };
+
+  const handleTrocarSenha = async (e) => {
+    e.preventDefault();
+    setErroTroca('');
+    setSucessoTroca('');
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, emailTroca, senhaAntiga);
+      const user = userCredential.user;
+      const credential = EmailAuthProvider.credential(user.email, senhaAntiga);
+      await reauthenticateWithCredential(user, credential);
+      await updatePassword(user, senhaNova);
+      setSucessoTroca('Senha alterada com sucesso! Você já pode entrar com a nova senha.');
+      setEmailTroca('');
+      setSenhaAntiga('');
+      setSenhaNova('');
+      await signOut(auth);
+    } catch (e) {
+      setErroTroca(`Erro ao alterar senha: ${e.message}`);
+    }
+  };
+
   return (
     <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px', position: 'relative' }}>
       <button type="button" onClick={setDarkMode} style={{ position: 'absolute', top: '15px', right: '15px', background: theme.cardBg, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
         {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
       </button>
-      <form onSubmit={handleLogin} style={{ background: theme.cardBg, color: theme.textMain, padding: '30px', borderRadius: '8px', width: '340px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
+
+      <form onSubmit={handleLogin} style={{ background: theme.cardBg, color: theme.textMain, padding: '30px', borderRadius: '8px', width: '340px', border: `1px solid ${theme.border}`, textAlign: 'center', boxSizing: 'border-box' }}>
         <img src="/logo.png" alt="Logo Fibralink" style={{ width: '150px', marginBottom: '15px', objectFit: 'contain' }} />
         <h2 style={{ marginBottom: '20px', fontSize: '18px' }}>InfraManager POP</h2>
-        {erro && <p style={{ color: '#ff6b6b', fontSize: '14px' }}>{erro}</p>}
+        {erro && <p style={{ color: '#ff6b6b', fontSize: '13px', marginBottom: '10px' }}>{erro}</p>}
+        
         <input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', padding: '10px', marginBottom: '15px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-        <input type="password" placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} required style={{ width: '100%', padding: '10px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-        <button type="submit" style={{ width: '100%', padding: '12px', background: '#007bff', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}>Entrar</button>
+        
+        <div style={{ position: 'relative', marginBottom: '15px' }}>
+          <input type={mostrarSenha ? "text" : "password"} placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} required style={{ width: '100%', padding: '10px', paddingRight: '40px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+          <button type="button" onClick={() => setMostrarSenha(!mostrarSenha)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '14px' }}>
+            {mostrarSenha ? '🙈' : '👁️'}
+          </button>
+        </div>
+
+        <button type="submit" style={{ width: '100%', padding: '12px', background: '#007bff', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', marginBottom: '15px' }}>Entrar</button>
+        
+        <button type="button" onClick={() => { setShowTrocarSenhaModal(true); setErroTroca(''); setSucessoTroca(''); }} style={{ background: 'transparent', border: 'none', color: '#4dabf7', cursor: 'pointer', fontSize: '12px', textDecoration: 'underline' }}>
+          Esqueceu/Alterar Senha?
+        </button>
       </form>
+
+      {showTrocarSenhaModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px' }}>
+          <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '350px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+            <h3 style={{ marginTop: 0, fontSize: '16px', textAlign: 'center' }}>Alterar Senha</h3>
+            {erroTroca && <p style={{ color: '#ff6b6b', fontSize: '12px', marginBottom: '10px' }}>{erroTroca}</p>}
+            {sucessoTroca && <p style={{ color: '#28a745', fontSize: '12px', marginBottom: '10px' }}>{sucessoTroca}</p>}
+            
+            <form onSubmit={handleTrocarSenha}>
+              <input type="email" placeholder="Confirme seu E-mail" value={emailTroca} onChange={(e) => setEmailTroca(e.target.value)} required style={{ width: '100%', padding: '8px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+              
+              <input type={mostrarSenhaTroca ? "text" : "password"} placeholder="Senha Antiga" value={senhaAntiga} onChange={(e) => setSenhaAntiga(e.target.value)} required style={{ width: '100%', padding: '8px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+              
+              <input type={mostrarSenhaTroca ? "text" : "password"} placeholder="Senha Nova" value={senhaNova} onChange={(e) => setSenhaNova(e.target.value)} required style={{ width: '100%', padding: '8px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '15px', fontSize: '12px' }}>
+                <input type="checkbox" id="chkMostrarTroca" checked={mostrarSenhaTroca} onChange={() => setMostrarSenhaTroca(!mostrarSenhaTroca)} />
+                <label htmlFor="chkMostrarTroca" style={{ cursor: 'pointer' }}>Mostrar senhas</label>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button type="button" onClick={() => setShowTrocarSenhaModal(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer' }}>Cancelar</button>
+                <button type="submit" style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Salvar Nova Senha</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -528,6 +603,7 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
   const [busca, setBusca] = useState('');
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
+  const [mostrarSenhaGerenciar, setMostrarSenhaGerenciar] = useState(false);
   const isPedro = tecnico.toLowerCase().includes('pedro');
   const popsFiltrados = listaPops.filter(p => (isPedro ? p.endereco.toLowerCase().endsWith('- pbs') : true) && (p.nome.toLowerCase().includes(busca.toLowerCase()) || p.endereco.toLowerCase().includes(busca.toLowerCase())));
   return (
@@ -554,9 +630,16 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
       </header>
       {showPasswordDialog && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px' }}>
-          <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '300px', border: `1px solid ${theme.border}` }}>
-            <h3>Senha Necessária</h3>
-            <input type="password" placeholder="Senha do Sistema" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} style={{ width: '100%', padding: '8px', margin: '15px 0', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+          <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '300px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+            <h3 style={{ marginTop: 0 }}>Senha Necessária</h3>
+            
+            <div style={{ position: 'relative', margin: '15px 0' }}>
+              <input type={mostrarSenhaGerenciar ? "text" : "password"} placeholder="Senha do Sistema" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} style={{ width: '100%', padding: '8px', paddingRight: '35px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+              <button type="button" onClick={() => setMostrarSenhaGerenciar(!mostrarSenhaGerenciar)} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '13px' }}>
+                {mostrarSenhaGerenciar ? '🙈' : '👁️'}
+              </button>
+            </div>
+
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               <button onClick={() => setShowPasswordDialog(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer' }}>Cancelar</button>
               <button onClick={() => {
@@ -1143,7 +1226,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
             <label htmlFor="limpCheck">Limpeza Necessária</label>
           </div>
 
-          <textarea placeholder="Anotações Extras" rows="3" value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+            <textarea placeholder="Anotações Extras" rows="3" value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
 
           <button type="button" onClick={finalizarInspecao} className="no-print" style={{ width: '100%', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', cursor: 'pointer' }}>
             Finalizar, Salvar e Gerar Relatório
