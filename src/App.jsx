@@ -335,6 +335,7 @@ export default function App() {
       <TelaInspecao 
         pop={popSelecionado} 
         tecnico={usuarioLogado} 
+        ultimosCheckIns={ultimosCheckIns}
         onBack={() => { setPopSelecionado(null); window.history.back(); }} 
         onCheckInRealizado={async (novoRegistro, forcarCheckin) => {
           let novaLista = [...ultimosCheckIns];
@@ -718,10 +719,10 @@ function TelaGerenciarPops({ listaPops, onBack, theme }) {
   );
 }
 
-function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setDarkMode, theme }) {
+function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizado, darkMode, setDarkMode, theme }) {
   const isDuandys = tecnico.toLowerCase().includes('duandys');
   const cargoLabel = isDuandys ? "Gestor" : "Técnico";
-  const nomeTecnico = tecnico.split('@')[0].replace('.', ' ').toUpperCase();
+  const nomeTecnicoLogado = tecnico.split('@')[0].replace('.', ' ').toUpperCase();
   
   const [tipoData, setTipoData] = useState('atual');
   const [dataManualInspecao, setDataManualInspecao] = useState('');
@@ -836,9 +837,23 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
     alert("Status dos ativos e observações salvos com sucesso!");
   };
 
+  const obterTecnicoOriginal = () => {
+    if (ultimosCheckIns && ultimosCheckIns.length > 0) {
+      const checkInPop = ultimosCheckIns.find(item => {
+        const nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '').toLowerCase().trim();
+        return nomeDoPop === pop.nome.toLowerCase().trim();
+      });
+      if (checkInPop && checkInPop.tecnico) {
+        return checkInPop.tecnico;
+      }
+    }
+    return nomeTecnicoLogado;
+  };
+
   const gerarPdfUltimaInspecao = async () => {
     let dataInspecaoFinal = '';
     let dataProxStr = '';
+    const tecnicoOriginal = obterTecnicoOriginal();
 
     if (tipoData === 'manual' && dataManualInspecao.trim() !== '') {
       const dataFormatada = dataManualInspecao.trim();
@@ -915,7 +930,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
             <img src="/logo.png" alt="Logo" style="width: 120px; object-fit: contain;" />
           </div>
           <p><span class="negrito">Endereço:</span> ${pop.endereco}</p>
-          <p><span class="negrito">${cargoLabel}:</span> ${nomeTecnico}</p>
+          <p><span class="negrito">${cargoLabel}:</span> ${tecnicoOriginal}</p>
           <p><span class="negrito">Data da Inspeção:</span> ${dataInspecaoFinal}</p>
           <p><span class="negrito">Próxima Inspeção Recomendada:</span> ${dataProxStr}</p>
 
@@ -1074,7 +1089,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
         popName: pop.nome,
         popNome: pop.nome,
         dataHora: dataInspecaoFinal,
-        tecnico: nomeTecnico,
+        tecnico: nomeTecnicoLogado,
         proximaInspecao: dataProxStr
       };
 
@@ -1106,7 +1121,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
               <img src="/logo.png" alt="Logo" style="width: 120px; object-fit: contain;" />
             </div>
             <p><span class="negrito">Endereço:</span> ${pop.endereco}</p>
-            <p><span class="negrito">${cargoLabel}:</span> ${nomeTecnico}</p>
+            <p><span class="negrito">${cargoLabel}:</span> ${nomeTecnicoLogado}</p>
             <p><span class="negrito">Data da Inspeção:</span> ${dataInspecaoFinal}</p>
             <p><span class="negrito">Próxima Inspeção Recomendada:</span> ${dataProxStr}</p>
 
@@ -1203,7 +1218,7 @@ function TelaInspecao({ pop, tecnico, onBack, onCheckInRealizado, darkMode, setD
         </div>
         <p style={{ color: theme.textMuted, fontSize: '13px', marginBottom: '20px' }}>{pop.endereco}</p>
 
-        <p style={{ color: theme.textMain, fontSize: '15px', fontWeight: 'bold', marginBottom: '15px' }}>{cargoLabel}: {nomeTecnico}</p>
+        <p style={{ color: theme.textMain, fontSize: '15px', fontWeight: 'bold', marginBottom: '15px' }}>{cargoLabel}: {nomeTecnicoLogado}</p>
         
         <div className="no-print" style={{ marginBottom: '20px', background: theme.cardInner, padding: '12px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '6px' }}>
