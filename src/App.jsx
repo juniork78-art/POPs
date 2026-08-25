@@ -71,29 +71,24 @@ const statusData = (dataStr) => {
   }
 };
 
-// Conversor de Semana/Ano (ex: 39/25) para Objeto Date e descrição por extenso
 const parseDataFabricacaoBateria = (fabStr) => {
   if (!fabStr) return { dataObj: null, textoExato: '' };
   
   const limpo = fabStr.trim();
   
-  // Formato Semana/Ano Ex: 39/25
   if (/^\d{1,2}\/\d{2}$/.test(limpo)) {
     const [semanaStr, anoStr] = limpo.split('/');
     const semana = parseInt(semanaStr, 10);
     const ano = 2000 + parseInt(anoStr, 10);
     
     if (semana >= 1 && semana <= 53) {
-      // Data aproximada do início da semana no ano
       const d = new Date(ano, 0, 1 + (semana - 1) * 7);
-      
       const mesesNomes = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
       const textoExato = `${semana}ª semana de ${ano} (~${d.getDate()} de ${mesesNomes[d.getMonth()]})`;
       return { dataObj: d, textoExato };
     }
   }
   
-  // Formato Tradicional dd/MM/aaaa
   const parts = limpo.split('/');
   if (parts.length === 3) {
     const day = parseInt(parts[0], 10);
@@ -813,6 +808,11 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
 
   const docRef = doc(db, "pops_dados", pop.nome);
 
+  // Link dinâmico do Maps para o POP Limos ou padrão para os demais
+  const linkGoogleMaps = pop.nome.toLowerCase() === 'limos' 
+    ? "https://maps.app.goo.gl/v2b7uLHvRzb5418P8" 
+    : "https://maps.app.goo.gl/RQBieTdyzTPBzUzv8";
+
   useEffect(() => {
     getDoc(docRef).then((snap) => {
       if (snap.exists()) {
@@ -1236,7 +1236,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', margin: 0 }}>Inspeção: {pop.nome}</h2>
             <a 
-              href="https://maps.app.goo.gl/RQBieTdyzTPBzUzv8" 
+              href={linkGoogleMaps} 
               target="_blank" 
               rel="noopener noreferrer" 
               className="no-print"
