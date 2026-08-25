@@ -808,7 +808,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
 
   const docRef = doc(db, "pops_dados", pop.nome);
 
-  // Mapeamento dos links de localização dos POPs fornecidos
+  // Mapeamento contendo apenas os POPs que possuem link de localização ativo
   const mapasPops = {
     "poseidon": "https://maps.app.goo.gl/3qcKmyKjA8q7FXCz7",
     "hermes": "https://maps.app.goo.gl/y51qfZ3aXtRmGnKcA",
@@ -822,7 +822,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
     "limos": "https://maps.app.goo.gl/v2b7uLHvRzb5418P8"
   };
 
-  const linkGoogleMaps = mapasPops[pop.nome.toLowerCase()] || "https://maps.app.goo.gl/RQBieTdyzTPBzUzv8";
+  const linkGoogleMaps = mapasPops[pop.nome.toLowerCase()] || null;
 
   useEffect(() => {
     getDoc(docRef).then((snap) => {
@@ -1246,15 +1246,17 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '15px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', margin: 0 }}>Inspeção: {pop.nome}</h2>
-            <a 
-              href={linkGoogleMaps} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="no-print"
-              style={{ background: '#007bff', color: '#fff', padding: '5px 10px', borderRadius: '4px', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}
-            >
-              📍 Localização
-            </a>
+            {linkGoogleMaps && (
+              <a 
+                href={linkGoogleMaps} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="no-print"
+                style={{ background: '#007bff', color: '#fff', padding: '5px 10px', borderRadius: '4px', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
+                📍 Localização
+              </a>
+            )}
           </div>
           <img src="/logo.png" alt="Logo" style={{ width: '100px', objectFit: 'contain' }} />
         </div>
