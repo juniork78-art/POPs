@@ -207,9 +207,19 @@ export default function App() {
   };
 
   const obterSiglaPop = (nomePop) => {
+    if (!nomePop) return '';
     const popObj = listaPops.find(p => p.nome.toLowerCase() === nomePop.toLowerCase());
     if (popObj && popObj.endereco) {
       const partes = popObj.endereco.split('-');
+      const ultimaParte = partes[partes.length - 1].trim();
+      if (ultimaParte.length <= 5) {
+        return ultimaParte.toUpperCase();
+      }
+    }
+    // Fallback direto caso o POP esteja na lista padrão e o endereço termine com mba/pbs/etc
+    const popPadrao = popsIniciaisPadrao.find(p => p.nome.toLowerCase() === nomePop.toLowerCase());
+    if (popPadrao && popPadrao.endereco) {
+      const partes = popPadrao.endereco.split('-');
       const ultimaParte = partes[partes.length - 1].trim();
       if (ultimaParte.length <= 5) {
         return ultimaParte.toUpperCase();
@@ -540,11 +550,11 @@ export default function App() {
                 </div>
               );
             })}
-          </div>
-        )}
-      </div>
-      <div style={{ flex: 1 }} onClick={() => setDrawerAberto(false)}></div>
+        </div>
+      )}
     </div>
+    <div style={{ flex: 1 }} onClick={() => setDrawerAberto(false)}></div>
+  </div>
   )}
     </div>
   );
@@ -705,8 +715,8 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
                 else { alert('Senha incorreta!'); setPasswordInput(''); }
               }} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>Confirmar</button>
             </div>
-          </div>
         </div>
+      </div>
       )}
       <input type="text" placeholder="Pesquisar POP" value={busca} onChange={(e) => setBusca(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.inputText, marginBottom: '20px', boxSizing: 'border-box' }} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px' }}>
@@ -880,7 +890,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
           };
         }
         setCentraisAr(loadedAr);
-      }
+    }
   });
   }, [pop.nome]);
 
