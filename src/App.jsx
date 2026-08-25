@@ -338,9 +338,11 @@ export default function App() {
             }
           }
           const qtdBancos = data.qtdBancos || 4;
+          const popNomeLower = popNome.toLowerCase();
+          const tipoPadraoGlob = (popNomeLower === 'set' || popNomeLower === 'bastet') ? 'Litio' : 'Chumbo';
           for (let i = 1; i <= qtdBancos; i++) {
             const fab = data[`bat_${i}_fab`] || '';
-            const tipoBat = data[`bat_${i}_tipo`] || ((popNome.toLowerCase() === 'set' || popNome.toLowerCase() === 'bastet') ? 'Litio' : 'Chumbo');
+            const tipoBat = data[`bat_${i}_tipo`] || tipoPadraoGlob;
             if (fab) {
               listaBateriasTemp.push({ popNome, banco: `Banco ${getLetra(i)}`, fabricacao: fab, proximaSubstituicao: calcularProximaSubstituicaoBateria(fab, popNome, tipoBat) });
             }
