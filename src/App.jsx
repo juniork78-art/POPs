@@ -133,7 +133,7 @@ const calcularProximaLimpezaAr = (dataUltimaLimpezaStr, mesesIntervalo) => {
 };
 
 const popsIniciaisPadrao = [
-  { id: 1, nome: "poseidon", endereco: "Folha 16 Quadra 29 Lote 61, Nova Marabá, mba - mba" },
+  { id: 1, nome: "poseidon", endereco: "Folha 16 Quadra 29 Lote 61, Nova Marabá - mba" },
   { id: 2, nome: "hermes", endereco: "br-222, 57 - São Félix - mba" },
   { id: 3, nome: "eros", endereco: "av. Itacaiúnas, 1878 - Cidade Nova - mba" },
   { id: 4, nome: "hades", endereco: "fl 27 q. Especial, s/n - Nova Marabá - disbravá - mba" },
@@ -1171,52 +1171,52 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
         }
       });
 
-      htmlRelatorio += `<h2>Bancos de Baterias</h2>`;
-      Array.from({ length: qtdBancos }, (_, i) => i + 1).forEach(banco => {
-        const bModel = bancosBateria[banco];
-        if (bModel) {
-          const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
-          const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao);
-          const resSub = statusData(proxSub);
-          const vencidoSub = resSub && resSub.status === 'vencido';
+    htmlRelatorio += `<h2>Bancos de Baterias</h2>`;
+    Array.from({ length: qtdBancos }, (_, i) => i + 1).forEach(banco => {
+      const bModel = bancosBateria[banco];
+      if (bModel) {
+        const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
+        const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao);
+        const resSub = statusData(proxSub);
+        const vencidoSub = resSub && resSub.status === 'vencido';
 
-          htmlRelatorio += `
-            <div class="bloco">
-              <span class="negrito">Banco ${getLetra(banco)}</span><br>
-              Data de Fabricação: ${textoExato || 'Não informada'}<br>
-              <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+2 anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
-              Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]
-            </div>
-          `;
-        }
-      });
+        htmlRelatorio += `
+          <div class="bloco">
+            <span class="negrito">Banco ${getLetra(banco)}</span><br>
+            Data de Fabricação: ${textoExato || 'Não informada'}<br>
+            <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+2 anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
+            Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]
+          </div>
+        `;
+      }
+    });
 
-      htmlRelatorio += `<h2>Centrais de Ar Condicionado</h2>`;
-      Array.from({ length: qtdAr }, (_, i) => i + 1).forEach(idx => {
-        const ar = centraisAr[idx];
-        if (ar) {
-          const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
-          const resLimp = statusData(proxLimp);
-          const vencidoLimp = resLimp && resLimp.status === 'vencido';
+    htmlRelatorio += `<h2>Centrais de Ar Condicionado</h2>`;
+    Array.from({ length: qtdAr }, (_, i) => i + 1).forEach(idx => {
+      const ar = centraisAr[idx];
+      if (ar) {
+        const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
+        const resLimp = statusData(proxLimp);
+        const vencidoLimp = resLimp && resLimp.status === 'vencido';
 
-          htmlRelatorio += `
-            <div class="bloco">
-              <span class="negrito">Central ${getLetra(idx)}</span> (${ar.modelo || 'Modelo não informado'} - ${ar.btu || 'BTU não inf.'})<br>
-              Data de Instalação: ${ar.dataInstalacao || 'N/A'}<br>
-              Data da Última Limpeza: ${ar.dataUltimaLimpeza || 'N/A'}<br>
-              <span class="${vencidoLimp ? 'vermelho' : ''}">Próxima Limpeza (${intervaloAr} meses): ${proxLimp || 'N/A'} ${vencidoLimp ? `(Expirado há ${resLimp.dias} dias)` : ''}</span>
-            </div>
-          `;
-        }
-      });
+        htmlRelatorio += `
+          <div class="bloco">
+            <span class="negrito">Central ${getLetra(idx)}</span> (${ar.modelo || 'Modelo não informado'} - ${ar.btu || 'BTU não inf.'})<br>
+            Data de Instalação: ${ar.dataInstalacao || 'N/A'}<br>
+            Data da Última Limpeza: ${ar.dataUltimaLimpeza || 'N/A'}<br>
+            <span class="${vencidoLimp ? 'vermelho' : ''}">Próxima Limpeza (${intervaloAr} meses): ${proxLimp || 'N/A'} ${vencidoLimp ? `(Expirado há ${resLimp.dias} dias)` : ''}</span>
+          </div>
+        `;
+      }
+    });
 
-      htmlRelatorio += `
-        <h2>Observações e Incidentes Gerais</h2>
-        <div class="bloco">
-          <p><span class="negrito">Incidentes Gerais:</span> ${incidentesGerais || 'Nenhum incidente relatado.'}</p>
-          <p><span class="negrito">Limpeza Necessária:</span> <span class="${precisaLimpeza ? 'vermelho' : ''}">${precisaLimpeza ? 'SIM' : 'NÃO'}</span></p>
-          <p><span class="negrito">Anotações Extras:</span> ${anotacoes || 'Nenhuma anotação.'}</p>
-        </div>
+    htmlRelatorio += `
+      <h2>Observações e Incidentes Gerais</h2>
+      <div class="bloco">
+        <p><span class="negrito">Incidentes Gerais:</span> ${incidentesGerais || 'Nenhum incidente relatado.'}</p>
+        <p><span class="negrito">Limpeza Necessária:</span> <span class="${precisaLimpeza ? 'vermelho' : ''}">${precisaLimpeza ? 'SIM' : 'NÃO'}</span></p>
+        <p><span class="negrito">Anotações Extras:</span> ${anotacoes || 'Nenhuma anotação.'}</p>
+      </div>
     </body></html>`;
 
     janelaPdf.document.write(htmlRelatorio);
