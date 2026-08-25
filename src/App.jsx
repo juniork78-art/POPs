@@ -71,13 +71,50 @@ const statusData = (dataStr) => {
   }
 };
 
+// Conversor de Semana/Ano (ex: 39/25) para Objeto Date e descrição por extenso
+const parseDataFabricacaoBateria = (fabStr) => {
+  if (!fabStr) return { dataObj: null, textoExato: '' };
+  
+  const limpo = fabStr.trim();
+  
+  // Formato Semana/Ano Ex: 39/25
+  if (/^\d{1,2}\/\d{2}$/.test(limpo)) {
+    const [semanaStr, anoStr] = limpo.split('/');
+    const semana = parseInt(semanaStr, 10);
+    const ano = 2000 + parseInt(anoStr, 10);
+    
+    if (semana >= 1 && semana <= 53) {
+      // Data aproximada do início da semana no ano
+      const d = new Date(ano, 0, 1 + (semana - 1) * 7);
+      
+      const mesesNomes = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+      const textoExato = `${semana}ª semana de ${ano} (~${d.getDate()} de ${mesesNomes[d.getMonth()]})`;
+      return { dataObj: d, textoExato };
+    }
+  }
+  
+  // Formato Tradicional dd/MM/aaaa
+  const parts = limpo.split('/');
+  if (parts.length === 3) {
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const year = parseInt(parts[2], 10);
+    const d = new Date(year, month, day);
+    if (!isNaN(d.getTime())) {
+      return { dataObj: d, textoExato: limpo };
+    }
+  }
+
+  return { dataObj: null, textoExato: limpo };
+};
+
 const calcularProximaSubstituicaoBateria = (dataFabricacaoStr) => {
   try {
-    const parts = dataFabricacaoStr.split('/');
-    if (parts.length === 3) {
-      const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1;
-      const year = parseInt(parts[2], 10) + 2;
+    const { dataObj } = parseDataFabricacaoBateria(dataFabricacaoStr);
+    if (dataObj) {
+      const year = dataObj.getFullYear() + 2;
+      const month = dataObj.getMonth();
+      const day = dataObj.getDate();
       const date = new Date(year, month, day);
       return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
     }
@@ -934,6 +971,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
       Array.from({ length: qtdBancos }, (_, i) => i + 1).forEach(banco => {
         const bModel = bancosBateria[banco];
         if (bModel) {
+          const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
           const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao);
           const resSub = statusData(proxSub);
           const vencidoSub = resSub && resSub.status === 'vencido';
@@ -941,7 +979,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
           htmlRelatorio += `
             <div class="bloco">
               <span class="negrito">Banco ${getLetra(banco)}</span><br>
-              Data de Fabricação: ${bModel.dataFabricacao || 'Não informada'}<br>
+              Data de Fabricação: ${textoExato || 'Não informada'}<br>
               <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+2 anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
               Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]
             </div>
@@ -1125,6 +1163,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
         Array.from({ length: qtdBancos }, (_, i) => i + 1).forEach(banco => {
           const bModel = bancosBateria[banco];
           if (bModel) {
+            const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
             const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao);
             const resSub = statusData(proxSub);
             const vencidoSub = resSub && resSub.status === 'vencido';
@@ -1132,7 +1171,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
             htmlRelatorio += `
               <div class="bloco">
                 <span class="negrito">Banco ${getLetra(banco)}</span><br>
-                Data de Fabricação: ${bModel.dataFabricacao || 'Não informada'}<br>
+                Data de Fabricação: ${textoExato || 'Não informada'}<br>
                 <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+2 anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
                 Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]
               </div>
@@ -1288,6 +1327,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
           </div>
           {Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
             const bModel = bancosBateria[banco] || { dataFabricacao: '', voltagens: ['', '', '', ''], salvo: false };
+            const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
             const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao);
             const resSub = statusData(proxSub);
             const vencidoSub = resSub && resSub.status === 'vencido';
@@ -1313,13 +1353,19 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
                   </button>
                 </div>
 
-                <div style={{ marginBottom: '8px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '3px' }}>Data de Fabricação (dd/MM/aaaa)</label>
-                  <input type="text" disabled={bModel.salvo} placeholder="dd/MM/aaaa" value={bModel.dataFabricacao} onChange={(e) => {
+                <div style={{ marginBottom: '4px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '3px' }}>Data de Fabricação (Ex: 39/25 ou dd/MM/aaaa)</label>
+                  <input type="text" disabled={bModel.salvo} placeholder="ex: 39/25 ou 05/08/2024" value={bModel.dataFabricacao} onChange={(e) => {
                     const novoVal = e.target.value;
                     setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, dataFabricacao: novoVal } });
                   }} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
                 </div>
+
+                {textoExato && (
+                  <p style={{ fontSize: '11px', color: '#28a745', margin: '0 0 4px 0', fontWeight: 'bold' }}>
+                    Convertido: {textoExato}
+                  </p>
+                )}
                 
                 <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoSub ? undefined : '#4dabf7', margin: '0 0 8px 0' }}>
                   Próxima Substituição (+2 anos): {proxSub || 'Preencha a data'} {vencidoSub && `(Exp. há ${resSub.dias}d)`}
