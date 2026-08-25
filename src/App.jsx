@@ -808,10 +808,21 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
 
   const docRef = doc(db, "pops_dados", pop.nome);
 
-  // Link dinâmico do Maps para o POP Limos ou padrão para os demais
-  const linkGoogleMaps = pop.nome.toLowerCase() === 'limos' 
-    ? "https://maps.app.goo.gl/v2b7uLHvRzb5418P8" 
-    : "https://maps.app.goo.gl/RQBieTdyzTPBzUzv8";
+  // Mapeamento dos links de localização dos POPs fornecidos
+  const mapasPops = {
+    "poseidon": "https://maps.app.goo.gl/3qcKmyKjA8q7FXCz7",
+    "hermes": "https://maps.app.goo.gl/y51qfZ3aXtRmGnKcA",
+    "eros": "https://maps.app.goo.gl/DR6VTgdewVinh5Y59",
+    "hades": "https://maps.app.goo.gl/Qv9rcGZu6D2J8NoR8",
+    "noto": "https://maps.app.goo.gl/Abi5aW5cNdzXL3J37",
+    "afrodite": "https://maps.app.goo.gl/JD18uXYmsokA7Rq4A",
+    "hemera": "https://maps.app.goo.gl/f8wGghuLgzxoiwTA6",
+    "cratos": "https://maps.app.goo.gl/RZbZszmk6z5XNBi96",
+    "helius": "https://maps.app.goo.gl/3VW9MpLCKunzaHko8",
+    "limos": "https://maps.app.goo.gl/v2b7uLHvRzb5418P8"
+  };
+
+  const linkGoogleMaps = mapasPops[pop.nome.toLowerCase()] || "https://maps.app.goo.gl/RQBieTdyzTPBzUzv8";
 
   useEffect(() => {
     getDoc(docRef).then((snap) => {
@@ -1140,7 +1151,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
               <img src="/logo.png" alt="Logo" style="width: 120px; object-fit: contain;" />
             </div>
             <p><span class="negrito">Endereço:</span> ${pop.endereco}</p>
-            <p><span class="negrito">${cargoLabel}:</span> ${nomeTecnicoLogado}</p>
+            <p><span class="negrito">${cargoLabel}:</span> ${tecnicoOriginal}</p>
             <p><span class="negrito">Data da Inspeção:</span> ${dataInspecaoFinal}</p>
             <p><span class="negrito">Próxima Inspeção Recomendada:</span> ${dataProxStr}</p>
 
