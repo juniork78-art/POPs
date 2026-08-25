@@ -492,60 +492,60 @@ export default function App() {
                         <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
                           Próx. Insp: {item.proximaInspecao} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
                         </p>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            ) : abaDrawer === 'limpezas' ? (
-              <div>
-                <h4 style={{ color: theme.textMuted, fontSize: '14px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px' }}>Cronograma Limpezas de Ar</h4>
-                {cronogramaLimpezas.map((item, idx) => {
-                  if (!popPertenceAoUsuario(item.popNome)) return null;
-                  const sigla = obterSiglaPop(item.popNome);
-                  const nomeExibicao = sigla ? `${item.popNome.toUpperCase()} - ${sigla}` : item.popNome.toUpperCase();
-                  const res = statusData(item.proximaLimpeza);
-                  const vencido = res && res.status === 'vencido';
-                  const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
-
-                  return (
-                    <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
-                      <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>{nomeExibicao} ({item.central})</p>
-                      <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Última: {item.ultimaLimpeza}</p>
-                      <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
-                        Próxima: {item.proximaLimpeza} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
-                      </p>
                     </div>
                   );
-                })}
-              </div>
-            ) : (
-              <div>
-                <h4 style={{ color: theme.textMuted, fontSize: '14px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px' }}>Cronograma de Baterias</h4>
-                {cronogramaBaterias.map((item, idx) => {
-                  if (!popPertenceAoUsuario(item.popNome)) return null;
-                  const sigla = obterSiglaPop(item.popNome);
-                  const nomeExibicao = sigla ? `${item.popNome.toUpperCase()} - ${sigla}` : item.popNome.toUpperCase();
-                  const res = statusData(item.proximaSubstituicao);
-                  const vencido = res && res.status === 'vencido';
-                  const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
+                })
+              )}
+            </div>
+          ) : abaDrawer === 'limpezas' ? (
+            <div>
+              <h4 style={{ color: theme.textMuted, fontSize: '14px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px' }}>Cronograma Limpezas de Ar</h4>
+              {cronogramaLimpezas.map((item, idx) => {
+                if (!popPertenceAoUsuario(item.popNome)) return null;
+                const sigla = obterSiglaPop(item.popNome);
+                const nomeExibicao = sigla ? `${item.popNome.toUpperCase()} - ${sigla}` : item.popNome.toUpperCase();
+                const res = statusData(item.proximaLimpeza);
+                const vencido = res && res.status === 'vencido';
+                const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
 
-                  return (
-                    <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
-                      <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>{nomeExibicao} ({item.banco})</p>
-                      <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Fabricação: {item.fabricacao}</p>
-                      <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
-                        Troca: {item.proximaSubstituicao} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                return (
+                  <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
+                    <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>{nomeExibicao} ({item.central})</p>
+                    <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Última: {item.ultimaLimpeza}</p>
+                    <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
+                      Próxima: {item.proximaLimpeza} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div>
+              <h4 style={{ color: theme.textMuted, fontSize: '14px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px' }}>Cronograma de Baterias</h4>
+              {cronogramaBaterias.map((item, idx) => {
+                if (!popPertenceAoUsuario(item.popNome)) return null;
+                const sigla = obterSiglaPop(item.popNome);
+                const nomeExibicao = sigla ? `${item.popNome.toUpperCase()} - ${sigla}` : item.popNome.toUpperCase();
+                const res = statusData(item.proximaSubstituicao);
+                const vencido = res && res.status === 'vencido';
+                const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
+
+                return (
+                  <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
+                    <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>{nomeExibicao} ({item.banco})</p>
+                    <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Fabricação: {item.fabricacao}</p>
+                    <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
+                      Troca: {item.proximaSubstituicao} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
+                    </p>
+                </div>
+              );
+            })}
           </div>
-          <div style={{ flex: 1 }} onClick={() => setDrawerAberto(false)}></div>
-        </div>
-      )}
+        )}
+      </div>
+      <div style={{ flex: 1 }} onClick={() => setDrawerAberto(false)}></div>
+    </div>
+  )}
     </div>
   );
 }
@@ -650,10 +650,10 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
                 <button type="submit" style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Salvar Nova Senha</button>
               </div>
             </form>
-          </div>
         </div>
-      )}
-    </div>
+      </div>
+    )}
+  </div>
   );
 }
 
@@ -818,7 +818,8 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
     "hemera": "https://maps.app.goo.gl/f8wGghuLgzxoiwTA6",
     "cratos": "https://maps.app.goo.gl/RZbZszmk6z5XNBi96",
     "helius": "https://maps.app.goo.gl/3VW9MpLCKunzaHko8",
-    "limos": "https://maps.app.goo.gl/v2b7uLHvRzb5418P8"
+    "limos": "https://maps.app.goo.gl/v2b7uLHvRzb5418P8",
+    "fanes": "https://maps.app.goo.gl/RQBieTdyzTPBzUzv8"
   };
 
   const linkGoogleMaps = mapasPops[pop.nome.toLowerCase()] || null;
@@ -880,59 +881,252 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
         }
         setCentraisAr(loadedAr);
       }
-    });
+  });
   }, [pop.nome]);
 
   const salvarNoFirebase = async (dadosNovos) => {
-    try {
-      await setDoc(docRef, dadosNovos, { merge: true });
-    } catch (e) {
-      console.error("Erro ao salvar:", e);
-    }
+  try {
+    await setDoc(docRef, dadosNovos, { merge: true });
+  } catch (e) {
+    console.error("Erro ao salvar:", e);
+  }
   };
 
   const salvarStatusAtivosFirebase = async () => {
+  await salvarNoFirebase({
+    statusAtivos,
+    ativosPresentes,
+    detalhesIncidentes,
+    incidentesGerais,
+    precisaLimpeza,
+    anotacoes
+  });
+  alert("Status dos ativos e observações salvos com sucesso!");
+  };
+
+  const obterDadosCheckInOriginal = () => {
+  if (ultimosCheckIns && ultimosCheckIns.length > 0) {
+    const checkInPop = ultimosCheckIns.find(item => {
+      const nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '').toLowerCase().trim();
+      return nomeDoPop === pop.nome.toLowerCase().trim();
+    });
+    if (checkInPop) {
+      return {
+        tecnico: checkInPop.tecnico || nomeTecnicoLogado,
+        dataHora: checkInPop.dataHora || '',
+        proximaInspecao: checkInPop.proximaInspecao || ''
+      };
+    }
+  }
+  const agora = new Date();
+  const dataProx = new Date(agora);
+  dataProx.setDate(dataProx.getDate() + 90);
+  const dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
+  return {
+    tecnico: nomeTecnicoLogado,
+    dataHora: ultimaDataSalva ? `${ultimaDataSalva} (Manual)` : `${String(agora.getDate()).padStart(2, '0')}/${String(agora.getMonth() + 1).padStart(2, '0')}/${agora.getFullYear()}`,
+    proximaInspecao: dataProxStr
+  };
+  };
+
+  const gerarPdfUltimaInspecao = async () => {
+  const dadosOriginais = obterDadosCheckInOriginal();
+  const dataInspecaoFinal = dadosOriginais.dataHora;
+  const dataProxStr = dadosOriginais.proximaInspecao;
+  const tecnicoOriginal = dadosOriginais.tecnico;
+
+  const janelaPdf = window.open('', '_blank');
+  if (janelaPdf) {
+    let htmlRelatorio = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Relatório de Inspeção - ${pop.nome.toUpperCase()}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 30px; color: #000; line-height: 1.6; }
+          .header-rel { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 15px; }
+          h1 { color: #0056b3; text-transform: uppercase; margin: 0; font-size: 22px; }
+          h2 { font-size: 15px; color: #333; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 3px; text-transform: uppercase; }
+          p { margin: 6px 0; }
+          .negrito { font-weight: bold; }
+          .vermelho { color: #d9534f; font-weight: bold; }
+          .bloco { margin-bottom: 12px; background: #f9f9f9; padding: 10px 15px; border-left: 4px solid #0056b3; border-radius: 4px; }
+        </style>
+      </head>
+      <body>
+        <div class="header-rel">
+          <h1>Relatório de Inspeção - POP: ${pop.nome.toUpperCase()}</h1>
+          <img src="/logo.png" alt="Logo" style="width: 120px; object-fit: contain;" />
+        </div>
+        <p><span class="negrito">Endereço:</span> ${pop.endereco}</p>
+        <p><span class="negrito">${cargoLabel}:</span> ${tecnicoOriginal}</p>
+        <p><span class="negrito">Data da Inspeção:</span> ${dataInspecaoFinal}</p>
+        <p><span class="negrito">Próxima Inspeção Recomendada:</span> ${dataProxStr}</p>
+
+        <h2>Status dos Ativos no POP</h2>
+    `;
+
+    Object.keys(statusAtivos).forEach(ativo => {
+      if (ativosPresentes[ativo]) {
+        const st = statusAtivos[ativo];
+        const det = detalhesIncidentes[ativo];
+        htmlRelatorio += `<div class="bloco"><span class="negrito">${ativo}:</span> <span style="color: ${st === 'OK' ? '#28a745' : '#d9534f'}; font-weight: bold;">${st}</span>`;
+        if (st === 'Incidente' && det) {
+          htmlRelatorio += `<br><span class="vermelho">Incidente Relatado: ${det}</span>`;
+        }
+        htmlRelatorio += `</div>`;
+      }
+    });
+
+    htmlRelatorio += `<h2>Bancos de Baterias</h2>`;
+    Array.from({ length: qtdBancos }, (_, i) => i + 1).forEach(banco => {
+      const bModel = bancosBateria[banco];
+      if (bModel) {
+        const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
+        const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao);
+        const resSub = statusData(proxSub);
+        const vencidoSub = resSub && resSub.status === 'vencido';
+
+        htmlRelatorio += `
+          <div class="bloco">
+            <span class="negrito">Banco ${getLetra(banco)}</span><br>
+            Data de Fabricação: ${textoExato || 'Não informada'}<br>
+            <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+2 anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
+            Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]
+          </div>
+        `;
+      }
+    });
+
+    htmlRelatorio += `<h2>Centrais de Ar Condicionado</h2>`;
+    Array.from({ length: qtdAr }, (_, i) => i + 1).forEach(idx => {
+      const ar = centraisAr[idx];
+      if (ar) {
+        const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
+        const resLimp = statusData(proxLimp);
+        const vencidoLimp = resLimp && resLimp.status === 'vencido';
+
+        htmlRelatorio += `
+          <div class="bloco">
+            <span class="negrito">Central ${getLetra(idx)}</span> (${ar.modelo || 'Modelo não informado'} - ${ar.btu || 'BTU não inf.'})<br>
+            Data de Instalação: ${ar.dataInstalacao || 'N/A'}<br>
+            Data da Última Limpeza: ${ar.dataUltimaLimpeza || 'N/A'}<br>
+            <span class="${vencidoLimp ? 'vermelho' : ''}">Próxima Limpeza (${intervaloAr} meses): ${proxLimp || 'N/A'} ${vencidoLimp ? `(Expirado há ${resLimp.dias} dias)` : ''}</span>
+          </div>
+        `;
+      }
+    });
+
+    htmlRelatorio += `
+      <h2>Observações e Incidentes Gerais</h2>
+      <div class="bloco">
+        <p><span class="negrito">Incidentes Gerais:</span> ${incidentesGerais || 'Nenhum incidente relatado.'}</p>
+        <p><span class="negrito">Limpeza Necessária:</span> <span class="${precisaLimpeza ? 'vermelho' : ''}">${precisaLimpeza ? 'SIM' : 'NÃO'}</span></p>
+        <p><span class="negrito">Anotações Extras:</span> ${anotacoes || 'Nenhuma anotação.'}</p>
+      </div>
+    </body></html>`;
+
+    janelaPdf.document.write(htmlRelatorio);
+    janelaPdf.document.close();
+    janelaPdf.focus();
+    setTimeout(() => {
+      janelaPdf.print();
+    }, 600);
+  }
+  };
+
+  const finalizarInspecao = async () => {
+  let dataInspecaoFinal = '';
+  let dataProxStr = '';
+  let forcarCheckin = false;
+  let dataParaSalvar = '';
+  const tecnicoOriginal = nomeTecnicoLogado;
+
+  if (tipoData === 'manual' && dataManualInspecao.trim() !== '') {
+    const dataFormatada = dataManualInspecao.trim();
+    dataInspecaoFinal = `${dataFormatada} (Manual)`;
+    dataParaSalvar = dataFormatada;
+    
+    if (dataFormatada !== ultimaDataSalva) {
+      forcarCheckin = true;
+    }
+
+    try {
+      const parts = dataFormatada.split('/');
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parseInt(parts[2], 10);
+        const dataProx = new Date(year, month, day);
+        dataProx.setDate(dataProx.getDate() + 90);
+        dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
+      }
+    } catch (e) {}
+  } else {
+    forcarCheckin = true;
+    const obterLocalizacao = () => new Promise((resolve) => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve(`GPS: ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`),
+          () => resolve("Sem GPS"),
+          { timeout: 10000 }
+        );
+      } else {
+        resolve("Sem GPS");
+      }
+    });
+
+    const coords = await obterLocalizacao();
+    const agora = new Date();
+    const diaStr = String(agora.getDate()).padStart(2, '0');
+    const mesStr = String(agora.getMonth() + 1).padStart(2, '0');
+    const anoStr = agora.getFullYear();
+    const horaStr = String(agora.getHours()).padStart(2, '0');
+    const minStr = String(agora.getMinutes()).padStart(2, '0');
+
+    const dataSimples = `${diaStr}/${mesStr}/${anoStr}`;
+    dataParaSalvar = dataSimples;
+    dataInspecaoFinal = `${dataSimples} ${horaStr}:${minStr} (${coords})`;
+
+    const dataProx = new Date(agora);
+    dataProx.setDate(dataProx.getDate() + 90);
+    dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
+  }
+
+  if (!dataProxStr) {
+    const agora = new Date();
+    const dataProx = new Date(agora);
+    dataProx.setDate(dataProx.getDate() + 90);
+    dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
+  }
+
+  try {
     await salvarNoFirebase({
       statusAtivos,
       ativosPresentes,
       detalhesIncidentes,
       incidentesGerais,
       precisaLimpeza,
-      anotacoes
+      anotacoes,
+      ultimaDataInspecao: dataParaSalvar
     });
-    alert("Status dos ativos e observações salvos com sucesso!");
-  };
 
-  const obterDadosCheckInOriginal = () => {
-    if (ultimosCheckIns && ultimosCheckIns.length > 0) {
-      const checkInPop = ultimosCheckIns.find(item => {
-        const nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '').toLowerCase().trim();
-        return nomeDoPop === pop.nome.toLowerCase().trim();
-      });
-      if (checkInPop) {
-        return {
-          tecnico: checkInPop.tecnico || nomeTecnicoLogado,
-          dataHora: checkInPop.dataHora || '',
-          proximaInspecao: checkInPop.proximaInspecao || ''
-        };
-      }
-    }
-    const agora = new Date();
-    const dataProx = new Date(agora);
-    dataProx.setDate(dataProx.getDate() + 90);
-    const dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
-    return {
-      tecnico: nomeTecnicoLogado,
-      dataHora: ultimaDataSalva ? `${ultimaDataSalva} (Manual)` : `${String(agora.getDate()).padStart(2, '0')}/${String(agora.getMonth() + 1).padStart(2, '0')}/${agora.getFullYear()}`,
+    setDataManualInspecao(dataParaSalvar);
+    setUltimaDataSalva(dataParaSalvar);
+    setTipoData('manual');
+
+    const novoRegistro = {
+      pop: pop.nome,
+      popName: pop.nome,
+      popNome: pop.nome,
+      dataHora: dataInspecaoFinal,
+      tecnico: tecnicoOriginal,
       proximaInspecao: dataProxStr
     };
-  };
 
-  const gerarPdfUltimaInspecao = async () => {
-    const dadosOriginais = obterDadosCheckInOriginal();
-    const dataInspecaoFinal = dadosOriginais.dataHora;
-    const dataProxStr = dadosOriginais.proximaInspecao;
-    const tecnicoOriginal = dadosOriginais.tecnico;
+    await onCheckInRealizado(novoRegistro, forcarCheckin);
+
+    alert("Check-in e dados de inspeção salvos com sucesso!");
 
     const janelaPdf = window.open('', '_blank');
     if (janelaPdf) {
@@ -1032,466 +1226,273 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
         janelaPdf.print();
       }, 600);
     }
-  };
 
-  const finalizarInspecao = async () => {
-    let dataInspecaoFinal = '';
-    let dataProxStr = '';
-    let forcarCheckin = false;
-    let dataParaSalvar = '';
-    const tecnicoOriginal = nomeTecnicoLogado;
+    onBack();
 
-    if (tipoData === 'manual' && dataManualInspecao.trim() !== '') {
-      const dataFormatada = dataManualInspecao.trim();
-      dataInspecaoFinal = `${dataFormatada} (Manual)`;
-      dataParaSalvar = dataFormatada;
-      
-      if (dataFormatada !== ultimaDataSalva) {
-        forcarCheckin = true;
-      }
-
-      try {
-        const parts = dataFormatada.split('/');
-        if (parts.length === 3) {
-          const day = parseInt(parts[0], 10);
-          const month = parseInt(parts[1], 10) - 1;
-          const year = parseInt(parts[2], 10);
-          const dataProx = new Date(year, month, day);
-          dataProx.setDate(dataProx.getDate() + 90);
-          dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
-        }
-      } catch (e) {}
-    } else {
-      forcarCheckin = true;
-      const obterLocalizacao = () => new Promise((resolve) => {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => resolve(`GPS: ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`),
-            () => resolve("Sem GPS"),
-            { timeout: 10000 }
-          );
-        } else {
-          resolve("Sem GPS");
-        }
-      });
-
-      const coords = await obterLocalizacao();
-      const agora = new Date();
-      const diaStr = String(agora.getDate()).padStart(2, '0');
-      const mesStr = String(agora.getMonth() + 1).padStart(2, '0');
-      const anoStr = agora.getFullYear();
-      const horaStr = String(agora.getHours()).padStart(2, '0');
-      const minStr = String(agora.getMinutes()).padStart(2, '0');
-
-      const dataSimples = `${diaStr}/${mesStr}/${anoStr}`;
-      dataParaSalvar = dataSimples;
-      dataInspecaoFinal = `${dataSimples} ${horaStr}:${minStr} (${coords})`;
-
-      const dataProx = new Date(agora);
-      dataProx.setDate(dataProx.getDate() + 90);
-      dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
-    }
-
-    if (!dataProxStr) {
-      const agora = new Date();
-      const dataProx = new Date(agora);
-      dataProx.setDate(dataProx.getDate() + 90);
-      dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
-    }
-
-    try {
-      await salvarNoFirebase({
-        statusAtivos,
-        ativosPresentes,
-        detalhesIncidentes,
-        incidentesGerais,
-        precisaLimpeza,
-        anotacoes,
-        ultimaDataInspecao: dataParaSalvar
-      });
-
-      setDataManualInspecao(dataParaSalvar);
-      setUltimaDataSalva(dataParaSalvar);
-      setTipoData('manual');
-
-      const novoRegistro = {
-        pop: pop.nome,
-        popName: pop.nome,
-        popNome: pop.nome,
-        dataHora: dataInspecaoFinal,
-        tecnico: tecnicoOriginal,
-        proximaInspecao: dataProxStr
-      };
-
-      await onCheckInRealizado(novoRegistro, forcarCheckin);
-
-      alert("Check-in e dados de inspeção salvos com sucesso!");
-
-      const janelaPdf = window.open('', '_blank');
-      if (janelaPdf) {
-        let htmlRelatorio = `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Relatório de Inspeção - ${pop.nome.toUpperCase()}</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 30px; color: #000; line-height: 1.6; }
-              .header-rel { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 15px; }
-              h1 { color: #0056b3; text-transform: uppercase; margin: 0; font-size: 22px; }
-              h2 { font-size: 15px; color: #333; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 3px; text-transform: uppercase; }
-              p { margin: 6px 0; }
-              .negrito { font-weight: bold; }
-              .vermelho { color: #d9534f; font-weight: bold; }
-              .bloco { margin-bottom: 12px; background: #f9f9f9; padding: 10px 15px; border-left: 4px solid #0056b3; border-radius: 4px; }
-            </style>
-          </head>
-          <body>
-            <div class="header-rel">
-              <h1>Relatório de Inspeção - POP: ${pop.nome.toUpperCase()}</h1>
-              <img src="/logo.png" alt="Logo" style="width: 120px; object-fit: contain;" />
-            </div>
-            <p><span class="negrito">Endereço:</span> ${pop.endereco}</p>
-            <p><span class="negrito">${cargoLabel}:</span> ${tecnicoOriginal}</p>
-            <p><span class="negrito">Data da Inspeção:</span> ${dataInspecaoFinal}</p>
-            <p><span class="negrito">Próxima Inspeção Recomendada:</span> ${dataProxStr}</p>
-
-            <h2>Status dos Ativos no POP</h2>
-        `;
-
-        Object.keys(statusAtivos).forEach(ativo => {
-          if (ativosPresentes[ativo]) {
-            const st = statusAtivos[ativo];
-            const det = detalhesIncidentes[ativo];
-            htmlRelatorio += `<div class="bloco"><span class="negrito">${ativo}:</span> <span style="color: ${st === 'OK' ? '#28a745' : '#d9534f'}; font-weight: bold;">${st}</span>`;
-            if (st === 'Incidente' && det) {
-              htmlRelatorio += `<br><span class="vermelho">Incidente Relatado: ${det}</span>`;
-            }
-            htmlRelatorio += `</div>`;
-          }
-        });
-
-        htmlRelatorio += `<h2>Bancos de Baterias</h2>`;
-        Array.from({ length: qtdBancos }, (_, i) => i + 1).forEach(banco => {
-          const bModel = bancosBateria[banco];
-          if (bModel) {
-            const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
-            const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao);
-            const resSub = statusData(proxSub);
-            const vencidoSub = resSub && resSub.status === 'vencido';
-
-            htmlRelatorio += `
-              <div class="bloco">
-                <span class="negrito">Banco ${getLetra(banco)}</span><br>
-                Data de Fabricação: ${textoExato || 'Não informada'}<br>
-                <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+2 anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
-                Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]
-              </div>
-            `;
-          }
-        });
-
-        htmlRelatorio += `<h2>Centrais de Ar Condicionado</h2>`;
-        Array.from({ length: qtdAr }, (_, i) => i + 1).forEach(idx => {
-          const ar = centraisAr[idx];
-          if (ar) {
-            const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
-            const resLimp = statusData(proxLimp);
-            const vencidoLimp = resLimp && resLimp.status === 'vencido';
-
-            htmlRelatorio += `
-              <div class="bloco">
-                <span class="negrito">Central ${getLetra(idx)}</span> (${ar.modelo || 'Modelo não informado'} - ${ar.btu || 'BTU não inf.'})<br>
-                Data de Instalação: ${ar.dataInstalacao || 'N/A'}<br>
-                Data da Última Limpeza: ${ar.dataUltimaLimpeza || 'N/A'}<br>
-                <span class="${vencidoLimp ? 'vermelho' : ''}">Próxima Limpeza (${intervaloAr} meses): ${proxLimp || 'N/A'} ${vencidoLimp ? `(Expirado há ${resLimp.dias} dias)` : ''}</span>
-              </div>
-            `;
-          }
-        });
-
-        htmlRelatorio += `
-          <h2>Observações e Incidentes Gerais</h2>
-          <div class="bloco">
-            <p><span class="negrito">Incidentes Gerais:</span> ${incidentesGerais || 'Nenhum incidente relatado.'}</p>
-            <p><span class="negrito">Limpeza Necessária:</span> <span class="${precisaLimpeza ? 'vermelho' : ''}">${precisaLimpeza ? 'SIM' : 'NÃO'}</span></p>
-            <p><span class="negrito">Anotações Extras:</span> ${anotacoes || 'Nenhuma anotação.'}</p>
-          </div>
-        </body></html>`;
-
-        janelaPdf.document.write(htmlRelatorio);
-        janelaPdf.document.close();
-        janelaPdf.focus();
-        setTimeout(() => {
-          janelaPdf.print();
-        }, 600);
-      }
-
-      onBack();
-
-    } catch (error) {
-      alert("Erro ao registrar o check-in: " + error.message);
-    }
+  } catch (error) {
+    alert("Erro ao registrar o check-in: " + error.message);
+  }
   };
 
   return (
-    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif', maxWidth: '750px', margin: '0 auto', boxSizing: 'border-box' }}>
-      <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
-        <button type="button" onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>← Voltar</button>
-        <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
-          {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
-        </button>
-      </div>
-      
-      <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '15px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', margin: 0 }}>Inspeção: {pop.nome}</h2>
-            {linkGoogleMaps && (
-              <a 
-                href={linkGoogleMaps} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="no-print"
-                style={{ background: '#007bff', color: '#fff', padding: '5px 10px', borderRadius: '4px', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}
-              >
-                📍 Localização
-              </a>
-            )}
-          </div>
-          <img src="/logo.png" alt="Logo" style={{ width: '100px', objectFit: 'contain' }} />
-        </div>
-        <p style={{ color: theme.textMuted, fontSize: '13px', marginBottom: '20px' }}>{pop.endereco}</p>
-
-        <p style={{ color: theme.textMain, fontSize: '15px', fontWeight: 'bold', marginBottom: '15px' }}>{cargoLabel}: {nomeTecnicoLogado}</p>
-        
-        <div className="no-print" style={{ marginBottom: '20px', background: theme.cardInner, padding: '12px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '6px' }}>
-            <label style={{ fontSize: '12px', color: theme.textMuted }}>Tipo de Data da Inspeção</label>
-            <button type="button" onClick={gerarPdfUltimaInspecao} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
-              📄 Gerar PDF da Última Inspeção
-            </button>
-          </div>
-          <div style={{ display: 'flex', gap: '15px', marginBottom: '10px', flexWrap: 'wrap' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '13px' }}>
-              <input type="radio" name="tipoData" checked={tipoData === 'atual'} onChange={() => setTipoData('atual')} /> Data Atual + GPS
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '13px' }}>
-              <input type="radio" name="tipoData" checked={tipoData === 'manual'} onChange={() => setTipoData('manual')} /> Data Manual Salva
-            </label>
-          </div>
-
-          {tipoData === 'manual' && (
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>Informe a data que foi feita a inspeção</label>
-              <input type="text" value={dataManualInspecao} onChange={(e) => setDataManualInspecao(e.target.value)} placeholder="ex: 20/08/2026" style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-            </div>
+  <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif', maxWidth: '750px', margin: '0 auto', boxSizing: 'border-box' }}>
+    <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+      <button type="button" onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>← Voltar</button>
+      <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
+        {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
+      </button>
+    </div>
+     
+    <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '15px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', margin: 0 }}>Inspeção: {pop.nome}</h2>
+          {linkGoogleMaps && (
+            <a 
+              href={linkGoogleMaps} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="no-print"
+              style={{ background: '#007bff', color: '#fff', padding: '5px 10px', borderRadius: '4px', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}
+            >
+              📍 Localização
+            </a>
           )}
         </div>
+        <img src="/logo.png" alt="Logo" style={{ width: '100px', objectFit: 'contain' }} />
+    </div>
+    <p style={{ color: theme.textMuted, fontSize: '13px', marginBottom: '20px' }}>{pop.endereco}</p>
 
-        <h3>Status dos Ativos no POP</h3>
-        {Object.keys(statusAtivos).map((ativo) => {
-          const presente = ativosPresentes[ativo];
-          return (
-            <div key={ativo} style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={presente} onChange={(e) => setAtivosPresentes({ ...ativosPresentes, [ativo]: e.target.checked })} />
-                  {ativo}
-                </label>
-                {presente && (
-                  <div className="no-print" style={{ display: 'flex', gap: '5px' }}>
-                    <button 
-                      type="button" 
-                      onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'OK' })} 
-                      style={{ 
-                        background: statusAtivos[ativo] === 'OK' ? '#28a745' : theme.cardBg, 
-                        border: `1px solid ${theme.border}`, 
-                        color: statusAtivos[ativo] === 'OK' ? '#fff' : theme.textMain, 
-                        padding: '4px 10px', 
-                        borderRadius: '4px', 
-                        cursor: 'pointer' 
-                      }}
-                    >
-                      OK
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'Incidente' })} 
-                      style={{ 
-                        background: statusAtivos[ativo] === 'Incidente' ? '#dc3545' : theme.cardBg, 
-                        border: `1px solid ${theme.border}`, 
-                        color: statusAtivos[ativo] === 'Incidente' ? '#fff' : theme.textMain, 
-                        padding: '4px 10px', 
-                        borderRadius: '4px', 
-                        cursor: 'pointer' 
-                      }}
-                    >
-                      Incidente
-                    </button>
-                  </div>
-                )}
-              </div>
-              {presente && statusAtivos[ativo] === 'Incidente' && (
-                <input type="text" placeholder={`Relatar incidente em ${ativo}`} value={detalhesIncidentes[ativo] || ''} onChange={(e) => setDetalhesIncidentes({ ...detalhesIncidentes, [ativo]: e.target.value })} style={{ width: '100%', marginTop: '8px', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-              )}
-            </div>
-          );
-        })}
-
-        <button type="button" onClick={salvarStatusAtivosFirebase} className="no-print" style={{ width: '100%', padding: '10px', background: '#17a2b8', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', marginTop: '10px', marginBottom: '20px' }}>
-          Salvar Status dos Ativos
+    <p style={{ color: theme.textMain, fontSize: '15px', fontWeight: 'bold', marginBottom: '15px' }}>{cargoLabel}: {nomeTecnicoLogado}</p>
+     
+    <div className="no-print" style={{ marginBottom: '20px', background: theme.cardInner, padding: '12px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '6px' }}>
+        <label style={{ fontSize: '12px', color: theme.textMuted }}>Tipo de Data da Inspeção</label>
+        <button type="button" onClick={gerarPdfUltimaInspecao} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
+          📄 Gerar PDF da Última Inspeção
         </button>
-
-        <div style={{ marginTop: '20px' }}>
-          <h3>Bancos de Baterias</h3>
-          <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
-            {[1, 2, 3, 4].map((num) => (
-              <button key={num} type="button" onClick={() => { setQtdBancos(num); salvarNoFirebase({ qtdBancos: num }); }} style={{ padding: '6px 12px', background: qtdBancos === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer' }}>{num}</button>
-            ))}
-          </div>
-          {Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
-            const bModel = bancosBateria[banco] || { dataFabricacao: '', voltagens: ['', '', '', ''], salvo: false };
-            const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
-            const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao);
-            const resSub = statusData(proxSub);
-            const vencidoSub = resSub && resSub.status === 'vencido';
-
-            return (
-              <div key={banco} style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '15px', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '10px' }}>
-                  <h4 style={{ margin: 0 }}>Banco {getLetra(banco)}</h4>
-                  <button type="button" onClick={() => {
-                    const novoSalvo = !bModel.salvo;
-                    const novoEstado = { ...bancosBateria, [banco]: { ...bModel, salvo: novoSalvo } };
-                    setBancosBateria(novoEstado);
-                    salvarNoFirebase({ 
-                      qtdBancos,
-                      [`bat_${banco}_fab`]: bModel.dataFabricacao, 
-                      [`bat_${banco}_v1`]: bModel.voltagens[0],
-                      [`bat_${banco}_v2`]: bModel.voltagens[1],
-                      [`bat_${banco}_v3`]: bModel.voltagens[2],
-                      [`bat_${banco}_v4`]: bModel.voltagens[3],
-                      [`bat_${banco}_salvo`]: novoSalvo 
-                    });
-                  }} className="no-print" style={{ background: bModel.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
-                    {bModel.salvo ? 'Editar Banco' : 'Salvar Banco'}
-                  </button>
-                </div>
-
-                <div style={{ marginBottom: '4px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '3px' }}>Data de Fabricação (Ex: 39/25 ou dd/MM/aaaa)</label>
-                  <input type="text" disabled={bModel.salvo} placeholder="ex: 39/25 ou 05/08/2024" value={bModel.dataFabricacao} onChange={(e) => {
-                    const novoVal = e.target.value;
-                    setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, dataFabricacao: novoVal } });
-                  }} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-                </div>
-
-                {textoExato && (
-                  <p style={{ fontSize: '11px', color: '#28a745', margin: '0 0 4px 0', fontWeight: 'bold' }}>
-                    Convertido: {textoExato}
-                  </p>
-                )}
-                
-                <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoSub ? undefined : '#4dabf7', margin: '0 0 8px 0' }}>
-                  Próxima Substituição (+2 anos): {proxSub || 'Preencha a data'} {vencidoSub && `(Exp. há ${resSub.dias}d)`}
-                </p>
-
-                <div style={{ fontSize: '12px', color: theme.textMuted, marginBottom: '5px' }}>Voltagem das 4 Baterias do Banco:</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', boxSizing: 'border-box' }}>
-                  {[0, 1, 2, 3].map((vIdx) => (
-                    <input 
-                      key={vIdx} 
-                      type="text" 
-                      disabled={bModel.salvo}
-                      placeholder={`Bat ${vIdx + 1} (V)`} 
-                      value={bModel.voltagens[vIdx] || ''} 
-                      onChange={(e) => {
-                        const novasVols = [...bModel.voltagens];
-                        novasVols[vIdx] = e.target.value;
-                        setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, voltagens: novasVols } });
-                    }} 
-                      style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', textAlign: 'center' }} 
-                  />
-                  ))}
-              </div>
-            </div>
-          );
-        })}
       </div>
+      <div style={{ display: 'flex', gap: '15px', marginBottom: '10px', flexWrap: 'wrap' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '13px' }}>
+          <input type="radio" name="tipoData" checked={tipoData === 'atual'} onChange={() => setTipoData('atual')} /> Data Atual + GPS
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '13px' }}>
+          <input type="radio" name="tipoData" checked={tipoData === 'manual'} onChange={() => setTipoData('manual')} /> Data Manual Salva
+        </label>
+    </div>
 
-      <div style={{ marginTop: '20px' }}>
-        <h3>Centrais de Ar</h3>
-        <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
-          {[1, 2, 3, 4].map((num) => (
-            <button key={num} type="button" onClick={() => { setQtdAr(num); salvarNoFirebase({ qtdAr: num }); }} style={{ padding: '6px 12px', background: qtdAr === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer' }}>{num}</button>
-          ))}
-        </div>
-        {Array.from({ length: qtdAr }, (_, i) => i + 1).map((idx) => {
-          const ar = centraisAr[idx] || { modelo: '', btu: '', dataInstalacao: '', dataUltimaLimpeza: '', salvo: false };
-          const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
-          const resLimp = statusData(proxLimp);
-          const vencidoLimp = resLimp && resLimp.status === 'vencido';
+    {tipoData === 'manual' && (
+      <div>
+        <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>Informe a data que foi feita a inspeção</label>
+        <input type="text" value={dataManualInspecao} onChange={(e) => setDataManualInspecao(e.target.value)} placeholder="ex: 20/08/2026" style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+      </div>
+    )}
+    </div>
 
-          return (
-            <div key={idx} style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                <h4>Central {getLetra(idx)}</h4>
-                <button type="button" onClick={() => {
-                  const novoSalvo = !ar.salvo;
-                  setCentraisAr({ ...centraisAr, [idx]: { ...ar, salvo: novoSalvo } });
-                  salvarNoFirebase({ 
-                    qtdAr,
-                    [`ar_${idx}_mod`]: ar.modelo, 
-                    [`ar_${idx}_btu`]: ar.btu, 
-                    [`ar_${idx}_inst`]: ar.dataInstalacao, 
-                    [`ar_${idx}_limp`]: ar.dataUltimaLimpeza, 
-                    [`ar_${idx}_salvo`]: novoSalvo 
-                  });
-                }} className="no-print" style={{ background: ar.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
-                  {ar.salvo ? 'Editar Central' : 'Salvar Central'}
+    <h3>Status dos Ativos no POP</h3>
+    {Object.keys(statusAtivos).map((ativo) => {
+      const presente = ativosPresentes[ativo];
+      return (
+        <div key={ativo} style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <input type="checkbox" checked={presente} onChange={(e) => setAtivosPresentes({ ...ativosPresentes, [ativo]: e.target.checked })} />
+              {ativo}
+            </label>
+            {presente && (
+              <div className="no-print" style={{ display: 'flex', gap: '5px' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'OK' })} 
+                  style={{ 
+                    background: statusAtivos[ativo] === 'OK' ? '#28a745' : theme.cardBg, 
+                    border: `1px solid ${theme.border}`, 
+                    color: statusAtivos[ativo] === 'OK' ? '#fff' : theme.textMain, 
+                    padding: '4px 10px', 
+                    borderRadius: '4px', 
+                    cursor: 'pointer' 
+                  }}
+                >
+                  OK
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'Incidente' })} 
+                  style={{ 
+                    background: statusAtivos[ativo] === 'Incidente' ? '#dc3545' : theme.cardBg, 
+                    border: `1px solid ${theme.border}`, 
+                    color: statusAtivos[ativo] === 'Incidente' ? '#fff' : theme.textMain, 
+                    padding: '4px 10px', 
+                    borderRadius: '4px', 
+                    cursor: 'pointer' 
+                  }}
+                >
+                  Incidente
                 </button>
               </div>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', marginTop: '8px', boxSizing: 'border-box', flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: '130px' }}>
-                  <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Modelo</label>
-                  <input type="text" disabled={ar.salvo} placeholder="Modelo" value={ar.modelo} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, modelo: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-                </div>
-                <div style={{ flex: 1, minWidth: '130px' }}>
-                  <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>BTU</label>
-                  <input type="text" disabled={ar.salvo} placeholder="BTU" value={ar.btu} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, btu: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-                </div>
-              </div>
-              <div style={{ marginBottom: '8px' }}>
-                <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data de Instalação (dd/MM/aaaa)</label>
-                <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataInstalacao} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataInstalacao: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-            </div>
-            <div style={{ marginBottom: '4px' }}>
-              <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data da Última Limpeza (dd/MM/aaaa)</label>
-              <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataUltimaLimpeza: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-            </div>
-            <p className={vencidoLimp ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoLimp ? undefined : '#4dabf7', margin: '6px 0 8px 0' }}>
-              Próxima Limpeza ({intervaloAr} meses): {proxLimp || 'Preencha a última limpeza'} {vencidoLimp && `(Exp. há ${resLimp.dias}d)`}
-            </p>
-          </div>
-          );
-        })}
+          )}
+        </div>
+        {presente && statusAtivos[ativo] === 'Incidente' && (
+          <input type="text" placeholder={`Relatar incidente em ${ativo}`} value={detalhesIncidentes[ativo] || ''} onChange={(e) => setDetalhesIncidentes({ ...detalhesIncidentes, [ativo]: e.target.value })} style={{ width: '100%', marginTop: '8px', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+        )}
       </div>
+    );
+   })}
 
-      <div style={{ marginTop: '20px' }}>
-        <input type="text" placeholder="Relatar Incidentes Gerais" value={incidentesGerais} onChange={(e) => setIncidentesGerais(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '15px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-          <input type="checkbox" checked={precisaLimpeza} onChange={(e) => setPrecisaLimpeza(e.target.checked)} id="limpCheck" />
-          <label htmlFor="limpCheck">Limpeza Necessária</label>
+   <button type="button" onClick={salvarStatusAtivosFirebase} className="no-print" style={{ width: '100%', padding: '10px', background: '#17a2b8', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', marginTop: '10px', marginBottom: '20px' }}>
+    Salvar Status dos Ativos
+   </button>
+
+   <div style={{ marginTop: '20px' }}>
+    <h3>Bancos de Baterias</h3>
+    <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
+      {[1, 2, 3, 4].map((num) => (
+        <button key={num} type="button" onClick={() => { setQtdBancos(num); salvarNoFirebase({ qtdBancos: num }); }} style={{ padding: '6px 12px', background: qtdBancos === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer' }}>{num}</button>
+      ))}
+    </div>
+    {Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
+      const bModel = bancosBateria[banco] || { dataFabricacao: '', voltagens: ['', '', '', ''], salvo: false };
+      const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
+      const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao);
+      const resSub = statusData(proxSub);
+      const vencidoSub = resSub && resSub.status === 'vencido';
+
+      return (
+        <div key={banco} style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '15px', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '10px' }}>
+            <h4 style={{ margin: 0 }}>Banco {getLetra(banco)}</h4>
+            <button type="button" onClick={() => {
+              const novoSalvo = !bModel.salvo;
+              const novoEstado = { ...bancosBateria, [banco]: { ...bModel, salvo: novoSalvo } };
+              setBancosBateria(novoEstado);
+              salvarNoFirebase({ 
+                qtdBancos,
+                [`bat_${banco}_fab`]: bModel.dataFabricacao, 
+                [`bat_${banco}_v1`]: bModel.voltagens[0],
+                [`bat_${banco}_v2`]: bModel.voltagens[1],
+                [`bat_${banco}_v3`]: bModel.voltagens[2],
+                [`bat_${banco}_v4`]: bModel.voltagens[3],
+                [`bat_${banco}_salvo`]: novoSalvo 
+            });
+          }} className="no-print" style={{ background: bModel.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
+            {bModel.salvo ? 'Editar Banco' : 'Salvar Banco'}
+          </button>
         </div>
 
-        <textarea placeholder="Anotações Extras" rows="3" value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+        <div style={{ marginBottom: '4px' }}>
+          <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '3px' }}>Data de Fabricação (Ex: 39/25 ou dd/MM/aaaa)</label>
+          <input type="text" disabled={bModel.salvo} placeholder="ex: 39/25 ou 05/08/2024" value={bModel.dataFabricacao} onChange={(e) => {
+            const novoVal = e.target.value;
+            setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, dataFabricacao: novoVal } });
+        }} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+        </div>
 
-        <button type="button" onClick={finalizarInspecao} className="no-print" style={{ width: '100%', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', cursor: 'pointer' }}>
-          Finalizar, Salvar e Gerar Relatório
+        {textoExato && (
+          <p style={{ fontSize: '11px', color: '#28a745', margin: '0 0 4px 0', fontWeight: 'bold' }}>
+            Convertido: {textoExato}
+          </p>
+        )}
+         
+        <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoSub ? undefined : '#4dabf7', margin: '0 0 8px 0' }}>
+          Próxima Substituição (+2 anos): {proxSub || 'Preencha a data'} {vencidoSub && `(Exp. há ${resSub.dias}d)`}
+        </p>
+
+        <div style={{ fontSize: '12px', color: theme.textMuted, marginBottom: '5px' }}>Voltagem das 4 Baterias do Banco:</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', boxSizing: 'border-box' }}>
+          {[0, 1, 2, 3].map((vIdx) => (
+            <input 
+              key={vIdx} 
+              type="text" 
+              disabled={bModel.salvo}
+              placeholder={`Bat ${vIdx + 1} (V)`} 
+              value={bModel.voltagens[vIdx] || ''} 
+              onChange={(e) => {
+                const novasVols = [...bModel.voltagens];
+                novasVols[vIdx] = e.target.value;
+                setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, voltagens: novasVols } });
+            }} 
+            style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', textAlign: 'center' }} 
+          />
+        ))}
+        </div>
+      </div>
+    );
+   })}
+   </div>
+
+   <div style={{ marginTop: '20px' }}>
+    <h3>Centrais de Ar</h3>
+    <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
+      {[1, 2, 3, 4].map((num) => (
+        <button key={num} type="button" onClick={() => { setQtdAr(num); salvarNoFirebase({ qtdAr: num }); }} style={{ padding: '6px 12px', background: qtdAr === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer' }}>{num}</button>
+      ))}
+   </div>
+   {Array.from({ length: qtdAr }, (_, i) => i + 1).map((idx) => {
+    const ar = centraisAr[idx] || { modelo: '', btu: '', dataInstalacao: '', dataUltimaLimpeza: '', salvo: false };
+    const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
+    const resLimp = statusData(proxLimp);
+    const vencidoLimp = resLimp && resLimp.status === 'vencido';
+
+    return (
+      <div key={idx} style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+          <h4>Central {getLetra(idx)}</h4>
+          <button type="button" onClick={() => {
+            const novoSalvo = !ar.salvo;
+            setCentraisAr({ ...centraisAr, [idx]: { ...ar, salvo: novoSalvo } });
+            salvarNoFirebase({ 
+              qtdAr,
+              [`ar_${idx}_mod`]: ar.modelo, 
+              [`ar_${idx}_btu`]: ar.btu, 
+              [`ar_${idx}_inst`]: ar.dataInstalacao, 
+              [`ar_${idx}_limp`]: ar.dataUltimaLimpeza, 
+              [`ar_${idx}_salvo`]: novoSalvo 
+          });
+        }} className="no-print" style={{ background: ar.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
+          {ar.salvo ? 'Editar Central' : 'Salvar Central'}
         </button>
       </div>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', marginTop: '8px', boxSizing: 'border-box', flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: '130px' }}>
+          <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Modelo</label>
+          <input type="text" disabled={ar.salvo} placeholder="Modelo" value={ar.modelo} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, modelo: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+        </div>
+        <div style={{ flex: 1, minWidth: '130px' }}>
+          <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>BTU</label>
+          <input type="text" disabled={ar.salvo} placeholder="BTU" value={ar.btu} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, btu: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+        </div>
     </div>
+    <div style={{ marginBottom: '8px' }}>
+      <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data de Instalação (dd/MM/aaaa)</label>
+      <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataInstalacao} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataInstalacao: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+    </div>
+    <div style={{ marginBottom: '4px' }}>
+      <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data da Última Limpeza (dd/MM/aaaa)</label>
+      <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataUltimaLimpeza: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+    </div>
+    <p className={vencidoLimp ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoLimp ? undefined : '#4dabf7', margin: '6px 0 8px 0' }}>
+      Próxima Limpeza ({intervaloAr} meses): {proxLimp || 'Preencha a última limpeza'} {vencidoLimp && `(Exp. há ${resLimp.dias}d)`}
+    </p>
+   </div>
+   );
+   })}
+   </div>
+
+   <div style={{ marginTop: '20px' }}>
+    <input type="text" placeholder="Relatar Incidentes Gerais" value={incidentesGerais} onChange={(e) => setIncidentesGerais(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '15px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+     
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+      <input type="checkbox" checked={precisaLimpeza} onChange={(e) => setPrecisaLimpeza(e.target.checked)} id="limpCheck" />
+      <label htmlFor="limpCheck">Limpeza Necessária</label>
+    </div>
+
+    <textarea placeholder="Anotações Extras" rows="3" value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+
+    <button type="button" onClick={finalizarInspecao} className="no-print" style={{ width: '100%', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', cursor: 'pointer' }}>
+      Finalizar, Salvar e Gerar Relatório
+    </button>
+   </div>
+  </div>
   </div>
   );
 }
