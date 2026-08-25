@@ -318,7 +318,7 @@ export default function App() {
         snapshot.forEach((d) => {
           const popNome = d.id;
           const data = d.data();
-          const qtdAr = data.qtdAr || 4; // Varre até 4 centrais para garantir
+          const qtdAr = data.qtdAr || 4;
           const intervaloAr = (popNome.toLowerCase() === 'helius' || popNome.toLowerCase() === 'limos') ? 5 : 8;
           for (let i = 1; i <= qtdAr; i++) {
             const ultimaLimp = data[`ar_${i}_limp`] || '';
@@ -1233,7 +1233,18 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
       
       <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '15px' }}>
-          <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', margin: 0 }}>Inspeção: {pop.nome}</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', margin: 0 }}>Inspeção: {pop.nome}</h2>
+            <a 
+              href="https://maps.app.goo.gl/RQBieTdyzTPBzUzv8" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="no-print"
+              style={{ background: '#007bff', color: '#fff', padding: '5px 10px', borderRadius: '4px', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}
+            >
+              📍 Localização
+            </a>
+          </div>
           <img src="/logo.png" alt="Logo" style={{ width: '100px', objectFit: 'contain' }} />
         </div>
         <p style={{ color: theme.textMuted, fontSize: '13px', marginBottom: '20px' }}>{pop.endereco}</p>
