@@ -133,7 +133,7 @@ const calcularProximaLimpezaAr = (dataUltimaLimpezaStr, mesesIntervalo) => {
 };
 
 const popsIniciaisPadrao = [
-  { id: 1, nome: "poseidon", endereco: "Folha 16 Quadra 29 Lote 61, Nova Marabá, mba" },
+  { id: 1, nome: "poseidon", endereco: "Folha 16 Quadra 29 Lote 61, Nova Marabá, mba - mba" },
   { id: 2, nome: "hermes", endereco: "br-222, 57 - São Félix - mba" },
   { id: 3, nome: "eros", endereco: "av. Itacaiúnas, 1878 - Cidade Nova - mba" },
   { id: 4, nome: "hades", endereco: "fl 27 q. Especial, s/n - Nova Marabá - disbravá - mba" },
@@ -650,10 +650,10 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
                 <button type="submit" style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Salvar Nova Senha</button>
               </div>
             </form>
+          </div>
         </div>
-      </div>
-    )}
-  </div>
+      )}
+    </div>
   );
 }
 
@@ -1217,12 +1217,12 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
           <p><span class="negrito">Limpeza Necessária:</span> <span class="${precisaLimpeza ? 'vermelho' : ''}">${precisaLimpeza ? 'SIM' : 'NÃO'}</span></p>
           <p><span class="negrito">Anotações Extras:</span> ${anotacoes || 'Nenhuma anotação.'}</p>
         </div>
-      </body></html>`;
+    </body></html>`;
 
-      janelaPdf.document.write(htmlRelatorio);
-      janelaPdf.document.close();
-      janelaPdf.focus();
-      setTimeout(() => {
+    janelaPdf.document.write(htmlRelatorio);
+    janelaPdf.document.close();
+    janelaPdf.focus();
+    setTimeout(() => {
         janelaPdf.print();
       }, 600);
     }
@@ -1349,73 +1349,73 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
       {[1, 2, 3, 4].map((num) => (
         <button key={num} type="button" onClick={() => { setQtdBancos(num); salvarNoFirebase({ qtdBancos: num }); }} style={{ padding: '6px 12px', background: qtdBancos === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer' }}>{num}</button>
       ))}
-    </div>
-    {Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
-      const bModel = bancosBateria[banco] || { dataFabricacao: '', voltagens: ['', '', '', ''], salvo: false };
-      const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
-      const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao);
-      const resSub = statusData(proxSub);
-      const vencidoSub = resSub && resSub.status === 'vencido';
+   </div>
+   {Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
+    const bModel = bancosBateria[banco] || { dataFabricacao: '', voltagens: ['', '', '', ''], salvo: false };
+    const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
+    const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao);
+    const resSub = statusData(proxSub);
+    const vencidoSub = resSub && resSub.status === 'vencido';
 
-      return (
-        <div key={banco} style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '15px', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '10px' }}>
-            <h4 style={{ margin: 0 }}>Banco {getLetra(banco)}</h4>
-            <button type="button" onClick={() => {
-              const novoSalvo = !bModel.salvo;
-              const novoEstado = { ...bancosBateria, [banco]: { ...bModel, salvo: novoSalvo } };
-              setBancosBateria(novoEstado);
-              salvarNoFirebase({ 
-                qtdBancos,
-                [`bat_${banco}_fab`]: bModel.dataFabricacao, 
-                [`bat_${banco}_v1`]: bModel.voltagens[0],
-                [`bat_${banco}_v2`]: bModel.voltagens[1],
-                [`bat_${banco}_v3`]: bModel.voltagens[2],
-                [`bat_${banco}_v4`]: bModel.voltagens[3],
-                [`bat_${banco}_salvo`]: novoSalvo 
-            });
-          }} className="no-print" style={{ background: bModel.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
-            {bModel.salvo ? 'Editar Banco' : 'Salvar Banco'}
-          </button>
-        </div>
-
-        <div style={{ marginBottom: '4px' }}>
-          <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '3px' }}>Data de Fabricação (Ex: 39/25 ou dd/MM/aaaa)</label>
-          <input type="text" disabled={bModel.salvo} placeholder="ex: 39/25 ou 05/08/2024" value={bModel.dataFabricacao} onChange={(e) => {
-            const novoVal = e.target.value;
-            setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, dataFabricacao: novoVal } });
-        }} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-        </div>
-
-        {textoExato && (
-          <p style={{ fontSize: '11px', color: '#28a745', margin: '0 0 4px 0', fontWeight: 'bold' }}>
-            Convertido: {textoExato}
-          </p>
-        )}
-         
-        <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoSub ? undefined : '#4dabf7', margin: '0 0 8px 0' }}>
-          Próxima Substituição (+2 anos): {proxSub || 'Preencha a data'} {vencidoSub && `(Exp. há ${resSub.dias}d)`}
-        </p>
-
-        <div style={{ fontSize: '12px', color: theme.textMuted, marginBottom: '5px' }}>Voltagem das 4 Baterias do Banco:</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', boxSizing: 'border-box' }}>
-          {[0, 1, 2, 3].map((vIdx) => (
-            <input 
-              key={vIdx} 
-              type="text" 
-              disabled={bModel.salvo}
-              placeholder={`Bat ${vIdx + 1} (V)`} 
-              value={bModel.voltagens[vIdx] || ''} 
-              onChange={(e) => {
-                const novasVols = [...bModel.voltagens];
-                novasVols[vIdx] = e.target.value;
-                setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, voltagens: novasVols } });
-            }} 
-            style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', textAlign: 'center' }} 
-          />
-        ))}
-        </div>
+    return (
+      <div key={banco} style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '15px', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '10px' }}>
+          <h4 style={{ margin: 0 }}>Banco {getLetra(banco)}</h4>
+          <button type="button" onClick={() => {
+            const novoSalvo = !bModel.salvo;
+            const novoEstado = { ...bancosBateria, [banco]: { ...bModel, salvo: novoSalvo } };
+            setBancosBateria(novoEstado);
+            salvarNoFirebase({ 
+              qtdBancos,
+              [`bat_${banco}_fab`]: bModel.dataFabricacao, 
+              [`bat_${banco}_v1`]: bModel.voltagens[0],
+              [`bat_${banco}_v2`]: bModel.voltagens[1],
+              [`bat_${banco}_v3`]: bModel.voltagens[2],
+              [`bat_${banco}_v4`]: bModel.voltagens[3],
+              [`bat_${banco}_salvo`]: novoSalvo 
+          });
+        }} className="no-print" style={{ background: bModel.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
+          {bModel.salvo ? 'Editar Banco' : 'Salvar Banco'}
+        </button>
       </div>
+
+      <div style={{ marginBottom: '4px' }}>
+        <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '3px' }}>Data de Fabricação (Ex: 39/25 ou dd/MM/aaaa)</label>
+        <input type="text" disabled={bModel.salvo} placeholder="ex: 39/25 ou 05/08/2024" value={bModel.dataFabricacao} onChange={(e) => {
+          const novoVal = e.target.value;
+          setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, dataFabricacao: novoVal } });
+      }} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+      </div>
+
+      {textoExato && (
+        <p style={{ fontSize: '11px', color: '#28a745', margin: '0 0 4px 0', fontWeight: 'bold' }}>
+          Convertido: {textoExato}
+        </p>
+      )}
+       
+      <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoSub ? undefined : '#4dabf7', margin: '0 0 8px 0' }}>
+        Próxima Substituição (+2 anos): {proxSub || 'Preencha a data'} {vencidoSub && `(Exp. há ${resSub.dias}d)`}
+      </p>
+
+      <div style={{ fontSize: '12px', color: theme.textMuted, marginBottom: '5px' }}>Voltagem das 4 Baterias do Banco:</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', boxSizing: 'border-box' }}>
+        {[0, 1, 2, 3].map((vIdx) => (
+          <input 
+            key={vIdx} 
+            type="text" 
+            disabled={bModel.salvo}
+            placeholder={`Bat ${vIdx + 1} (V)`} 
+            value={bModel.voltagens[vIdx] || ''} 
+            onChange={(e) => {
+              const novasVols = [...bModel.voltagens];
+              novasVols[vIdx] = e.target.value;
+              setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, voltagens: novasVols } });
+            }} 
+          style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', textAlign: 'center' }} 
+        />
+      ))}
+      </div>
+    </div>
     );
    })}
    </div>
