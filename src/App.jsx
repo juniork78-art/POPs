@@ -174,6 +174,18 @@ export default function App() {
     inputText: darkMode ? '#fff' : '#212529'
   };
 
+  const obterSiglaPop = (nomePop) => {
+    const popObj = listaPops.find(p => p.nome.toLowerCase() === nomePop.toLowerCase());
+    if (popObj && popObj.endereco) {
+      const partes = popObj.endereco.split('-');
+      const ultimaParte = partes[partes.length - 1].trim();
+      if (ultimaParte.length <= 5) {
+        return ultimaParte.toUpperCase();
+      }
+    }
+    return '';
+  };
+
   const popPertenceAoUsuario = (nomePop) => {
     if (!usuarioLogado) return true;
     const isPedro = usuarioLogado.toLowerCase().includes('pedro');
@@ -189,10 +201,14 @@ export default function App() {
     const processarItem = (nomePop, baseMsg, dataStr) => {
       const res = statusData(dataStr);
       if (nomePop && res && popPertenceAoUsuario(nomePop)) {
+        const sigla = obterSiglaPop(nomePop);
+        const nomeFormatado = sigla ? `${nomePop.toUpperCase()} - ${sigla}` : nomePop.toUpperCase();
+        const msgFinal = baseMsg.replace(`POP: ${nomePop.toUpperCase()}`, `POP: ${nomeFormatado}`);
+
         if (res.status === 'vencido') {
-          vencidos.push(`${baseMsg} (Expirado há ${res.dias} dias)`);
+          vencidos.push(`${msgFinal} (Expirado há ${res.dias} dias)`);
         } else if (res.status === 'amanha' || res.status === 'hoje') {
-          amanha.push(`${baseMsg} (${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})`);
+          amanha.push(`${msgFinal} (${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})`);
         }
       }
     };
@@ -429,6 +445,8 @@ export default function App() {
                   ultimosCheckIns.map((item, idx) => {
                     const nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '');
                     if (!popPertenceAoUsuario(nomeDoPop)) return null;
+                    const sigla = obterSiglaPop(nomeDoPop);
+                    const nomeExibicao = sigla ? `${nomeDoPop.toUpperCase()} - ${sigla}` : nomeDoPop.toUpperCase();
                     const res = statusData(item.proximaInspecao);
                     const vencido = res && res.status === 'vencido';
                     const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
@@ -436,7 +454,7 @@ export default function App() {
                     return (
                       <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}`, position: 'relative' }}>
                         <button onClick={() => apagarCheckInIndividual(idx)} style={{ position: 'absolute', top: '8px', right: '8px', background: 'transparent', border: 'none', color: '#ff4d4d', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer' }}>✕</button>
-                        <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', paddingRight: '15px' }}>POP: {nomeDoPop}</p>
+                        <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', paddingRight: '15px' }}>POP: {nomeExibicao}</p>
                         <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Técnico: {item.tecnico}</p>
                         <p style={{ margin: '0 0 3px 0', color: theme.textMuted }}>Data: {item.dataHora}</p>
                         <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
@@ -452,13 +470,15 @@ export default function App() {
                 <h4 style={{ color: theme.textMuted, fontSize: '14px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px' }}>Cronograma Limpezas de Ar</h4>
                 {cronogramaLimpezas.map((item, idx) => {
                   if (!popPertenceAoUsuario(item.popNome)) return null;
+                  const sigla = obterSiglaPop(item.popNome);
+                  const nomeExibicao = sigla ? `${item.popNome.toUpperCase()} - ${sigla}` : item.popNome.toUpperCase();
                   const res = statusData(item.proximaLimpeza);
                   const vencido = res && res.status === 'vencido';
                   const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
 
                   return (
                     <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
-                      <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>{item.popNome} ({item.central})</p>
+                      <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>{nomeExibicao} ({item.central})</p>
                       <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Última: {item.ultimaLimpeza}</p>
                       <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
                         Próxima: {item.proximaLimpeza} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
@@ -472,13 +492,15 @@ export default function App() {
                 <h4 style={{ color: theme.textMuted, fontSize: '14px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px' }}>Cronograma de Baterias</h4>
                 {cronogramaBaterias.map((item, idx) => {
                   if (!popPertenceAoUsuario(item.popNome)) return null;
+                  const sigla = obterSiglaPop(item.popNome);
+                  const nomeExibicao = sigla ? `${item.popNome.toUpperCase()} - ${sigla}` : item.popNome.toUpperCase();
                   const res = statusData(item.proximaSubstituicao);
                   const vencido = res && res.status === 'vencido';
                   const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
 
                   return (
                     <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
-                      <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>{item.popNome} ({item.banco})</p>
+                      <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>{nomeExibicao} ({item.banco})</p>
                       <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Fabricação: {item.fabricacao}</p>
                       <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
                         Troca: {item.proximaSubstituicao} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
