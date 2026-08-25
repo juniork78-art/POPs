@@ -318,7 +318,7 @@ export default function App() {
         snapshot.forEach((d) => {
           const popNome = d.id;
           const data = d.data();
-          const qtdAr = data.qtdAr || 0;
+          const qtdAr = data.qtdAr || 4; // Varre até 4 centrais para garantir
           const intervaloAr = (popNome.toLowerCase() === 'helius' || popNome.toLowerCase() === 'limos') ? 5 : 8;
           for (let i = 1; i <= qtdAr; i++) {
             const ultimaLimp = data[`ar_${i}_limp`] || '';
@@ -326,7 +326,7 @@ export default function App() {
               listaLimpezasTemp.push({ popNome, central: `Central ${getLetra(i)}`, ultimaLimpeza: ultimaLimp, proximaLimpeza: calcularProximaLimpezaAr(ultimaLimp, intervaloAr) });
             }
           }
-          const qtdBancos = data.qtdBancos || 1;
+          const qtdBancos = data.qtdBancos || 4;
           for (let i = 1; i <= qtdBancos; i++) {
             const fab = data[`bat_${i}_fab`] || '';
             if (fab) {
@@ -1341,6 +1341,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
                     const novoEstado = { ...bancosBateria, [banco]: { ...bModel, salvo: novoSalvo } };
                     setBancosBateria(novoEstado);
                     salvarNoFirebase({ 
+                      qtdBancos,
                       [`bat_${banco}_fab`]: bModel.dataFabricacao, 
                       [`bat_${banco}_v1`]: bModel.voltagens[0],
                       [`bat_${banco}_v2`]: bModel.voltagens[1],
@@ -1415,6 +1416,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
                     const novoSalvo = !ar.salvo;
                     setCentraisAr({ ...centraisAr, [idx]: { ...ar, salvo: novoSalvo } });
                     salvarNoFirebase({ 
+                      qtdAr,
                       [`ar_${idx}_mod`]: ar.modelo, 
                       [`ar_${idx}_btu`]: ar.btu, 
                       [`ar_${idx}_inst`]: ar.dataInstalacao, 
