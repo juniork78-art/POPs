@@ -79,7 +79,7 @@ const calcularProximaSubstituicaoBateria = (dataFabricacaoStr) => {
       const month = parseInt(parts[1], 10) - 1;
       const year = parseInt(parts[2], 10) + 2;
       const date = new Date(year, month, day);
-      return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+      return `{String(date.getDate()).padStart(2, '0')}/{String(date.getMonth() + 1).padStart(2, '0')}/{date.getFullYear()}`;
     }
     return '';
   } catch (e) { return ''; }
