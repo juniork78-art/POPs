@@ -801,6 +801,11 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
   const [precisaLimpeza, setPrecisaLimpeza] = useState(false);
   const [anotacoes, setAnotacoes] = useState('');
 
+  // Estados para gerenciar Fotos do POP
+  const [fotosPop, setFotosPop] = useState([]);
+  const [modalFotosAberto, setModalFotosAberto] = useState(false);
+  const [fotoCarregadaBase64, setFotoCarregadaBase64] = useState('');
+
   const [statusAtivos, setStatusAtivos] = useState({
     "Motor de Portão": "OK",
     "Câmeras": "OK",
@@ -849,6 +854,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
         const data = snap.data();
         if (data.qtdBancos) setQtdBancos(data.qtdBancos);
         if (data.qtdAr) setQtdAr(data.qtdAr);
+        if (data.fotosPop) setFotosPop(data.fotosPop);
 
         if (data.statusAtivos) {
           const filtrados = { ...data.statusAtivos };
@@ -925,6 +931,41 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
     anotacoes
   });
   alert("Status dos ativos e observações salvos com sucesso!");
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFotoCarregadaBase64(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const salvarFotoPop = async () => {
+    if (!fotoCarregadaBase64) {
+      alert("Selecione uma foto primeiro.");
+      return;
+    }
+    const novaListaFotos = [...fotosPop, { id: Date.now(), url: fotoCarregadaBase64, data: new Date().toLocaleDateString() }];
+    setFotosPop(novaListaFotos);
+    setFotoCarregadaBase64('');
+    await salvarNoFirebase({ fotosPop: novaListaFotos });
+    alert("Foto salva com sucesso!");
+  };
+
+  const deletarFotoPop = async (fotoId) => {
+    const senha = prompt("Digite a senha do sistema para excluir esta foto:");
+    if (senha !== "@fibralink00") {
+      alert("Senha incorreta! Ação cancelada.");
+      return;
+    }
+    const novaListaFotos = fotosPop.filter(f => f.id !== fotoId);
+    setFotosPop(novaListaFotos);
+    await salvarNoFirebase({ fotosPop: novaListaFotos });
+    alert("Foto removida com sucesso!");
   };
 
   const obterDadosCheckInOriginal = () => {
@@ -1272,23 +1313,73 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '15px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', margin: 0 }}>Inspeção: {pop.nome}</h2>
-          {linkGoogleMaps && (
-            <a 
-              href={linkGoogleMaps} 
-              target="_blank" 
-              rel="noopener noreferrer" 
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {linkGoogleMaps && (
+              <a 
+                href={linkGoogleMaps} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="no-print"
+                style={{ background: '#007bff', color: '#fff', padding: '5px 10px', borderRadius: '4px', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
+                📍 Localização
+              </a>
+            )}
+            <button 
+              type="button"
+              onClick={() => setModalFotosAberto(true)}
               className="no-print"
-              style={{ background: '#007bff', color: '#fff', padding: '5px 10px', borderRadius: '4px', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}
+              style={{ background: '#6c757d', color: '#fff', padding: '5px 10px', borderRadius: '4px', border: 'none', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
             >
-              📍 Localização
-            </a>
-          )}
+              📷 Fotos {fotosPop.length > 0 ? `(${fotosPop.length})` : ''}
+            </button>
+          </div>
         </div>
         <img src="/logo.png" alt="Logo" style={{ width: '100px', objectFit: 'contain' }} />
     </div>
     <p style={{ color: theme.textMuted, fontSize: '13px', marginBottom: '20px' }}>{pop.endereco}</p>
 
     <p style={{ color: theme.textMain, fontSize: '15px', fontWeight: 'bold', marginBottom: '15px' }}>{cargoLabel}: {nomeTecnicoLogado}</p>
+
+    {/* MODAL DE FOTOS */}
+    {modalFotosAberto && (
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 1200, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px', boxSizing: 'border-box' }}>
+        <div style={{ background: theme.cardBg, color: theme.textMain, padding: '20px', borderRadius: '8px', width: '100%', maxWidth: '500px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', border: `1px solid ${theme.border}` }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <h3 style={{ margin: 0, color: '#4dabf7' }}>Fotos do POP: {pop.nome.toUpperCase()}</h3>
+            <button onClick={() => setModalFotosAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, fontSize: '18px', cursor: 'pointer' }}>✕</button>
+          </div>
+
+          <div style={{ marginBottom: '15px', background: theme.cardInner, padding: '10px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
+            <label style={{ display: 'block', fontSize: '12px', marginBottom: '6px', fontWeight: 'bold' }}>Carregar Nova Foto</label>
+            <input type="file" accept="image/*" onChange={handleFileChange} style={{ width: '100%', marginBottom: '10px', fontSize: '12px', color: theme.textMain }} />
+            {fotoCarregadaBase64 && (
+              <div style={{ marginBottom: '10px', textAlign: 'center' }}>
+                <img src={fotoCarregadaBase64} alt="Pré-visualização" style={{ maxWidth: '100%', maxHeight: '120px', objectFit: 'contain', borderRadius: '4px' }} />
+              </div>
+            )}
+            <button type="button" onClick={salvarFotoPop} style={{ width: '100%', padding: '8px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>Salvar Foto</button>
+          </div>
+
+          <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <h4 style={{ margin: '0 0 5px 0', fontSize: '13px', color: theme.textMuted }}>Fotos Salvas</h4>
+            {fotosPop.length === 0 ? (
+              <p style={{ fontSize: '12px', color: theme.textMuted, textAlign: 'center' }}>Nenhuma foto salva para este POP.</p>
+            ) : (
+              fotosPop.map((foto) => (
+                <div key={foto.id} style={{ background: theme.cardInner, padding: '8px', borderRadius: '6px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                  <img src={foto.url} alt="POP" style={{ width: '70px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />
+                  <div style={{ flex: 1, fontSize: '11px', color: theme.textMuted }}>
+                    Salva em: {foto.data}
+                  </div>
+                  <button type="button" onClick={() => deletarFotoPop(foto.id)} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '5px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Deletar</button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    )}
       
     <div className="no-print" style={{ marginBottom: '20px', background: theme.cardInner, padding: '12px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '6px' }}>
@@ -1515,7 +1606,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
       <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataUltimaLimpeza: e.target.value } })} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
     </div>
     <p className={vencidoLimp ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoLimp ? undefined : '#4dabf7', margin: '6px 0 8px 0' }}>
-      Próxima Limpeza ({intervaloAr} meses): {proxLimp || 'Preencha a última limpeza'} {vencidoLimp && `(Exp. há ${resLimp.dias}d)`}
+      Próxima Limpeza (${intervaloAr} meses): {proxLimp || 'Preencha a última limpeza'} {vencidoLimp && `(Exp. há ${resLimp.dias}d)`}
     </p>
    </div>
    );
