@@ -805,6 +805,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
   const [fotosPop, setFotosPop] = useState([]);
   const [modalFotosAberto, setModalFotosAberto] = useState(false);
   const [fotoCarregadaBase64, setFotoCarregadaBase64] = useState('');
+  const [fotoTelaCheiaUrl, setFotoTelaCheiaUrl] = useState(null);
 
   const [statusAtivos, setStatusAtivos] = useState({
     "Motor de Portão": "OK",
@@ -1355,7 +1356,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
             <input type="file" accept="image/*" onChange={handleFileChange} style={{ width: '100%', marginBottom: '10px', fontSize: '12px', color: theme.textMain }} />
             {fotoCarregadaBase64 && (
               <div style={{ marginBottom: '10px', textAlign: 'center' }}>
-                <img src={fotoCarregadaBase64} alt="Pré-visualização" style={{ maxWidth: '100%', maxHeight: '120px', objectFit: 'contain', borderRadius: '4px' }} />
+                <img src={fotoCarregadaBase64} alt="Pré-visualização" style={{ maxWidth: '100%', maxHeight: '120px', objectFit: 'contain', borderRadius: '4px', cursor: 'pointer' }} onClick={() => setFotoTelaCheiaUrl(fotoCarregadaBase64)} title="Clique para ampliar" />
               </div>
             )}
             <button type="button" onClick={salvarFotoPop} style={{ width: '100%', padding: '8px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>Salvar Foto</button>
@@ -1368,7 +1369,13 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
             ) : (
               fotosPop.map((foto) => (
                 <div key={foto.id} style={{ background: theme.cardInner, padding: '8px', borderRadius: '6px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-                  <img src={foto.url} alt="POP" style={{ width: '70px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />
+                  <img 
+                    src={foto.url} 
+                    alt="POP" 
+                    style={{ width: '70px', height: '50px', objectFit: 'cover', borderRadius: '4px', cursor: 'pointer' }} 
+                    onClick={() => setFotoTelaCheiaUrl(foto.url)}
+                    title="Clique para abrir em tela cheia"
+                  />
                   <div style={{ flex: 1, fontSize: '11px', color: theme.textMuted }}>
                     Salva em: {foto.data}
                   </div>
@@ -1378,6 +1385,19 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
             )}
           </div>
         </div>
+      </div>
+    )}
+
+    {/* MODAL DE TELA CHEIA PARA A IMAGEM */}
+    {fotoTelaCheiaUrl && (
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.95)', zIndex: 1300, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', boxSizing: 'border-box' }}>
+        <button 
+          onClick={() => setFotoTelaCheiaUrl(null)} 
+          style={{ position: 'absolute', top: '20px', right: '20px', background: '#dc3545', border: 'none', color: '#fff', fontSize: '18px', fontWeight: 'bold', padding: '8px 14px', borderRadius: '4px', cursor: 'pointer' }}
+        >
+          ✕ Fechar
+        </button>
+        <img src={fotoTelaCheiaUrl} alt="Tela Cheia" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '6px' }} />
       </div>
     )}
       
