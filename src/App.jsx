@@ -331,22 +331,18 @@ export default function App() {
         return n === pop.nome.toLowerCase();
       });
 
-      // VERIFICA SE EXISTE QUALQUER COISA VENCIDA NESTE POP OU INCIDENTES GERAIS
       let temAlgoVencido = false;
 
-      // 1. Verifica inspeção geral
       const proxInspGeral = checkInPop ? checkInPop.proximaInspecao : null;
       const statusInsp = statusData(proxInspGeral);
       if (statusInsp && statusInsp.status === 'vencido') {
         temAlgoVencido = true;
       }
 
-      // 2. Verifica incidentes gerais
       if (dadosPop.incidentesGerais && dadosPop.incidentesGerais.trim() !== '') {
         temAlgoVencido = true;
       }
 
-      // 3. Verifica baterias vencidas
       const qtdB = dadosPop.qtdBancos || 1;
       for (let b = 1; b <= qtdB; b++) {
         const fab = dadosPop[`bat_${b}_fab`];
@@ -358,7 +354,6 @@ export default function App() {
         }
       }
 
-      // 4. Verifica limpezas de ar vencidas
       const qtdA = dadosPop.qtdAr || 1;
       const nomeLower = pop.nome.toLowerCase();
       const interAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : 8;
@@ -371,7 +366,6 @@ export default function App() {
         }
       }
 
-      // Se não houver nada vencido nem incidente, pula este POP
       if (!temAlgoVencido) return;
 
       const sigla = obterSiglaPop(pop.nome) || 'GERAL';
@@ -391,7 +385,7 @@ export default function App() {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Relatório Geral de Itens Vencidos</title>
+        <title>Relatório de Itens Vencidos</title>
         <style>
           body { font-family: Arial, sans-serif; padding: 25px; color: #000; line-height: 1.5; }
           .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #d9534f; padding-bottom: 12px; margin-bottom: 20px; }
@@ -435,8 +429,6 @@ export default function App() {
           const statusInsp = statusData(proxInspGeral);
           if (statusInsp && statusInsp.status === 'vencido') {
             html += `<p><span class="negrito">Última Inspeção:</span> ${checkIn.dataHora} | <span class="vermelho">Próxima Inspeção: ${checkIn.proximaInspecao} (VENCIDO há ${statusInsp.dias} dias)</span></p>`;
-          } else {
-            html += `<p><span class="negrito">Última Inspeção:</span> ${checkIn ? checkIn.dataHora : (dados.ultimaDataInspecao ? `${dados.ultimaDataInspecao} (Salva)` : 'Nenhuma registrada')}</p>`;
           }
 
           if (dados.incidentesGerais && dados.incidentesGerais.trim() !== '') {
@@ -444,34 +436,46 @@ export default function App() {
             html += `<div class="incidente-item">${dados.incidentesGerais}</div>`;
           }
 
+          // FILTRA APENAS BATERIAS VENCIDAS
           const qtdB = dados.qtdBancos || 1;
-          html += `<p style="margin-top: 6px;"><span class="negrito">Bancos de Baterias (${qtdB}):</span>`;
+          let bateriasVencidasHtml = '';
+          let qtdBateriasVencidas = 0;
           for (let b = 1; b <= qtdB; b++) {
             const fab = dados[`bat_${b}_fab`];
             const tipoB = dados[`bat_${b}_tipo`] || 'Chumbo';
-            const { textoExato } = parseDataFabricacaoBateria(fab);
-            const fabExibicao = textoExato ? `${fab} (${textoExato})` : (fab || 'N/A');
             const proxSub = calcularProximaSubstituicaoBateria(fab, nome, tipoB);
             const resSub = statusData(proxSub);
-            const estiloTroca = resSub?.status === 'vencido' ? 'color: #d9534f; font-weight: bold;' : '';
-            const textoVencido = resSub?.status === 'vencido' ? ` (VENCIDO há ${resSub.dias}d)` : '';
-            html += `<br>&nbsp;&nbsp;• Banco ${getLetra(b)} (${tipoB}) - Fab: ${fabExibicao} | Próx. Troca: <span style="${estiloTroca}">${proxSub || 'N/A'}${textoVencido}</span>`;
+            if (resSub && resSub.status === 'vencido') {
+              qtdBateriasVencidas++;
+              const { textoExato } = parseDataFabricacaoBateria(fab);
+              const fabExibicao = textoExato ? `${fab} (${textoExato})` : (fab || 'N/A');
+              bateriasVencidasHtml += `<br>&nbsp;&nbsp;• Banco ${getLetra(b)} (${tipoB}) - Fab: ${fabExibicao} | Próx. Troca: <span style="color: #d9534f; font-weight: bold;">${proxSub} (VENCIDO há ${resSub.dias}d)</span>`;
+            }
           }
-          html += `</p>`;
 
+          if (qtdBateriasVencidas > 0) {
+            html += `<p style="margin-top: 6px;"><span class="negrito">Bancos de Baterias Vencidos (${qtdBateriasVencidas}):</span>${bateriasVencidasHtml}</p>`;
+          }
+
+          // FILTRA APENAS CENTRAIS DE AR VENCIDAS
           const qtdA = dados.qtdAr || 1;
           const nomeLower = nome.toLowerCase();
           const interAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : 8;
-          html += `<p style="margin-top: 4px;"><span class="negrito">Centrais de Ar (${qtdA}):</span>`;
+          let aresVencidosHtml = '';
+          let qtdAresVencidos = 0;
           for (let a = 1; a <= qtdA; a++) {
             const limp = dados[`ar_${a}_limp`];
             const proxLimp = calcularProximaLimpezaAr(limp, interAr);
             const resLimp = statusData(proxLimp);
-            const estiloLimp = resLimp?.status === 'vencido' ? 'color: #d9534f; font-weight: bold;' : '';
-            const textoVencidoLimp = resLimp?.status === 'vencido' ? ` (VENCIDO há ${resLimp.dias}d)` : '';
-            html += `<br>&nbsp;&nbsp;• Central ${getLetra(a)} (${dados[`ar_${a}_mod`] || 'Elgin'}) - Última Limpeza: ${limp || 'N/A'} | Próx. Limpeza: <span style="${estiloLimp}">${proxLimp || 'N/A'}${textoVencidoLimp}</span>`;
+            if (resLimp && resLimp.status === 'vencido') {
+              qtdAresVencidos++;
+              aresVencidosHtml += `<br>&nbsp;&nbsp;• Central ${getLetra(a)} (${dados[`ar_${a}_mod`] || 'Elgin'}) - Última Limpeza: ${limp || 'N/A'} | Próx. Limpeza: <span style="color: #d9534f; font-weight: bold;">${proxLimp} (VENCIDO há ${resLimp.dias}d)</span>`;
+            }
           }
-          html += `</p>`;
+
+          if (qtdAresVencidos > 0) {
+            html += `<p style="margin-top: 4px;"><span class="negrito">Centrais de Ar Vencidas (${qtdAresVencidos}):</span>${aresVencidosHtml}</p>`;
+          }
 
           if (dados.anotacoes) {
             html += `<p style="margin-top: 4px;"><span class="negrito">Anotações:</span> ${dados.anotacoes}</p>`;
