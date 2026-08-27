@@ -564,15 +564,24 @@ export default function App() {
         }
       });
 
-      const unsubPopsDados = onSnapshot(collection(db, "pops_dados"), (snapshot) => {
+      const unsubPopsDados = onSnapshot(collection(db, "pops_dados"), async (snapshot) => {
         const listaLimpezasTemp = [];
         const listaBateriasTemp = [];
         const dadosGeraisTemp = {};
 
-        snapshot.forEach((d) => {
+        // CORREÇÃO AUTOMÁTICA DE EMERGÊNCIA: Se o balder ainda tiver bat_1_fab como '21/23', limpa automaticamente no Firestore!
+        snapshot.forEach(async (d) => {
           let popNome = d.id;
           if (popNome.toLowerCase() === 'odin' || popNome.toLowerCase() === 'odim') popNome = 'balder';
           const data = d.data();
+
+          if (popNome.toLowerCase() === 'balder' && data.bat_1_fab === '21/23') {
+            try {
+              await setDoc(doc(db, "pops_dados", "balder"), { bat_1_fab: "" }, { merge: true });
+              data.bat_1_fab = ""; // limpa localmente para sumir já
+            } catch (err) {}
+          }
+
           dadosGeraisTemp[popNome.toLowerCase()] = data;
 
           const qtdAr = data.qtdAr || 4;
