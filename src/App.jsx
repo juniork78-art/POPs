@@ -127,7 +127,7 @@ const calcularProximaSubstituicaoBateria = (dataFabricacaoStr, popNome = '', tip
   try {
     const { dataObj } = parseDataFabricacaoBateria(dataFabricacaoStr);
     if (dataObj) {
-      let anosAdicionais = tipoBateria === 'Litio' ? 8 : 2;
+      let anosAdicionais = tipoBateria === 'Lítio' ? 8 : 2;
 
       const year = dataObj.getFullYear() + anosAdicionais;
       const month = dataObj.getMonth();
@@ -144,7 +144,7 @@ const calcularProximaInspecaoBateria = (dataUltimaInspecaoStr) => {
     const parts = (dataUltimaInspecaoStr || '').split('/');
     if (parts.length === 3) {
       const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1 + 3; // Intervalo fixo de 3 meses
+      const month = parseInt(parts[1], 10) - 1 + 3;
       const year = parseInt(parts[2], 10) + Math.floor(month / 12);
       const adjustedMonth = month % 12;
       const date = new Date(year, adjustedMonth, day);
@@ -1095,7 +1095,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
     Array.from({ length: qtdBancos }, (_, i) => i + 1).forEach(banco => {
       const bModel = bancosBateria[banco];
       if (bModel) {
-        const anosTrocaCalculado = bModel.tipo === 'Litio' ? 8 : 2;
+        const anosTrocaCalculado = bModel.tipo === 'Lítio' ? 8 : 2;
         const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
         const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao, pop.nome, bModel.tipo);
         const resSub = statusData(proxSub);
@@ -1105,14 +1105,18 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         const resInsp = statusData(proxInsp);
         const vencidoInsp = resInsp && resInsp.status === 'vencido';
 
+        const voltagensHtml = bModel.tipo !== 'Lítio' 
+          ? `<br>Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]` 
+          : '';
+
         htmlRelatorio += `
           <div class="bloco">
             <span class="negrito">Banco ${getLetra(banco)} (${bModel.tipo})</span><br>
             Data de Fabricação: ${textoExato || 'Não informada'}<br>
             <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+${anosTrocaCalculado} anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
             Data da Última Inspeção: ${bModel.dataUltimaInspecao || 'N/A'}<br>
-            <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (3 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span><br>
-            Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]
+            <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (3 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span>
+            ${voltagensHtml}
           </div>
         `;
       }
@@ -1295,7 +1299,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
     Array.from({ length: qtdBancos }, (_, i) => i + 1).forEach(banco => {
       const bModel = bancosBateria[banco];
       if (bModel) {
-        const anosTrocaCalculado = bModel.tipo === 'Litio' ? 8 : 2;
+        const anosTrocaCalculado = bModel.tipo === 'Lítio' ? 8 : 2;
         const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
         const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao, pop.nome, bModel.tipo);
         const resSub = statusData(proxSub);
@@ -1305,14 +1309,18 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         const resInsp = statusData(proxInsp);
         const vencidoInsp = resInsp && resInsp.status === 'vencido';
 
+        const voltagensHtml = bModel.tipo !== 'Lítio' 
+          ? `<br>Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]` 
+          : '';
+
         htmlRelatorio += `
           <div class="bloco">
             <span class="negrito">Banco ${getLetra(banco)} (${bModel.tipo})</span><br>
             Data de Fabricação: ${textoExato || 'Não informada'}<br>
             <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+${anosTrocaCalculado} anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
             Data da Última Inspeção: ${bModel.dataUltimaInspecao || 'N/A'}<br>
-            <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (3 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span><br>
-            Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]
+            <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (3 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span>
+            ${voltagensHtml}
           </div>
         `;
       }
@@ -1585,7 +1593,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
      {Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
       const bModel = bancosBateria[banco] || { tipo: 'Chumbo', dataFabricacao: '', dataUltimaInspecao: '', voltagens: ['', '', '', ''], salvo: false };
       
-      const anosTrocaCalculado = bModel.tipo === 'Litio' ? 8 : 2;
+      const anosTrocaCalculado = bModel.tipo === 'Lítio' ? 8 : 2;
       const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
       const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao, pop.nome, bModel.tipo);
       const resSub = statusData(proxSub);
@@ -1610,7 +1618,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 style={{ padding: '4px 6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '12px' }}
               >
                 <option value="Chumbo">Chumbo</option>
-                <option value="Litio">Lítio</option>
+                <option value="Lítio">Lítio</option>
               </select>
             </div>
             <button type="button" onClick={() => {
@@ -1663,24 +1671,28 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
           Próxima Inspeção (3 meses): {proxInsp || 'Preencha a última inspeção'} {vencidoInsp && `(Exp. há ${resInsp.dias}d)`}
         </p>
 
-        <div style={{ fontSize: '12px', color: theme.textMuted, marginBottom: '5px', fontWeight: 'bold' }}>Voltagem das 4 Baterias do Banco:</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', boxSizing: 'border-box', width: '100%' }}>
-          {[0, 1, 2, 3].map((vIdx) => (
-            <input 
-              key={vIdx} 
-              type="text" 
-              disabled={bModel.salvo}
-              placeholder={`Bat ${vIdx + 1}`} 
-              value={bModel.voltagens[vIdx] || ''} 
-              onChange={(e) => {
-                const novasVols = [...bModel.voltagens];
-                novasVols[vIdx] = e.target.value;
-                setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, voltagens: novasVols } });
-              }} 
-            style={{ width: '100%', padding: '7px 4px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', textAlign: 'center', fontSize: '12px' }} 
-          />
-        ))}
-        </div>
+        {bModel.tipo !== 'Lítio' && (
+          <>
+            <div style={{ fontSize: '12px', color: theme.textMuted, marginBottom: '5px', fontWeight: 'bold' }}>Voltagem das 4 Baterias do Banco:</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', boxSizing: 'border-box', width: '100%' }}>
+              {[0, 1, 2, 3].map((vIdx) => (
+                <input 
+                  key={vIdx} 
+                  type="text" 
+                  disabled={bModel.salvo}
+                  placeholder={`Bat ${vIdx + 1}`} 
+                  value={bModel.voltagens[vIdx] || ''} 
+                  onChange={(e) => {
+                    const novasVols = [...bModel.voltagens];
+                    novasVols[vIdx] = e.target.value;
+                    setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, voltagens: novasVols } });
+                  }} 
+                style={{ width: '100%', padding: '7px 4px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', textAlign: 'center', fontSize: '12px' }} 
+              />
+            ))}
+            </div>
+          </>
+        )}
       </div>
       );
      })}
