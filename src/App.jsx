@@ -43,11 +43,17 @@ style.innerHTML = `
   }
   @media (max-width: 600px) {
     .container-movel {
-      padding: 2px !important;
+      padding: 0px !important;
+      width: 100% !important;
+      max-width: 100% !important;
     }
     .card-movel {
-      padding: 8px !important;
-      border-radius: 2px !important;
+      padding: 6px !important;
+      border-radius: 0px !important;
+      border-left: none !important;
+      border-right: none !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
     }
   }
 `;
@@ -1326,15 +1332,15 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
   };
 
   return (
-  <div className="container-movel" style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', padding: '4px', fontFamily: 'sans-serif', maxWidth: '750px', margin: '0 auto', boxSizing: 'border-box' }}>
-    <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px', padding: '0 4px' }}>
+  <div className="container-movel" style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', padding: '0px', fontFamily: 'sans-serif', maxWidth: '750px', margin: '0 auto', boxSizing: 'border-box' }}>
+    <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px', padding: '4px' }}>
       <button type="button" onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>← Voltar</button>
       <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '5px 10px', borderRadius: '20px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
         {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
       </button>
     </div>
       
-    <div className="card-movel" style={{ background: theme.cardBg, color: theme.textMain, padding: '10px', borderRadius: '4px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+    <div className="card-movel" style={{ background: theme.cardBg, color: theme.textMain, padding: '6px', borderRadius: '0px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', margin: 0, fontSize: '16px' }}>Inspeção: {pop.nome}</h2>
