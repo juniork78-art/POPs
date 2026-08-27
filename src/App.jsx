@@ -323,17 +323,61 @@ export default function App() {
 
     listaPops.forEach(pop => {
       if (!popPertenceAoUsuario(pop.nome)) return;
-      const sigla = obterSiglaPop(pop.nome) || 'GERAL';
-      if (!dadosPorCidade[sigla]) {
-        dadosPorCidade[sigla] = [];
-      }
-
+      
       const dadosPop = dadosGeraisPops[pop.nome] || {};
       const checkInPop = ultimosCheckIns.find(c => {
         let n = (c.popNome || c.pop || '').toLowerCase();
         if (n === 'odin' || n === 'odim') n = 'balder';
         return n === pop.nome.toLowerCase();
       });
+
+      // VERIFICA SE EXISTE QUALQUER COISA VENCIDA NESTE POP OU INCIDENTES GERAIS
+      let temAlgoVencido = false;
+
+      // 1. Verifica inspeção geral
+      const proxInspGeral = checkInPop ? checkInPop.proximaInspecao : null;
+      const statusInsp = statusData(proxInspGeral);
+      if (statusInsp && statusInsp.status === 'vencido') {
+        temAlgoVencido = true;
+      }
+
+      // 2. Verifica incidentes gerais
+      if (dadosPop.incidentesGerais && dadosPop.incidentesGerais.trim() !== '') {
+        temAlgoVencido = true;
+      }
+
+      // 3. Verifica baterias vencidas
+      const qtdB = dadosPop.qtdBancos || 1;
+      for (let b = 1; b <= qtdB; b++) {
+        const fab = dadosPop[`bat_${b}_fab`];
+        const tipoB = dadosPop[`bat_${b}_tipo`] || 'Chumbo';
+        const proxSub = calcularProximaSubstituicaoBateria(fab, pop.nome, tipoB);
+        const resSub = statusData(proxSub);
+        if (resSub && resSub.status === 'vencido') {
+          temAlgoVencido = true;
+        }
+      }
+
+      // 4. Verifica limpezas de ar vencidas
+      const qtdA = dadosPop.qtdAr || 1;
+      const nomeLower = pop.nome.toLowerCase();
+      const interAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : 8;
+      for (let a = 1; a <= qtdA; a++) {
+        const limp = dadosPop[`ar_${a}_limp`];
+        const proxLimp = calcularProximaLimpezaAr(limp, interAr);
+        const resLimp = statusData(proxLimp);
+        if (resLimp && resLimp.status === 'vencido') {
+          temAlgoVencido = true;
+        }
+      }
+
+      // Se não houver nada vencido nem incidente, pula este POP
+      if (!temAlgoVencido) return;
+
+      const sigla = obterSiglaPop(pop.nome) || 'GERAL';
+      if (!dadosPorCidade[sigla]) {
+        dadosPorCidade[sigla] = [];
+      }
 
       dadosPorCidade[sigla].push({
         nome: pop.nome,
@@ -347,23 +391,23 @@ export default function App() {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Relatório Geral de Incidentes e Operações</title>
+        <title>Relatório Geral de Itens Vencidos</title>
         <style>
           body { font-family: Arial, sans-serif; padding: 25px; color: #000; line-height: 1.5; }
-          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #0056b3; padding-bottom: 12px; margin-bottom: 20px; }
-          h1 { color: #0056b3; margin: 0; font-size: 20px; text-transform: uppercase; }
+          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #d9534f; padding-bottom: 12px; margin-bottom: 20px; }
+          h1 { color: #d9534f; margin: 0; font-size: 20px; text-transform: uppercase; }
           h2 { color: #333; font-size: 16px; margin-top: 25px; border-bottom: 2px solid #007bff; padding-bottom: 4px; text-transform: uppercase; background: #eef2f5; padding-left: 8px; }
           h3 { color: #0056b3; font-size: 14px; margin: 12px 0 4px 0; text-transform: uppercase; }
           p { margin: 4px 0; font-size: 12px; }
           .negrito { font-weight: bold; }
           .vermelho { color: #d9534f; font-weight: bold; }
-          .bloco-pop { background: #fdfdfd; border: 1px solid #ddd; padding: 10px 14px; margin-bottom: 10px; border-radius: 4px; border-left: 4px solid #007bff; }
+          .bloco-pop { background: #fdfdfd; border: 1px solid #ddd; padding: 10px 14px; margin-bottom: 10px; border-radius: 4px; border-left: 4px solid #d9534f; }
           .incidente-item { background: #fff5f5; border-left: 3px solid #d9534f; padding: 6px 10px; margin: 4px 0; font-size: 12px; }
         </style>
       </head>
       <body>
         <div class="header">
-          <h1>Relatório Geral - Incidentes, Baterias e Limpezas</h1>
+          <h1>Relatório de Itens Vencidos e Alertas</h1>
           <div>
             <p><strong>Emitido por:</strong> ${usuarioLogado ? usuarioLogado.split('@')[0].toUpperCase() : 'Sistema'}</p>
             <p><strong>Data:</strong> ${new Date().toLocaleDateString()}</p>
@@ -371,61 +415,72 @@ export default function App() {
         </div>
     `;
 
-    Object.keys(dadosPorCidade).sort().forEach(sigla => {
-      html += `<h2>Região / Cidade: ${sigla}</h2>`;
+    const regioes = Object.keys(dadosPorCidade).sort();
+    if (regioes.length === 0) {
+      html += `<p style="text-align: center; font-size: 14px; color: #28a745; margin-top: 40px; font-weight: bold;">Nenhum POP com itens vencidos no momento! Todos estão em dia. 👍</p>`;
+    } else {
+      regioes.forEach(sigla => {
+        html += `<h2>Região / Cidade: ${sigla}</h2>`;
 
-      dadosPorCidade[sigla].forEach(item => {
-        const { nome, endereco, checkIn, dados } = item;
+        dadosPorCidade[sigla].forEach(item => {
+          const { nome, endereco, checkIn, dados } = item;
 
-        html += `
-          <div class="bloco-pop">
-            <h3>POP: ${nome.toUpperCase()}</h3>
-            <p><span class="negrito">Endereço:</span> ${endereco}</p>
-            <p><span class="negrito">Última Inspeção:</span> ${checkIn ? checkIn.dataHora : (dados.ultimaDataInspecao ? `${dados.ultimaDataInspecao} (Salva)` : 'Nenhuma registrada')}</p>
-            <p><span class="negrito">Próxima Inspeção:</span> ${checkIn ? checkIn.proximaInspecao : 'N/A'}</p>
-        `;
+          html += `
+            <div class="bloco-pop">
+              <h3>POP: ${nome.toUpperCase()}</h3>
+              <p><span class="negrito">Endereço:</span> ${endereco}</p>
+          `;
 
-        if (dados.incidentesGerais && dados.incidentesGerais.trim() !== '') {
-          html += `<p class="vermelho" style="margin-top:6px;">⚠️ Incidentes Registrados:</p>`;
-          html += `<div class="incidente-item">${dados.incidentesGerais}</div>`;
-        }
+          const proxInspGeral = checkIn ? checkIn.proximaInspecao : null;
+          const statusInsp = statusData(proxInspGeral);
+          if (statusInsp && statusInsp.status === 'vencido') {
+            html += `<p><span class="negrito">Última Inspeção:</span> ${checkIn.dataHora} | <span class="vermelho">Próxima Inspeção: ${checkIn.proximaInspecao} (VENCIDO há ${statusInsp.dias} dias)</span></p>`;
+          } else {
+            html += `<p><span class="negrito">Última Inspeção:</span> ${checkIn ? checkIn.dataHora : (dados.ultimaDataInspecao ? `${dados.ultimaDataInspecao} (Salva)` : 'Nenhuma registrada')}</p>`;
+          }
 
-        const qtdB = dados.qtdBancos || 1;
-        html += `<p style="margin-top: 6px;"><span class="negrito">Bancos de Baterias (${qtdB}):</span>`;
-        for (let b = 1; b <= qtdB; b++) {
-          const fab = dados[`bat_${b}_fab`];
-          const tipoB = dados[`bat_${b}_tipo`] || 'Chumbo';
-          const { textoExato } = parseDataFabricacaoBateria(fab);
-          const fabExibicao = textoExato ? `${fab} (${textoExato})` : (fab || 'N/A');
-          const proxSub = calcularProximaSubstituicaoBateria(fab, nome, tipoB);
-          const resSub = statusData(proxSub);
-          const estiloTroca = resSub?.status === 'vencido' ? 'color: #d9534f; font-weight: bold;' : '';
-          const textoVencido = resSub?.status === 'vencido' ? ' (VENCIDO)' : '';
-          html += `<br>&nbsp;&nbsp;• Banco ${getLetra(b)} (${tipoB}) - Fab: ${fabExibicao} | Próx. Troca: <span style="${estiloTroca}">${proxSub || 'N/A'}${textoVencido}</span>`;
-        }
-        html += `</p>`;
+          if (dados.incidentesGerais && dados.incidentesGerais.trim() !== '') {
+            html += `<p class="vermelho" style="margin-top:6px;">⚠️ Incidentes Registrados:</p>`;
+            html += `<div class="incidente-item">${dados.incidentesGerais}</div>`;
+          }
 
-        const qtdA = dados.qtdAr || 1;
-        const nomeLower = nome.toLowerCase();
-        const interAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : 8;
-        html += `<p style="margin-top: 4px;"><span class="negrito">Centrais de Ar (${qtdA}):</span>`;
-        for (let a = 1; a <= qtdA; a++) {
-          const limp = dados[`ar_${a}_limp`];
-          const proxLimp = calcularProximaLimpezaAr(limp, interAr);
-          const resLimp = statusData(proxLimp);
-          const estiloLimp = resLimp?.status === 'vencido' ? 'color: #d9534f; font-weight: bold;' : '';
-          const textoVencidoLimp = resLimp?.status === 'vencido' ? ' (VENCIDO)' : '';
-          html += `<br>&nbsp;&nbsp;• Central ${getLetra(a)} (${dados[`ar_${a}_mod`] || 'Elgin'}) - Última Limpeza: ${limp || 'N/A'} | Próx. Limpeza: <span style="${estiloLimp}">${proxLimp || 'N/A'}${textoVencidoLimp}</span>`;
-        }
-        html += `</p>`;
+          const qtdB = dados.qtdBancos || 1;
+          html += `<p style="margin-top: 6px;"><span class="negrito">Bancos de Baterias (${qtdB}):</span>`;
+          for (let b = 1; b <= qtdB; b++) {
+            const fab = dados[`bat_${b}_fab`];
+            const tipoB = dados[`bat_${b}_tipo`] || 'Chumbo';
+            const { textoExato } = parseDataFabricacaoBateria(fab);
+            const fabExibicao = textoExato ? `${fab} (${textoExato})` : (fab || 'N/A');
+            const proxSub = calcularProximaSubstituicaoBateria(fab, nome, tipoB);
+            const resSub = statusData(proxSub);
+            const estiloTroca = resSub?.status === 'vencido' ? 'color: #d9534f; font-weight: bold;' : '';
+            const textoVencido = resSub?.status === 'vencido' ? ` (VENCIDO há ${resSub.dias}d)` : '';
+            html += `<br>&nbsp;&nbsp;• Banco ${getLetra(b)} (${tipoB}) - Fab: ${fabExibicao} | Próx. Troca: <span style="${estiloTroca}">${proxSub || 'N/A'}${textoVencido}</span>`;
+          }
+          html += `</p>`;
 
-        if (dados.anotacoes) {
-          html += `<p style="margin-top: 4px;"><span class="negrito">Anotações:</span> ${dados.anotacoes}</p>`;
-        }
+          const qtdA = dados.qtdAr || 1;
+          const nomeLower = nome.toLowerCase();
+          const interAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : 8;
+          html += `<p style="margin-top: 4px;"><span class="negrito">Centrais de Ar (${qtdA}):</span>`;
+          for (let a = 1; a <= qtdA; a++) {
+            const limp = dados[`ar_${a}_limp`];
+            const proxLimp = calcularProximaLimpezaAr(limp, interAr);
+            const resLimp = statusData(proxLimp);
+            const estiloLimp = resLimp?.status === 'vencido' ? 'color: #d9534f; font-weight: bold;' : '';
+            const textoVencidoLimp = resLimp?.status === 'vencido' ? ` (VENCIDO há ${resLimp.dias}d)` : '';
+            html += `<br>&nbsp;&nbsp;• Central ${getLetra(a)} (${dados[`ar_${a}_mod`] || 'Elgin'}) - Última Limpeza: ${limp || 'N/A'} | Próx. Limpeza: <span style="${estiloLimp}">${proxLimp || 'N/A'}${textoVencidoLimp}</span>`;
+          }
+          html += `</p>`;
 
-        html += `</div>`;
+          if (dados.anotacoes) {
+            html += `<p style="margin-top: 4px;"><span class="negrito">Anotações:</span> ${dados.anotacoes}</p>`;
+          }
+
+          html += `</div>`;
+        });
       });
-    });
+    }
 
     html += `</body></html>`;
     janelaPdf.document.write(html);
@@ -922,7 +977,7 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
           <h1 style={{ margin: 0, fontSize: '16px' }}>| Olá, {tecnico.split('@')[0].toUpperCase()}</h1>
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <button onClick={onGerarRelatorioGeral} style={{ background: '#17a2b8', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>📊 Relatório Geral</button>
+          <button onClick={onGerarRelatorioGeral} style={{ background: '#d9534f', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>📊 Relatório de Vencidos</button>
           <button onClick={onOpenAvisos} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '14px' }}>
             🔔
             {totalAlertas > 0 && (
