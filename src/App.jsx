@@ -227,7 +227,7 @@ export default function App() {
     cardBg: darkMode ? '#1e1e1e' : '#ffffff',
     cardInner: darkMode ? '#252525' : '#f8f9fa',
     textMain: darkMode ? '#fff' : '#212529',
-    textMuted: darkMode ? '#aaa' : '#555555',
+    textMuted: darkMode ? '#bbb' : '#444444',
     border: darkMode ? '#333' : '#d0d7de',
     inputBg: darkMode ? '#2d2d2d' : '#ffffff',
     inputText: darkMode ? '#fff' : '#212529'
@@ -414,7 +414,7 @@ export default function App() {
     }
   };
 
-  if (loadingAuth) return <div style={{ color: theme.textMain, backgroundColor: theme.bg, textAlign: 'center', marginTop: '20vh', fontFamily: 'sans-serif', minHeight: '100vh' }}>Carregando InfraManager...</div>;
+  if (loadingAuth) return <div style={{ color: theme.textMain, backgroundColor: theme.bg, textAlign: 'center', marginTop: '20vh', fontFamily: 'sans-serif', minHeight: '100vh', fontSize: '15px' }}>Carregando InfraManager...</div>;
   if (!usuarioLogado) return <TelaLogin onLoginSucesso={(email) => setUsuarioLogado(email)} darkMode={darkMode} setDarkMode={alternarTema} theme={theme} />;
   if (telaGerenciarPopsAberta) return <TelaGerenciarPops listaPops={listaPops} onBack={() => { setTelaGerenciarPopsAberta(false); window.history.back(); }} theme={theme} />;
   if (popSelecionado) {
@@ -468,26 +468,26 @@ export default function App() {
       {showAvisoGlobal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px', boxSizing: 'border-box' }}>
           <div style={{ background: theme.cardBg, color: theme.textMain, padding: '20px', borderRadius: '12px', border: '2px solid #ff4d4d', width: '100%', maxWidth: '450px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
-            <h2 style={{ color: '#ff4d4d', marginTop: 0, fontSize: '16px', textAlign: 'center' }}>⚠️ Atenção: Prazos e Vencimentos</h2>
+            <h2 style={{ color: '#ff4d4d', marginTop: 0, fontSize: '17px', textAlign: 'center' }}>⚠️ Atenção: Prazos e Vencimentos</h2>
             <div style={{ margin: '10px 0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
               {vencidos.length === 0 && amanha.length === 0 ? (
-                <p style={{ color: theme.textMuted, textAlign: 'center', fontSize: '13px' }}>Nenhum alerta pendente no momento.</p>
+                <p style={{ color: theme.textMuted, textAlign: 'center', fontSize: '14px' }}>Nenhum alerta pendente no momento.</p>
               ) : (
                 <>
                   {vencidos.map((msg, i) => (
-                    <div key={i} style={{ background: theme.cardInner, padding: '8px', borderRadius: '6px', borderLeft: '3px solid #ff4d4d' }}>
-                      <p className="alerta-vencido" style={{ margin: 0, fontSize: '11px' }}>{msg}</p>
+                    <div key={i} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', borderLeft: '3px solid #ff4d4d' }}>
+                      <p className="alerta-vencido" style={{ margin: 0, fontSize: '13px' }}>{msg}</p>
                     </div>
                   ))}
                   {amanha.map((msg, i) => (
-                    <div key={i} style={{ background: theme.cardInner, padding: '8px', borderRadius: '6px', borderLeft: '3px solid #ff9800' }}>
-                      <p className="alerta-amanha" style={{ margin: 0, fontSize: '11px' }}>{msg}</p>
+                    <div key={i} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', borderLeft: '3px solid #ff9800' }}>
+                      <p className="alerta-amanha" style={{ margin: 0, fontSize: '13px' }}>{msg}</p>
                     </div>
                   ))}
                 </>
               )}
             </div>
-            <button onClick={() => setShowAvisoGlobal(false)} style={{ width: '100%', padding: '10px', background: '#ff4d4d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer', marginTop: '10px' }}>Entendido</button>
+            <button onClick={() => setShowAvisoGlobal(false)} style={{ width: '100%', padding: '12px', background: '#ff4d4d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer', marginTop: '10px', fontSize: '14px' }}>Entendido</button>
           </div>
         </div>
       )}
@@ -496,25 +496,25 @@ export default function App() {
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex' }}>
           <div style={{ width: '320px', background: theme.cardBg, color: theme.textMain, height: '100%', padding: '20px', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column', borderRight: `1px solid ${theme.border}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-              <h3 style={{ margin: 0 }}>Menu do Sistema</h3>
+              <h3 style={{ margin: '0', fontSize: '16px' }}>Menu do Sistema</h3>
               <button onClick={() => setDrawerAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, fontSize: '18px', cursor: 'pointer' }}>✕</button>
             </div>
             <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
-              <button onClick={() => setAbaDrawer('checkins')} style={{ flex: 1, padding: '8px 4px', background: abaDrawer === 'checkins' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}>Check-ins</button>
-              <button onClick={() => setAbaDrawer('limpezas')} style={{ flex: 1, padding: '8px 4px', background: abaDrawer === 'limpezas' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}>Limpezas Ar</button>
-              <button onClick={() => setAbaDrawer('baterias')} style={{ flex: 1, padding: '8px 4px', background: abaDrawer === 'baterias' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}>Baterias</button>
+              <button onClick={() => setAbaDrawer('checkins')} style={{ flex: 1, padding: '8px 6px', background: abaDrawer === 'checkins' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Check-ins</button>
+              <button onClick={() => setAbaDrawer('limpezas')} style={{ flex: 1, padding: '8px 6px', background: abaDrawer === 'limpezas' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Limpezas Ar</button>
+              <button onClick={() => setAbaDrawer('baterias')} style={{ flex: 1, padding: '8px 6px', background: abaDrawer === 'baterias' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Baterias</button>
             </div>
 
             {abaDrawer === 'checkins' ? (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px', marginBottom: '10px' }}>
-                  <h4 style={{ color: theme.textMuted, fontSize: '14px', margin: 0 }}>Últimos Check-ins</h4>
+                  <h4 style={{ color: theme.textMuted, fontSize: '15px', margin: 0 }}>Últimos Check-ins</h4>
                   {ultimosCheckIns.length > 0 && (
-                    <button onClick={apagarCheckinsAntigos} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '4px 6px', borderRadius: '4px', cursor: 'pointer', fontSize: '9px', fontWeight: 'bold' }}>Apagar Antigos</button>
+                    <button onClick={apagarCheckinsAntigos} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Apagar Antigos</button>
                   )}
                 </div>
                 {ultimosCheckIns.length === 0 ? (
-                  <p style={{ color: theme.textMuted, fontSize: '13px' }}>Nenhum check-in registrado.</p>
+                  <p style={{ color: theme.textMuted, fontSize: '14px' }}>Nenhum check-in registrado.</p>
                 ) : (
                   ultimosCheckIns.map((item, idx) => {
                     const nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '');
@@ -526,11 +526,11 @@ export default function App() {
                     const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
 
                     return (
-                      <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}`, position: 'relative' }}>
-                        <button onClick={() => apagarCheckInIndividual(idx)} style={{ position: 'absolute', top: '8px', right: '8px', background: 'transparent', border: 'none', color: '#ff4d4d', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer' }}>✕</button>
-                        <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', paddingRight: '15px' }}>POP: {nomeExibicao}</p>
-                        <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Técnico: {item.tecnico}</p>
-                        <p style={{ margin: '0 0 3px 0', color: theme.textMuted }}>Data: {item.dataHora}</p>
+                      <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '13px', border: `1px solid ${theme.border}`, position: 'relative' }}>
+                        <button onClick={() => apagarCheckInIndividual(idx)} style={{ position: 'absolute', top: '8px', right: '8px', background: 'transparent', border: 'none', color: '#ff4d4d', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer' }}>✕</button>
+                        <p style={{ margin: '0 0 4px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', paddingRight: '15px', fontSize: '13px' }}>POP: {nomeExibicao}</p>
+                        <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Técnico: {item.tecnico}</p>
+                        <p style={{ margin: '0 0 4px 0', color: theme.textMuted }}>Data: {item.dataHora}</p>
                         <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
                           Próx. Insp: {item.proximaInspecao} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
                         </p>
@@ -541,7 +541,7 @@ export default function App() {
               </div>
             ) : abaDrawer === 'limpezas' ? (
               <div>
-                <h4 style={{ color: theme.textMuted, fontSize: '14px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px' }}>Cronograma Limpezas de Ar</h4>
+                <h4 style={{ color: theme.textMuted, fontSize: '15px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px', marginTop: 0 }}>Cronograma Limpezas de Ar</h4>
                 {cronogramaLimpezas.map((item, idx) => {
                   if (!popPertenceAoUsuario(item.popNome)) return null;
                   const sigla = obterSiglaPop(item.popNome);
@@ -551,9 +551,9 @@ export default function App() {
                   const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
 
                   return (
-                    <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
-                      <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>{nomeExibicao} ({item.central})</p>
-                      <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Última: {item.ultimaLimpeza}</p>
+                    <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '13px', border: `1px solid ${theme.border}` }}>
+                      <p style={{ margin: '0 0 4px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '13px' }}>{nomeExibicao} ({item.central})</p>
+                      <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Última: {item.ultimaLimpeza}</p>
                       <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
                         Próxima: {item.proximaLimpeza} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
                       </p>
@@ -563,7 +563,7 @@ export default function App() {
               </div>
             ) : (
               <div>
-                <h4 style={{ color: theme.textMuted, fontSize: '14px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px' }}>Cronograma de Baterias</h4>
+                <h4 style={{ color: theme.textMuted, fontSize: '15px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px', marginTop: 0 }}>Cronograma de Baterias</h4>
                 {cronogramaBaterias.map((item, idx) => {
                   if (!popPertenceAoUsuario(item.popNome)) return null;
                   const sigla = obterSiglaPop(item.popNome);
@@ -573,9 +573,9 @@ export default function App() {
                   const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
 
                   return (
-                    <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '12px', border: `1px solid ${theme.border}` }}>
-                      <p style={{ margin: '0 0 3px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase' }}>{nomeExibicao} ({item.banco})</p>
-                      <p style={{ margin: '0 0 3px 0', color: theme.textMain }}>Fabricação: {item.fabricacao}</p>
+                    <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '13px', border: `1px solid ${theme.border}` }}>
+                      <p style={{ margin: '0 0 4px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '13px' }}>{nomeExibicao} ({item.banco})</p>
+                      <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Fabricação: {item.fabricacao}</p>
                       <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
                         Troca: {item.proximaSubstituicao} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
                       </p>
@@ -646,18 +646,18 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
         <h2 style={{ marginBottom: '20px', fontSize: '18px' }}>InfraManager POP</h2>
         {erro && <p style={{ color: '#ff6b6b', fontSize: '13px', marginBottom: '10px' }}>{erro}</p>}
         
-        <input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', padding: '10px', marginBottom: '15px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+        <input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', padding: '10px', marginBottom: '15px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
         
         <div style={{ position: 'relative', marginBottom: '15px' }}>
-          <input type={mostrarSenha ? "text" : "password"} placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} required style={{ width: '100%', padding: '10px', paddingRight: '40px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-          <button type="button" onClick={() => setMostrarSenha(!mostrarSenha)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '14px' }}>
+          <input type={mostrarSenha ? "text" : "password"} placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} required style={{ width: '100%', padding: '10px', paddingRight: '40px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+          <button type="button" onClick={() => setMostrarSenha(!mostrarSenha)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '15px' }}>
             {mostrarSenha ? '🔓' : '🔒'}
           </button>
         </div>
 
-        <button type="submit" style={{ width: '100%', padding: '12px', background: '#007bff', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', marginBottom: '15px' }}>Entrar</button>
+        <button type="submit" style={{ width: '100%', padding: '12px', background: '#007bff', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', marginBottom: '15px', fontSize: '14px' }}>Entrar</button>
         
-        <button type="button" onClick={() => { setShowTrocarSenhaModal(true); setErroTroca(''); setSucessoTroca(''); }} style={{ background: 'transparent', border: 'none', color: '#4dabf7', cursor: 'pointer', fontSize: '12px', textDecoration: 'underline' }}>
+        <button type="button" onClick={() => { setShowTrocarSenhaModal(true); setErroTroca(''); setSucessoTroca(''); }} style={{ background: 'transparent', border: 'none', color: '#4dabf7', cursor: 'pointer', fontSize: '13px', textDecoration: 'underline' }}>
           Esqueceu/Alterar Senha?
         </button>
       </form>
@@ -665,22 +665,22 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
       {showTrocarSenhaModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px', boxSizing: 'border-box' }}>
           <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '350px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
-            <h3 style={{ marginTop: 0, fontSize: '16px', textAlign: 'center' }}>Alterar Senha</h3>
-            {erroTroca && <p style={{ color: '#ff6b6b', fontSize: '12px', marginBottom: '10px' }}>{erroTroca}</p>}
-            {sucessoTroca && <p style={{ color: '#28a745', fontSize: '12px', marginBottom: '10px' }}>{sucessoTroca}</p>}
+            <h3 style={{ marginTop: 0, fontSize: '17px', textAlign: 'center' }}>Alterar Senha</h3>
+            {erroTroca && <p style={{ color: '#ff6b6b', fontSize: '13px', marginBottom: '10px' }}>{erroTroca}</p>}
+            {sucessoTroca && <p style={{ color: '#28a745', fontSize: '13px', marginBottom: '10px' }}>{sucessoTroca}</p>}
             
             <form onSubmit={handleTrocarSenha}>
-              <input type="email" placeholder="Confirme seu E-mail" value={emailTroca} onChange={(e) => setEmailTroca(e.target.value)} required style={{ width: '100%', padding: '8px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+              <input type="email" placeholder="Confirme seu E-mail" value={emailTroca} onChange={(e) => setEmailTroca(e.target.value)} required style={{ width: '100%', padding: '9px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
               
               <div style={{ position: 'relative', marginBottom: '10px' }}>
-                <input type={mostrarSenhaTroca ? "text" : "password"} placeholder="Senha Antiga" value={senhaAntiga} onChange={(e) => setSenhaAntiga(e.target.value)} required style={{ width: '100%', padding: '8px', paddingRight: '35px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+                <input type={mostrarSenhaTroca ? "text" : "password"} placeholder="Senha Antiga" value={senhaAntiga} onChange={(e) => setSenhaAntiga(e.target.value)} required style={{ width: '100%', padding: '9px', paddingRight: '35px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
               </div>
 
               <div style={{ position: 'relative', marginBottom: '10px' }}>
-                <input type={mostrarSenhaTroca ? "text" : "password"} placeholder="Senha Nova" value={senhaNova} onChange={(e) => setSenhaNova(e.target.value)} required style={{ width: '100%', padding: '8px', paddingRight: '35px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+                <input type={mostrarSenhaTroca ? "text" : "password"} placeholder="Senha Nova" value={senhaNova} onChange={(e) => setSenhaNova(e.target.value)} required style={{ width: '100%', padding: '9px', paddingRight: '35px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
               </div>
               
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '15px', fontSize: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '15px', fontSize: '13px' }}>
                 <input type="checkbox" id="chkMostrarTroca" checked={mostrarSenhaTroca} onChange={() => setMostrarSenhaTroca(!mostrarSenhaTroca)} />
                 <label htmlFor="chkMostrarTroca" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   {mostrarSenhaTroca ? '🔓' : '🔒'} Mostrar senhas
@@ -688,8 +688,8 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                <button type="button" onClick={() => setShowTrocarSenhaModal(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer' }}>Cancelar</button>
-                <button type="submit" style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Salvar Nova Senha</button>
+                <button type="button" onClick={() => setShowTrocarSenhaModal(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '13px' }}>Cancelar</button>
+                <button type="submit" style={{ background: '#007bff', border: 'none', color: '#fff', padding: '7px 14px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>Salvar Nova Senha</button>
               </div>
             </form>
           </div>
@@ -707,55 +707,55 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
   const isPedro = tecnico.toLowerCase().includes('pedro');
   const popsFiltrados = listaPops.filter(p => (isPedro ? p.endereco.toLowerCase().endsWith('- pbs') : true) && (p.nome.toLowerCase().includes(busca.toLowerCase()) || p.endereco.toLowerCase().includes(busca.toLowerCase())));
   return (
-    <div className="container-movel" style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', width: '100%', margin: 0, padding: '10px', boxSizing: 'border-box' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', borderBottom: `1px solid ${theme.border}`, paddingBottom: '10px', flexWrap: 'wrap', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
+    <div className="container-movel" style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', width: '100%', margin: 0, padding: '12px', boxSizing: 'border-box' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', flexWrap: 'wrap', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <button onClick={onOpenDrawer} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>☰ Menu</button>
+          <button onClick={onOpenDrawer} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>☰ Menu</button>
           <img src="/logo.png" alt="Logo Fibralink" style={{ width: '90px', objectFit: 'contain' }} />
-          <h1 style={{ margin: 0, fontSize: '15px' }}>| Olá, {tecnico.split('@')[0].toUpperCase()}</h1>
+          <h1 style={{ margin: 0, fontSize: '16px' }}>| Olá, {tecnico.split('@')[0].toUpperCase()}</h1>
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           <button onClick={onOpenAvisos} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '14px' }}>
             🔔
             {totalAlertas > 0 && (
-              <span style={{ background: '#ff4d4d', color: '#fff', fontSize: '10px', fontWeight: 'bold', padding: '1px 5px', borderRadius: '10px' }}>
+              <span style={{ background: '#ff4d4d', color: '#fff', fontSize: '11px', fontWeight: 'bold', padding: '1px 6px', borderRadius: '10px' }}>
                 {totalAlertas}
               </span>
             )}
           </button>
-          <button onClick={() => setShowPasswordDialog(true)} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>Gerenciar POPs</button>
+          <button onClick={() => setShowPasswordDialog(true)} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>Gerenciar POPs</button>
           <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>{darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}</button>
-          <button onClick={onLogout} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>Sair</button>
+          <button onClick={onLogout} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>Sair</button>
         </div>
       </header>
       {showPasswordDialog && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px', boxSizing: 'border-box' }}>
-          <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '300px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
-            <h3 style={{ marginTop: 0 }}>Senha Necessária</h3>
+          <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '310px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+            <h3 style={{ marginTop: 0, fontSize: '16px' }}>Senha Necessária</h3>
             
             <div style={{ position: 'relative', margin: '15px 0' }}>
-              <input type={mostrarSenhaGerenciar ? "text" : "password"} placeholder="Senha do Sistema" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} style={{ width: '100%', padding: '8px', paddingRight: '35px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-              <button type="button" onClick={() => setMostrarSenhaGerenciar(!mostrarSenhaGerenciar)} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '13px' }}>
+              <input type={mostrarSenhaGerenciar ? "text" : "password"} placeholder="Senha do Sistema" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} style={{ width: '100%', padding: '9px', paddingRight: '35px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
+              <button type="button" onClick={() => setMostrarSenhaGerenciar(!mostrarSenhaGerenciar)} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '14px' }}>
                 {mostrarSenhaGerenciar ? '🔓' : '🔒'}
               </button>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button onClick={() => setShowPasswordDialog(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer' }}>Cancelar</button>
+              <button onClick={() => setShowPasswordDialog(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '13px' }}>Cancelar</button>
               <button onClick={() => {
                 if (passwordInput === "%001mNbBa*+!") { setShowPasswordDialog(false); setPasswordInput(''); onOpenGerenciarPops(); }
                 else { alert('Senha incorreta!'); setPasswordInput(''); }
-              }} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>Confirmar</button>
+              }} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>Confirmar</button>
             </div>
           </div>
         </div>
       )}
-      <input type="text" placeholder="Pesquisar POP" value={busca} onChange={(e) => setBusca(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.inputText, marginBottom: '15px', boxSizing: 'border-box' }} />
+      <input type="text" placeholder="Pesquisar POP" value={busca} onChange={(e) => setBusca(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '4px', border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.inputText, marginBottom: '15px', boxSizing: 'border-box', fontSize: '14px' }} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
         {popsFiltrados.map((pop) => (
-          <div key={pop.id} onClick={() => onPopClick(pop)} style={{ background: theme.cardBg, padding: '12px', borderRadius: '6px', border: `1px solid ${theme.border}`, cursor: 'pointer', width: '100%', boxSizing: 'border-box' }}>
-            <h3 style={{ margin: '0 0 6px 0', color: '#4dabf7', textTransform: 'uppercase' }}>{pop.nome}</h3>
-            <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{pop.endereco}</p>
+          <div key={pop.id} onClick={() => onPopClick(pop)} style={{ background: theme.cardBg, padding: '14px', borderRadius: '6px', border: `1px solid ${theme.border}`, cursor: 'pointer', width: '100%', boxSizing: 'border-box' }}>
+            <h3 style={{ margin: '0 0 6px 0', color: '#4dabf7', textTransform: 'uppercase', fontSize: '15px' }}>{pop.nome}</h3>
+            <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>{pop.endereco}</p>
           </div>
         ))}
       </div>
@@ -780,31 +780,31 @@ function TelaGerenciarPops({ listaPops, onBack, theme }) {
   return (
     <div className="container-movel" style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', width: '100%', padding: '15px', margin: 0, boxSizing: 'border-box' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', width: '100%', boxSizing: 'border-box' }}>
-        <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>← Voltar</button>
-        <h2>Gerenciar POPs</h2>
-        <button onClick={() => { setPopEdicao({ id: Date.now() }); setNome(''); setEndereco(''); setShowDialog(true); }} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>+ Novo POP</button>
+        <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>← Voltar</button>
+        <h2 style={{ fontSize: '17px', margin: 0 }}>Gerenciar POPs</h2>
+        <button onClick={() => { setPopEdicao({ id: Date.now() }); setNome(''); setEndereco(''); setShowDialog(true); }} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>+ Novo POP</button>
       </div>
       {showDialog && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px', boxSizing: 'border-box' }}>
           <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '350px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
-            <h3>Editar/Novo POP</h3>
-            <input type="text" placeholder="Nome" value={nome} onChange={(e) => setNome(e.target.value)} style={{ width: '100%', padding: '8px', margin: '10px 0', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
-            <input type="text" placeholder="Endereço" value={endereco} onChange={(e) => setEndereco(e.target.value)} style={{ width: '100%', padding: '8px', margin: '10px 0 20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
+            <h3 style={{ marginTop: 0, fontSize: '16px' }}>Editar/Novo POP</h3>
+            <input type="text" placeholder="Nome" value={nome} onChange={(e) => setNome(e.target.value)} style={{ width: '100%', padding: '9px', margin: '10px 0', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
+            <input type="text" placeholder="Endereço" value={endereco} onChange={(e) => setEndereco(e.target.value)} style={{ width: '100%', padding: '9px', margin: '10px 0 20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button onClick={() => setShowDialog(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer' }}>Cancelar</button>
-              <button onClick={salvarPop} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>Salvar</button>
+              <button onClick={() => setShowDialog(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '13px' }}>Cancelar</button>
+              <button onClick={salvarPop} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>Salvar</button>
             </div>
           </div>
         </div>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
         {listaPops.map((pop) => (
-          <div key={pop.id} style={{ background: theme.cardBg, color: theme.textMain, padding: '12px', borderRadius: '6px', border: `1px solid ${theme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', boxSizing: 'border-box' }}>
+          <div key={pop.id} style={{ background: theme.cardBg, color: theme.textMain, padding: '14px', borderRadius: '6px', border: `1px solid ${theme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', boxSizing: 'border-box' }}>
             <div>
-              <h4 style={{ margin: '0 0 5px 0', color: '#4dabf7', textTransform: 'uppercase' }}>{pop.nome}</h4>
-              <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{pop.endereco}</p>
+              <h4 style={{ margin: '0 0 5px 0', color: '#4dabf7', textTransform: 'uppercase', fontSize: '15px' }}>{pop.nome}</h4>
+              <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>{pop.endereco}</p>
             </div>
-            <button onClick={() => { setPopEdicao(pop); setNome(pop.nome); setEndereco(pop.endereco); setShowDialog(true); }} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '6px 10px', borderRadius: '4px', cursor: 'pointer' }}>Editar</button>
+            <button onClick={() => { setPopEdicao(pop); setNome(pop.nome); setEndereco(pop.endereco); setShowDialog(true); }} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>Editar</button>
           </div>
         ))}
       </div>
@@ -1351,12 +1351,12 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
     {/* CONTAINER LIMITADO DENTRO DA ÁREA CENTRAL */}
     <div style={{ width: '100%', maxWidth: '900px', boxSizing: 'border-box' }}>
       
-      <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px', padding: '4px 0', width: '100%', boxSizing: 'border-box' }}>
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <button type="button" onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>← Voltar</button>
-          <button type="button" onClick={() => setMenuPopsLateralAberto(true)} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>📁 Trocar POP</button>
+      <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px', padding: '4px 0', width: '100%', boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button type="button" onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>← Voltar</button>
+          <button type="button" onClick={() => setMenuPopsLateralAberto(true)} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>📁 Trocar POP</button>
         </div>
-        <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '5px 10px', borderRadius: '20px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
+        <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
           {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
         </button>
       </div>
@@ -1364,17 +1364,17 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
       {/* MENU LATERAL DE TROCA DE POPS */}
       {menuPopsLateralAberto && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 1250, display: 'flex' }}>
-          <div style={{ width: '300px', background: theme.cardBg, color: theme.textMain, height: '100%', padding: '15px', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column', borderRight: `1px solid ${theme.border}` }}>
+          <div style={{ width: '310px', background: theme.cardBg, color: theme.textMain, height: '100%', padding: '15px', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column', borderRight: `1px solid ${theme.border}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <h3 style={{ margin: 0, fontSize: '15px' }}>Selecionar POP</h3>
-              <button onClick={() => setMenuPopsLateralAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, fontSize: '16px', cursor: 'pointer' }}>✕</button>
+              <h3 style={{ margin: 0, fontSize: '16px' }}>Selecionar POP</h3>
+              <button onClick={() => setMenuPopsLateralAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, fontSize: '18px', cursor: 'pointer' }}>✕</button>
             </div>
-            <input type="text" placeholder="Filtrar POP..." value={buscaPopLateral} onChange={(e) => setBuscaPopLateral(e.target.value)} style={{ width: '100%', padding: '6px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px', borderRadius: '4px' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', overflowY: 'auto', flex: 1 }}>
+            <input type="text" placeholder="Filtrar POP..." value={buscaPopLateral} onChange={(e) => setBuscaPopLateral(e.target.value)} style={{ width: '100%', padding: '8px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px', borderRadius: '4px' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', flex: 1 }}>
               {popsFiltradosMenu.map((p) => (
                 <div key={p.id} onClick={() => { onSelectPop(p); setMenuPopsLateralAberto(false); }} style={{ background: p.nome.toLowerCase() === pop.nome.toLowerCase() ? '#007bff' : theme.cardInner, color: p.nome.toLowerCase() === pop.nome.toLowerCase() ? '#fff' : theme.textMain, padding: '10px', borderRadius: '4px', cursor: 'pointer', border: `1px solid ${theme.border}` }}>
-                  <p style={{ margin: '0 0 2px 0', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px' }}>{p.nome}</p>
-                  <p style={{ margin: 0, fontSize: '10px', opacity: 0.8 }}>{p.endereco}</p>
+                  <p style={{ margin: '0 0 3px 0', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '13px' }}>{p.nome}</p>
+                  <p style={{ margin: 0, fontSize: '11px', opacity: 0.9 }}>{p.endereco}</p>
                 </div>
               ))}
             </div>
@@ -1383,18 +1383,18 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         </div>
       )}
         
-      <div className="card-movel" style={{ background: theme.cardBg, color: theme.textMain, padding: '12px', width: '100%', borderRadius: '6px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+      <div className="card-movel" style={{ background: theme.cardBg, color: theme.textMain, padding: '15px', width: '100%', borderRadius: '6px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', width: '100%', boxSizing: 'border-box' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', margin: 0, fontSize: '16px' }}>Inspeção: {pop.nome}</h2>
-            <div style={{ display: 'flex', gap: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', margin: 0, fontSize: '18px' }}>Inspeção: {pop.nome}</h2>
+            <div style={{ display: 'flex', gap: '6px' }}>
               {linkGoogleMaps && (
                 <a 
                   href={linkGoogleMaps} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="no-print"
-                  style={{ background: '#007bff', color: '#fff', padding: '4px 8px', borderRadius: '4px', textDecoration: 'none', fontSize: '11px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '3px' }}
+                  style={{ background: '#007bff', color: '#fff', padding: '5px 10px', borderRadius: '4px', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}
                 >
                   📍 Localização
                 </a>
@@ -1403,56 +1403,56 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 type="button"
                 onClick={() => setModalFotosAberto(true)}
                 className="no-print"
-                style={{ background: '#6c757d', color: '#fff', padding: '4px 8px', borderRadius: '4px', border: 'none', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px' }}
+                style={{ background: '#6c757d', color: '#fff', padding: '5px 10px', borderRadius: '4px', border: 'none', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
               >
                 📷 Fotos {fotosPop.length > 0 ? `(${fotosPop.length})` : ''}
               </button>
             </div>
           </div>
-          <img src="/logo.png" alt="Logo" style={{ width: '80px', objectFit: 'contain' }} />
+          <img src="/logo.png" alt="Logo" style={{ width: '90px', objectFit: 'contain' }} />
       </div>
-      <p style={{ color: theme.textMuted, fontSize: '12px', marginBottom: '15px' }}>{pop.endereco}</p>
+      <p style={{ color: theme.textMuted, fontSize: '14px', marginBottom: '15px' }}>{pop.endereco}</p>
 
-      <p style={{ color: theme.textMain, fontSize: '14px', fontWeight: 'bold', marginBottom: '12px' }}>{cargoLabel}: {nomeTecnicoLogado}</p>
+      <p style={{ color: theme.textMain, fontSize: '15px', fontWeight: 'bold', marginBottom: '15px' }}>{cargoLabel}: {nomeTecnicoLogado}</p>
 
       {/* MODAL DE FOTOS */}
       {modalFotosAberto && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 1200, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px', boxSizing: 'border-box' }}>
-          <div style={{ background: theme.cardBg, color: theme.textMain, padding: '15px', borderRadius: '6px', width: '100%', maxWidth: '500px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <h3 style={{ margin: 0, color: '#4dabf7', fontSize: '15px' }}>Fotos do POP: {pop.nome.toUpperCase()}</h3>
-              <button onClick={() => setModalFotosAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, fontSize: '16px', cursor: 'pointer' }}>✕</button>
+          <div style={{ background: theme.cardBg, color: theme.textMain, padding: '20px', borderRadius: '6px', width: '100%', maxWidth: '500px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h3 style={{ margin: 0, color: '#4dabf7', fontSize: '16px' }}>Fotos do POP: {pop.nome.toUpperCase()}</h3>
+              <button onClick={() => setModalFotosAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, fontSize: '18px', cursor: 'pointer' }}>✕</button>
             </div>
 
-            <div style={{ marginBottom: '12px', background: theme.cardInner, padding: '8px', borderRadius: '4px', border: `1px solid ${theme.border}` }}>
-              <label style={{ display: 'block', fontSize: '11px', marginBottom: '4px', fontWeight: 'bold' }}>Carregar Nova Foto</label>
-              <input type="file" accept="image/*" onChange={handleFileChange} style={{ width: '100%', marginBottom: '8px', fontSize: '11px', color: theme.textMain }} />
+            <div style={{ marginBottom: '15px', background: theme.cardInner, padding: '10px', borderRadius: '4px', border: `1px solid ${theme.border}` }}>
+              <label style={{ display: 'block', fontSize: '12px', marginBottom: '6px', fontWeight: 'bold' }}>Carregar Nova Foto</label>
+              <input type="file" accept="image/*" onChange={handleFileChange} style={{ width: '100%', marginBottom: '10px', fontSize: '12px', color: theme.textMain }} />
               {fotoCarregadaBase64 && (
-                <div style={{ marginBottom: '8px', textAlign: 'center' }}>
-                  <img src={fotoCarregadaBase64} alt="Pré-visualização" style={{ maxWidth: '100%', maxHeight: '100px', objectFit: 'contain', borderRadius: '4px', cursor: 'pointer' }} onClick={() => setFotoTelaCheiaUrl(fotoCarregadaBase64)} title="Clique para ampliar" />
+                <div style={{ marginBottom: '10px', textAlign: 'center' }}>
+                  <img src={fotoCarregadaBase64} alt="Pré-visualização" style={{ maxWidth: '100%', maxHeight: '110px', objectFit: 'contain', borderRadius: '4px', cursor: 'pointer' }} onClick={() => setFotoTelaCheiaUrl(fotoCarregadaBase64)} title="Clique para ampliar" />
                 </div>
               )}
-              <button type="button" onClick={salvarFotoPop} style={{ width: '100%', padding: '6px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>Salvar Foto</button>
+              <button type="button" onClick={salvarFotoPop} style={{ width: '100%', padding: '8px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>Salvar Foto</button>
             </div>
 
             <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <h4 style={{ margin: '0 0 4px 0', fontSize: '12px', color: theme.textMuted }}>Fotos Salvas</h4>
+              <h4 style={{ margin: '0 0 6px 0', fontSize: '13px', color: theme.textMuted }}>Fotos Salvas</h4>
               {fotosPop.length === 0 ? (
-                <p style={{ fontSize: '11px', color: theme.textMuted, textAlign: 'center' }}>Nenhuma foto salva para este POP.</p>
+                <p style={{ fontSize: '12px', color: theme.textMuted, textAlign: 'center' }}>Nenhuma foto salva para este POP.</p>
               ) : (
                 fotosPop.map((foto) => (
-                  <div key={foto.id} style={{ background: theme.cardInner, padding: '6px', borderRadius: '4px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', width: '100%', boxSizing: 'border-box' }}>
+                  <div key={foto.id} style={{ background: theme.cardInner, padding: '8px', borderRadius: '4px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
                     <img 
                       src={foto.url} 
                       alt="POP" 
-                      style={{ width: '60px', height: '40px', objectFit: 'cover', borderRadius: '4px', cursor: 'pointer' }} 
+                      style={{ width: '70px', height: '45px', objectFit: 'cover', borderRadius: '4px', cursor: 'pointer' }} 
                       onClick={() => setFotoTelaCheiaUrl(foto.url)}
                       title="Clique para abrir em tela cheia"
                     />
-                    <div style={{ flex: 1, fontSize: '10px', color: theme.textMuted }}>
+                    <div style={{ flex: 1, fontSize: '12px', color: theme.textMuted }}>
                       Salva em: {foto.data}
                     </div>
-                    <button type="button" onClick={() => deletarFotoPop(foto.id)} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '4px 6px', borderRadius: '4px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>Deletar</button>
+                    <button type="button" onClick={() => deletarFotoPop(foto.id)} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '5px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Deletar</button>
                   </div>
                 ))
               )}
@@ -1466,7 +1466,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.95)', zIndex: 1300, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px', boxSizing: 'border-box' }}>
           <button 
             onClick={() => setFotoTelaCheiaUrl(null)} 
-            style={{ position: 'absolute', top: '15px', right: '15px', background: '#dc3545', border: 'none', color: '#fff', fontSize: '16px', fontWeight: 'bold', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}
+            style={{ position: 'absolute', top: '15px', right: '15px', background: '#dc3545', border: 'none', color: '#fff', fontSize: '16px', fontWeight: 'bold', padding: '8px 14px', borderRadius: '4px', cursor: 'pointer' }}
           >
             ✕ Fechar
           </button>
@@ -1474,42 +1474,42 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         </div>
       )}
         
-      <div className="no-print" style={{ marginBottom: '15px', background: theme.cardInner, padding: '8px', borderRadius: '4px', border: `1px solid ${theme.border}`, width: '100%', boxSizing: 'border-box' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '4px', width: '100%', boxSizing: 'border-box' }}>
-          <label style={{ fontSize: '11px', color: theme.textMuted }}>Tipo de Data da Inspeção</label>
-          <button type="button" onClick={gerarPdfUltimaInspecao} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>
+      <div className="no-print" style={{ marginBottom: '18px', background: theme.cardInner, padding: '10px 12px', borderRadius: '6px', border: `1px solid ${theme.border}`, width: '100%', boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '6px', width: '100%', boxSizing: 'border-box' }}>
+          <label style={{ fontSize: '12px', color: theme.textMuted, fontWeight: 'bold' }}>Tipo de Data da Inspeção</label>
+          <button type="button" onClick={gerarPdfUltimaInspecao} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
             📄 Gerar PDF da Última Inspeção
           </button>
         </div>
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '12px' }}>
+        <div style={{ display: 'flex', gap: '15px', marginBottom: '8px', flexWrap: 'wrap' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '13px' }}>
             <input type="radio" name="tipoData" checked={tipoData === 'atual'} onChange={() => setTipoData('atual')} /> Data Atual + GPS
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '12px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '13px' }}>
             <input type="radio" name="tipoData" checked={tipoData === 'manual'} onChange={() => setTipoData('manual')} /> Data Manual Salva
           </label>
       </div>
 
       {tipoData === 'manual' && (
         <div>
-          <label style={{ display: 'block', fontSize: '10px', color: theme.textMuted, marginBottom: '2px' }}>Informe a data que foi feita a inspeção</label>
-          <input type="text" value={dataManualInspecao} onChange={(e) => setDataManualInspecao(e.target.value)} placeholder="ex: 20/08/2026" style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
+          <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>Informe a data que foi feita a inspeção</label>
+          <input type="text" value={dataManualInspecao} onChange={(e) => setDataManualInspecao(e.target.value)} placeholder="ex: 20/08/2026" style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
         </div>
       )}
       </div>
 
-      <h3 style={{ fontSize: '15px', marginBottom: '8px' }}>Status dos Ativos no POP</h3>
+      <h3 style={{ fontSize: '16px', marginBottom: '10px' }}>Status dos Ativos no POP</h3>
       {Object.keys(statusAtivos).map((ativo) => {
         const presente = ativosPresentes[ativo];
         return (
-          <div key={ativo} style={{ background: theme.cardInner, padding: '8px', borderRadius: '4px', marginBottom: '8px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
+          <div key={ativo} style={{ background: theme.cardInner, padding: '10px 12px', borderRadius: '6px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
                 <input type="checkbox" checked={presente} onChange={(e) => setAtivosPresentes({ ...ativosPresentes, [ativo]: e.target.checked })} />
                 {ativo}
               </label>
               {presente && (
-                <div className="no-print" style={{ display: 'flex', gap: '4px' }}>
+                <div className="no-print" style={{ display: 'flex', gap: '6px' }}>
                   <button 
                     type="button" 
                     onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'OK' })} 
@@ -1517,10 +1517,11 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                       background: statusAtivos[ativo] === 'OK' ? '#28a745' : theme.cardBg, 
                       border: `1px solid ${theme.border}`, 
                       color: statusAtivos[ativo] === 'OK' ? '#fff' : theme.textMain, 
-                      padding: '3px 8px', 
+                      padding: '4px 10px', 
                       borderRadius: '4px', 
                       cursor: 'pointer',
-                      fontSize: '11px'
+                      fontSize: '12px',
+                      fontWeight: 'bold'
                     }}
                   >
                     OK
@@ -1532,10 +1533,11 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                       background: statusAtivos[ativo] === 'Incidente' ? '#dc3545' : theme.cardBg, 
                       border: `1px solid ${theme.border}`, 
                       color: statusAtivos[ativo] === 'Incidente' ? '#fff' : theme.textMain, 
-                      padding: '3px 8px', 
+                      padding: '4px 10px', 
                       borderRadius: '4px', 
                       cursor: 'pointer',
-                      fontSize: '11px'
+                      fontSize: '12px',
+                      fontWeight: 'bold'
                     }}
                   >
                     Incidente
@@ -1544,21 +1546,21 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
               )}
             </div>
             {presente && statusAtivos[ativo] === 'Incidente' && (
-              <input type="text" placeholder={`Relatar incidente em ${ativo}`} value={detalhesIncidentes[ativo] || ''} onChange={(e) => setDetalhesIncidentes({ ...detalhesIncidentes, [ativo]: e.target.value })} style={{ width: '100%', marginTop: '6px', padding: '5px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
+              <input type="text" placeholder={`Relatar incidente em ${ativo}`} value={detalhesIncidentes[ativo] || ''} onChange={(e) => setDetalhesIncidentes({ ...detalhesIncidentes, [ativo]: e.target.value })} style={{ width: '100%', marginTop: '8px', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
             )}
           </div>
         );
       })}
 
-     <button type="button" onClick={salvarStatusAtivosFirebase} className="no-print" style={{ width: '100%', padding: '8px', background: '#17a2b8', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', marginTop: '6px', marginBottom: '15px', fontSize: '13px', boxSizing: 'border-box' }}>
+     <button type="button" onClick={salvarStatusAtivosFirebase} className="no-print" style={{ width: '100%', padding: '10px', background: '#17a2b8', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', marginTop: '6px', marginBottom: '18px', fontSize: '14px', boxSizing: 'border-box' }}>
       Salvar Status dos Ativos
      </button>
 
      <div style={{ marginTop: '15px', width: '100%', boxSizing: 'border-box' }}>
-      <h3 style={{ fontSize: '15px', marginBottom: '8px' }}>Bancos de Baterias</h3>
-      <div className="no-print" style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+      <h3 style={{ fontSize: '16px', marginBottom: '10px' }}>Bancos de Baterias</h3>
+      <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
         {[1, 2, 3, 4].map((num) => (
-          <button key={num} type="button" onClick={() => { setQtdBancos(num); salvarNoFirebase({ qtdBancos: num }); }} style={{ padding: '5px 10px', background: qtdBancos === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>{num}</button>
+          <button key={num} type="button" onClick={() => { setQtdBancos(num); salvarNoFirebase({ qtdBancos: num }); }} style={{ padding: '6px 12px', background: qtdBancos === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>{num}</button>
         ))}
      </div>
      {Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
@@ -1572,10 +1574,10 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
       const vencidoSub = resSub && resSub.status === 'vencido';
 
       return (
-        <div key={banco} style={{ background: theme.cardInner, padding: '8px', borderRadius: '4px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '8px', width: '100%', boxSizing: 'border-box' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <h4 style={{ margin: 0, fontSize: '13px' }}>Banco {getLetra(banco)}</h4>
+        <div key={banco} style={{ background: theme.cardInner, padding: '10px 12px', borderRadius: '6px', marginBottom: '12px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px', width: '100%', boxSizing: 'border-box' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold' }}>Banco {getLetra(banco)}</h4>
               <select 
                 disabled={bModel.salvo}
                 value={bModel.tipo}
@@ -1583,7 +1585,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                   const novoTipo = e.target.value;
                   setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, tipo: novoTipo } });
                 }}
-                style={{ padding: '2px 4px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '11px' }}
+                style={{ padding: '4px 6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '12px' }}
               >
                 <option value="Chumbo">Chumbo</option>
                 <option value="Litio">Lítio</option>
@@ -1603,31 +1605,31 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 [`bat_${banco}_v4`]: bModel.voltagens[3],
                 [`bat_${banco}_salvo`]: novoSalvo 
             });
-          }} className="no-print" style={{ background: bModel.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}>
+          }} className="no-print" style={{ background: bModel.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
             {bModel.salvo ? 'Editar' : 'Salvar'}
           </button>
         </div>
 
-        <div style={{ marginBottom: '4px', width: '100%', boxSizing: 'border-box' }}>
-          <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data de Fabricação (Ex: 39/25 ou dd/MM/aaaa)</label>
+        <div style={{ marginBottom: '6px', width: '100%', boxSizing: 'border-box' }}>
+          <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '3px' }}>Data de Fabricação (Ex: 39/25 ou dd/MM/aaaa)</label>
           <input type="text" disabled={bModel.salvo} placeholder="ex: 39/25 ou 05/08/2024" value={bModel.dataFabricacao} onChange={(e) => {
             const novoVal = e.target.value;
             setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, dataFabricacao: novoVal } });
-        }} style={{ width: '100%', padding: '5px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
+        }} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
         </div>
 
         {textoExato && (
-          <p style={{ fontSize: '10px', color: '#28a745', margin: '0 0 3px 0', fontWeight: 'bold' }}>
+          <p style={{ fontSize: '12px', color: '#28a745', margin: '0 0 4px 0', fontWeight: 'bold' }}>
             Convertido: {textoExato}
           </p>
         )}
          
-        <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '11px', color: vencidoSub ? undefined : '#4dabf7', margin: '0 0 6px 0' }}>
+        <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoSub ? undefined : '#4dabf7', margin: '0 0 8px 0', fontWeight: 'bold' }}>
           Próxima Substituição (+{anosTrocaCalculado} anos): {proxSub || 'Preencha a data'} {vencidoSub && `(Exp. há ${resSub.dias}d)`}
         </p>
 
-        <div style={{ fontSize: '11px', color: theme.textMuted, marginBottom: '4px' }}>Voltagem das 4 Baterias do Banco:</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', boxSizing: 'border-box', width: '100%' }}>
+        <div style={{ fontSize: '12px', color: theme.textMuted, marginBottom: '5px', fontWeight: 'bold' }}>Voltagem das 4 Baterias do Banco:</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', boxSizing: 'border-box', width: '100%' }}>
           {[0, 1, 2, 3].map((vIdx) => (
             <input 
               key={vIdx} 
@@ -1640,7 +1642,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 novasVols[vIdx] = e.target.value;
                 setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, voltagens: novasVols } });
               }} 
-            style={{ width: '100%', padding: '5px 2px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', textAlign: 'center', fontSize: '11px' }} 
+            style={{ width: '100%', padding: '7px 4px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', textAlign: 'center', fontSize: '12px' }} 
           />
         ))}
         </div>
@@ -1649,11 +1651,11 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
      })}
      </div>
 
-     <div style={{ marginTop: '15px', width: '100%', boxSizing: 'border-box' }}>
-      <h3 style={{ fontSize: '15px', marginBottom: '8px' }}>Centrais de Ar</h3>
-      <div className="no-print" style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+     <div style={{ marginTop: '18px', width: '100%', boxSizing: 'border-box' }}>
+      <h3 style={{ fontSize: '16px', marginBottom: '10px' }}>Centrais de Ar</h3>
+      <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
         {[1, 2, 3, 4].map((num) => (
-          <button key={num} type="button" onClick={() => { setQtdAr(num); salvarNoFirebase({ qtdAr: num }); }} style={{ padding: '5px 10px', background: qtdAr === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>{num}</button>
+          <button key={num} type="button" onClick={() => { setQtdAr(num); salvarNoFirebase({ qtdAr: num }); }} style={{ padding: '6px 12px', background: qtdAr === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>{num}</button>
         ))}
      </div>
      {Array.from({ length: qtdAr }, (_, i) => i + 1).map((idx) => {
@@ -1663,9 +1665,9 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
       const vencidoLimp = resLimp && resLimp.status === 'vencido';
 
       return (
-        <div key={idx} style={{ background: theme.cardInner, padding: '8px', borderRadius: '4px', marginBottom: '8px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
+        <div key={idx} style={{ background: theme.cardInner, padding: '10px 12px', borderRadius: '6px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', width: '100%', boxSizing: 'border-box' }}>
-            <h4 style={{ margin: 0, fontSize: '13px' }}>Central {getLetra(idx)}</h4>
+            <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold' }}>Central {getLetra(idx)}</h4>
             <button type="button" onClick={() => {
               const novoSalvo = !ar.salvo;
               setCentraisAr({ ...centraisAr, [idx]: { ...ar, salvo: novoSalvo } });
@@ -1677,29 +1679,29 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 [`ar_${idx}_limp`]: ar.dataUltimaLimpeza, 
                 [`ar_${idx}_salvo`]: novoSalvo 
             });
-          }} className="no-print" style={{ background: ar.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}>
+          }} className="no-print" style={{ background: ar.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
             {ar.salvo ? 'Editar' : 'Salvar'}
           </button>
         </div>
-        <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', marginTop: '6px', boxSizing: 'border-box', flexWrap: 'wrap', width: '100%' }}>
-          <div style={{ flex: 1, minWidth: '110px' }}>
-            <label style={{ display: 'block', fontSize: '10px', color: theme.textMuted, marginBottom: '2px' }}>Modelo</label>
-            <input type="text" disabled={ar.salvo} placeholder="Modelo" value={ar.modelo} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, modelo: e.target.value } })} style={{ width: '100%', padding: '5px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', marginTop: '8px', boxSizing: 'border-box', flexWrap: 'wrap', width: '100%' }}>
+          <div style={{ flex: 1, minWidth: '120px' }}>
+            <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>Modelo</label>
+            <input type="text" disabled={ar.salvo} placeholder="Modelo" value={ar.modelo} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, modelo: e.target.value } })} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
           </div>
-          <div style={{ flex: 1, minWidth: '110px' }}>
-            <label style={{ display: 'block', fontSize: '10px', color: theme.textMuted, marginBottom: '2px' }}>BTU</label>
-            <input type="text" disabled={ar.salvo} placeholder="BTU" value={ar.btu} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, btu: e.target.value } })} style={{ width: '100%', padding: '5px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
+          <div style={{ flex: 1, minWidth: '120px' }}>
+            <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>BTU</label>
+            <input type="text" disabled={ar.salvo} placeholder="BTU" value={ar.btu} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, btu: e.target.value } })} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
           </div>
       </div>
-      <div style={{ marginBottom: '6px', width: '100%', boxSizing: 'border-box' }}>
-        <label style={{ display: 'block', fontSize: '10px', color: theme.textMuted, marginBottom: '2px' }}>Data de Instalação (dd/MM/aaaa)</label>
-        <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataInstalacao} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataInstalacao: e.target.value } })} style={{ width: '100%', padding: '5px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
+      <div style={{ marginBottom: '8px', width: '100%', boxSizing: 'border-box' }}>
+        <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>Data de Instalação (dd/MM/aaaa)</label>
+        <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataInstalacao} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataInstalacao: e.target.value } })} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
       </div>
-      <div style={{ marginBottom: '3px', width: '100%', boxSizing: 'border-box' }}>
-        <label style={{ display: 'block', fontSize: '10px', color: theme.textMuted, marginBottom: '2px' }}>Data da Última Limpeza (dd/MM/aaaa)</label>
-        <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataUltimaLimpeza: e.target.value } })} style={{ width: '100%', padding: '5px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
+      <div style={{ marginBottom: '4px', width: '100%', boxSizing: 'border-box' }}>
+        <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>Data da Última Limpeza (dd/MM/aaaa)</label>
+        <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataUltimaLimpeza: e.target.value } })} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
       </div>
-      <p className={vencidoLimp ? 'alerta-vencido' : ''} style={{ fontSize: '11px', color: vencidoLimp ? undefined : '#4dabf7', margin: '4px 0 6px 0' }}>
+      <p className={vencidoLimp ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoLimp ? undefined : '#4dabf7', margin: '6px 0 6px 0', fontWeight: 'bold' }}>
         Próxima Limpeza ({intervaloAr} meses): {proxLimp || 'Preencha a última limpeza'} {vencidoLimp && `(Exp. há ${resLimp.dias}d)`}
       </p>
      </div>
@@ -1707,17 +1709,17 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
      })}
      </div>
 
-     <div style={{ marginTop: '15px', width: '100%', boxSizing: 'border-box' }}>
-      <input type="text" placeholder="Relatar Incidentes Gerais" value={incidentesGerais} onChange={(e) => setIncidentesGerais(e.target.value)} style={{ width: '100%', padding: '8px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
+     <div style={{ marginTop: '18px', width: '100%', boxSizing: 'border-box' }}>
+      <input type="text" placeholder="Relatar Incidentes Gerais" value={incidentesGerais} onChange={(e) => setIncidentesGerais(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
        
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', fontSize: '13px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontSize: '14px', fontWeight: 'bold' }}>
         <input type="checkbox" checked={precisaLimpeza} onChange={(e) => setPrecisaLimpeza(e.target.checked)} id="limpCheck" />
-        <label htmlFor="limpCheck">Limpeza Necessária</label>
+        <label htmlFor="limpCheck" style={{ cursor: 'pointer' }}>Limpeza Necessária</label>
       </div>
 
-      <textarea placeholder="Anotações Extras" rows="3" value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '8px', marginBottom: '15px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
+      <textarea placeholder="Anotações Extras" rows="3" value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '18px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
 
-      <button type="button" onClick={finalizarInspecao} className="no-print" style={{ width: '100%', padding: '12px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '15px', borderRadius: '4px', cursor: 'pointer', boxSizing: 'border-box' }}>
+      <button type="button" onClick={finalizarInspecao} className="no-print" style={{ width: '100%', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', cursor: 'pointer', boxSizing: 'border-box' }}>
         Finalizar, Salvar e Gerar Relatório
       </button>
      </div>
