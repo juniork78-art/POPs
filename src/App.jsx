@@ -171,31 +171,31 @@ const calcularProximaLimpezaAr = (dataUltimaLimpezaStr, mesesIntervalo) => {
 
 const popsIniciaisPadrao = [
   { id: 1, nome: "poseidon", endereco: "Folha 16 Quadra 29 Lote 61, Nova Marabá - mba" },
-  { id: 2, nome: "hermes", endereco: "br-222, 57 - São Félix - mba" },
-  { id: 3, nome: "eros", endereco: "av. Itacaiúnas, 1878 - Cidade Nova - mba" },
-  { id: 4, nome: "hades", endereco: "fl 27 q. Especial, s/n - Nova Marabá - disbravá - mba" },
-  { id: 5, nome: "noto", endereco: "br-230, km 9 - Total Ville - mba" },
-  { id: 6, nome: "afrodite", endereco: "av. Tocantins, 150, Morada Nova - mba" },
-  { id: 7, nome: "hemera", endereco: "av. Boa Esperança, qd 27, lt 03 e 05 - Liberdade - mba" },
-  { id: 8, nome: "apolo", endereco: "fl 31, qd 33, lt 02 - mba" },
-  { id: 9, nome: "cratos", endereco: "distribuidora nossa agua, km 88 - mba" },
-  { id: 10, nome: "helius", endereco: "rua das castanheiras, 123 - Belo Horizonte - mba" },
-  { id: 11, nome: "limos", endereco: "Travessa João Passondas de Carvalho - Velha Marabá - mba" },
+  { id: 2, nome: "hermes", endereco: "br-222, 57 - São Félix (Casa San João) - mba" },
+  { id: 3, nome: "eros", endereco: "av. Itacaiúnas, 1878 - Cidade Nova (CDMA)- mba" },
+  { id: 4, nome: "hades", endereco: "fl 27 q. Especial, s/n - Nova Marabá - (disbrava) - mba" },
+  { id: 5, nome: "noto", endereco: "br-230, km 9 - (Total Ville) - mba" },
+  { id: 6, nome: "afrodite", endereco: "av. Tocantins, 150, Morada Nova (Nutrisolo) - mba" },
+  { id: 7, nome: "hemera", endereco: "av. Boa Esperança, qd 27, lt 03 e 05 - Liberdade (Guinhazi) - mba" },
+  { id: 8, nome: "apolo", endereco: "fl 31, qd 33, lt 02 (Predio CETIC) - mba" },
+  { id: 9, nome: "cratos", endereco: "Distribuidora nossa água, km 8 (Nossa água) - mba" },
+  { id: 10, nome: "helius", endereco: "Rua das castanheiras, 123 - Belo Horizonte (Solar das Castanheiras) - mba" },
+  { id: 11, nome: "limos", endereco: "Travessa João Passondas de Carvalho - Velha Marabá - POP fica no segundo andar kitnet proxima a varanda que tem vista para rua - mba" },
   { id: 12, nome: "geb", endereco: "Cidade Jardim - pbs" },
-  { id: 13, nome: "anubis", endereco: "pa-275, qd 131, lt 37 - Disbrava - pbs" },
-  { id: 14, nome: "osiris", endereco: "rua praça da bíblia, grupo correio - Morro dos Ventos - pbs" },
-  { id: 15, nome: "set", endereco: "rua m, n 224 - União - Escritório - pbs" },
+  { id: 13, nome: "anubis", endereco: "Lote 37 QD 101, Rodovia, PA-275, Parauapebas - PA, 68515-000 - pbs" },
+  { id: 14, nome: "osiris", endereco: "Rua praça da bíblia, grupo correio - Morro dos Ventos - pbs" },
+  { id: 15, nome: "set", endereco: "Rua m, n 224 - União - Escritório - pbs" },
   { id: 16, nome: "amaterasu", endereco: "av. 31 de março, 220, Centro / Escritório - itg" },
   { id: 17, nome: "balder", endereco: "R. Dr. Pedro Paulo Barcaúí • Vila Paulista, 68552-700 - Em frente a MEDTRAFEGO - rdc" },
-  { id: 18, nome: "telesto", endereco: "tv. Brasispampa, 272 - Escritório - sda" },
-  { id: 19, nome: "tupã1", endereco: "rua Guajajaras, 55 - Centro - Escritório - xga" },
+  { id: 18, nome: "telesto", endereco: "Tv. Brasispampa, 272 - Centro, 68520-000, São Domingos do Araguaia-PA - sda" },
+  { id: 19, nome: "tupi", endereco: "Rua Guajajaras, 55 - Centro - Escritório - xga" },
   { id: 20, nome: "terra", endereco: "Próprio R. JK, 111 - Centro, Canaã dos Carajás - PA, 68537-860 - cna" },
-  { id: 21, nome: "marduk", endereco: "v. Conselheiro Furtado, 2865 - Edifício Sintese 21, Sala 701 - Belém - bel" },
+  { id: 21, nome: "marduk", endereco: "Av. Conselheiro Furtado, 2865 - Edifício Sintese 21, Sala 701 - Belém - bel" },
   { id: 22, nome: "ceuci", endereco: "Av. Dez, 898 - Centro, Rio Maria - PA, 68530-000 - rma" },
-  { id: 23, nome: "fanes", endereco: "distrito industrial - mba" },
-  { id: 24, nome: "dereter", endereco: "Avenida Castelo Branco - Centro, 68573-003, São Geraldo do Araguaia - sga" },
-  { id: 25, nome: "neftis", endereco: "Avenida Inglaterra 333, Novo Horizonte - Parauapebas - PA, 68515-000 - pbs" },
-  { id: 26, nome: "bastet", endereco: "apartamento - Rio Verde - pbs" },
+  { id: 23, nome: "fanes", endereco: "Distrito industrial - mba" },
+  { id: 24, nome: "demeter", endereco: "Avenida Castelo Branco - Centro, 68573-003, São Geraldo do Araguaia - sga" },
+  { id: 25, nome: "neftis", endereco: "Avenida Inglaterra 333, Novo Horizonte - Parauapebas - PA, 68515-000 - Galeria - pbs" },
+  { id: 26, nome: "bastet", endereco: "Apartamento - Rio Verde - pbs" },
   { id: 27, nome: "hathor", endereco: "vs10 - pbs" },
   { id: 28, nome: "sobek", endereco: "Rio Verde - pbs" }
 ];
@@ -208,6 +208,7 @@ export default function App() {
   const [ultimosCheckIns, setUltimosCheckIns] = useState([]);
   const [cronogramaLimpezas, setCronogramaLimpezas] = useState([]);
   const [cronogramaBaterias, setCronogramaBaterias] = useState([]);
+  const [dadosGeraisPops, setDadosGeraisPops] = useState({});
   const [loadingAuth, setLoadingAuth] = useState(true);
 
   const [drawerAberto, setDrawerAberto] = useState(false);
@@ -314,6 +315,146 @@ export default function App() {
     return n.toUpperCase();
   };
 
+  const gerarRelatorioGeralIncidentesPDF = () => {
+    const janelaPdf = window.open('', '_blank');
+    if (!janelaPdf) return;
+
+    // Agrupar dados por cidade (sigla)
+    const dadosPorCidade = {};
+
+    listaPops.forEach(pop => {
+      if (!popPertenceAoUsuario(pop.nome)) return;
+      const sigla = obterSiglaPop(pop.nome) || 'GERAL';
+      if (!dadosPorCidade[sigla]) {
+        dadosPorCidade[sigla] = [];
+      }
+
+      const dadosPop = dadosGeraisPops[pop.nome] || {};
+      const checkInPop = ultimosCheckIns.find(c => {
+        let n = (c.popNome || c.pop || '').toLowerCase();
+        if (n === 'odin' || n === 'odim') n = 'balder';
+        return n === pop.nome.toLowerCase();
+      });
+
+      dadosPorCidade[sigla].push({
+        nome: pop.nome,
+        endereco: pop.endereco,
+        checkIn: checkInPop || null,
+        dados: dadosPop
+      });
+    });
+
+    let html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Relatório Geral de Incidentes e Operações</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 25px; color: #000; line-height: 1.5; }
+          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #0056b3; padding-bottom: 12px; margin-bottom: 20px; }
+          h1 { color: #0056b3; margin: 0; font-size: 20px; text-transform: uppercase; }
+          h2 { color: #333; font-size: 16px; margin-top: 25px; border-bottom: 2px solid #007bff; padding-bottom: 4px; text-transform: uppercase; background: #eef2f5; padding-left: 8px; }
+          h3 { color: #0056b3; font-size: 14px; margin: 12px 0 4px 0; text-transform: uppercase; }
+          p { margin: 4px 0; font-size: 12px; }
+          .negrito { font-weight: bold; }
+          .vermelho { color: #d9534f; font-weight: bold; }
+          .verde { color: #28a745; font-weight: bold; }
+          .bloco-pop { background: #fdfdfd; border: 1px solid #ddd; padding: 10px 14px; margin-bottom: 10px; border-radius: 4px; border-left: 4px solid #007bff; }
+          .incidente-item { background: #fff5f5; border-left: 3px solid #d9534f; padding: 6px 10px; margin: 4px 0; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Relatório Geral - Incidentes, Baterias e Limpezas</h1>
+          <div>
+            <p><strong>Emitido por:</strong> ${usuarioLogado ? usuarioLogado.split('@')[0].toUpperCase() : 'Sistema'}</p>
+            <p><strong>Data:</strong> ${new Date().toLocaleDateString()}</p>
+          </div>
+        </div>
+    `;
+
+    Object.keys(dadosPorCidade).sort().forEach(sigla => {
+      html += `<h2>Região / Cidade: ${sigla}</h2>`;
+
+      dadosPorCidade[sigla].forEach(item => {
+        const { nome, endereco, checkIn, dados } = item;
+        
+        // Verificar se tem incidentes em ativos
+        let temIncidentesAtivos = false;
+        if (dados.statusAtivos) {
+          Object.keys(dados.statusAtivos).forEach(atv => {
+            if (dados.statusAtivos[atv] === 'Incidente') temIncidentesAtivos = true;
+          });
+        }
+
+        html += `
+          <div class="bloco-pop">
+            <h3>POP: ${nome.toUpperCase()}</h3>
+            <p><span class="negrito">Endereço:</span> ${endereco}</p>
+            <p><span class="negrito">Última Inspeção:</span> ${checkIn ? checkIn.dataHora : (dados.ultimaDataInspecao ? `${dados.ultimaDataInspecao} (Salva)` : 'Nenhuma registrada')}</p>
+            <p><span class="negrito">Próxima Inspeção:</span> ${checkIn ? checkIn.proximaInspecao : 'N/A'}</p>
+        `;
+
+        // Incidentes em Ativos
+        if (temIncidentesAtivos || (dados.incidentesGerais && dados.incidentesGerais.trim() !== '')) {
+          html += `<p class="vermelho" style="margin-top:6px;">⚠️ Incidentes Registrados:</p>`;
+          if (dados.statusAtivos) {
+            Object.keys(dados.statusAtivos).forEach(atv => {
+              if (dados.statusAtivos[atv] === 'Incidente') {
+                const det = dados.detalhesIncidentes?.[atv] || 'Sem detalhes';
+                html += `<div class="incidente-item"><strong>Ativo (${atv}):</strong> ${det}</div>`;
+              }
+            });
+          }
+          if (dados.incidentesGerais) {
+            html += `<div class="incidente-item"><strong>Incidentes Gerais:</strong> ${dados.incidentesGerais}</div>`;
+          }
+        } else {
+          html += `<p style="color: #666; font-style: italic; margin-top: 4px;">Nenhum incidente relatado neste POP.</p>`;
+        }
+
+        // Baterias
+        const qtdB = dados.qtdBancos || 1;
+        html += `<p style="margin-top: 6px;"><span class="negrito">Bancos de Baterias (${qtdB}):</span>`;
+        for (let b = 1; b <= qtdB; b++) {
+          const fab = dados[`bat_${b}_fab`];
+          const tipoB = dados[`bat_${b}_tipo`] || 'Chumbo';
+          const proxSub = calcularProximaSubstituicaoBateria(fab, nome, tipoB);
+          const resSub = statusData(proxSub);
+          html += `<br>&nbsp;&nbsp;• Banco ${getLetra(b)} (${tipoB}) - Fab: ${fab || 'N/A'} | Próx. Troca: ${proxSub || 'N/A'} ${resSub?.status === 'vencido' ? '(VENCIDO)' : ''}`;
+        }
+        html += `</p>`;
+
+        // Ar Condicionado
+        const qtdA = dados.qtdAr || 1;
+        const nomeLower = nome.toLowerCase();
+        const interAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : 8;
+        html += `<p style="margin-top: 4px;"><span class="negrito">Centrais de Ar (${qtdA}):</span>`;
+        for (let a = 1; a <= qtdA; a++) {
+          const limp = dados[`ar_${a}_limp`];
+          const proxLimp = calcularProximaLimpezaAr(limp, interAr);
+          const resLimp = statusData(proxLimp);
+          html += `<br>&nbsp;&nbsp;• Central ${getLetra(a)} (${dados[`ar_${a}_mod`] || 'Mod. N/I'}) - Última Limpeza: ${limp || 'N/A'} | Próx. Limpeza: ${proxLimp || 'N/A'} ${resLimp?.status === 'vencido' ? '(VENCIDO)' : ''}`;
+        }
+        html += `</p>`;
+
+        if (dados.anotacoes) {
+          html += `<p style="margin-top: 4px;"><span class="negrito">Anotações:</span> ${dados.anotacoes}</p>`;
+        }
+
+        html += `</div>`;
+      });
+    });
+
+    html += `</body></html>`;
+    janelaPdf.document.write(html);
+    janelaPdf.document.close();
+    janelaPdf.focus();
+    setTimeout(() => {
+      janelaPdf.print();
+    }, 600);
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) setUsuarioLogado(user.email);
@@ -363,9 +504,8 @@ export default function App() {
           let listaOriginal = snap.data().lista;
           let precisaAtualizar = false;
 
-          // Normaliza dinamicamente odin/odim para balder no histórico
           const listaAtualizada = listaOriginal.map(item => {
-            const nomePop = item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '';
+            let nomePop = item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '';
             if (nomePop.toLowerCase() === 'odin' || nomePop.toLowerCase() === 'odim') {
               precisaAtualizar = true;
               return {
@@ -389,10 +529,14 @@ export default function App() {
       const unsubPopsDados = onSnapshot(collection(db, "pops_dados"), (snapshot) => {
         const listaLimpezasTemp = [];
         const listaBateriasTemp = [];
+        const dadosGeraisTemp = {};
+
         snapshot.forEach((d) => {
           let popNome = d.id;
           if (popNome.toLowerCase() === 'odin' || popNome.toLowerCase() === 'odim') popNome = 'balder';
           const data = d.data();
+          dadosGeraisTemp[popNome.toLowerCase()] = data;
+
           const qtdAr = data.qtdAr || 4;
           const nomeLower = popNome.toLowerCase();
           const intervaloAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : 8;
@@ -413,6 +557,7 @@ export default function App() {
         });
         setCronogramaLimpezas(listaLimpezasTemp);
         setCronogramaBaterias(listaBateriasTemp);
+        setDadosGeraisPops(dadosGeraisTemp);
         setDadosCarregados(true);
       });
 
@@ -515,6 +660,7 @@ export default function App() {
         onOpenDrawer={() => setDrawerAberto(true)}
         onOpenGerenciarPops={() => setTelaGerenciarPopsAberta(true)}
         onOpenAvisos={() => setShowAvisoGlobal(true)}
+        onGerarRelatorioGeral={gerarRelatorioGeralIncidentesPDF}
         totalAlertas={totalAlertas}
         onLogout={() => { sessionStorage.removeItem('avisoMostrado'); signOut(auth); setUsuarioLogado(null); }} 
         darkMode={darkMode}
@@ -761,7 +907,7 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
   );
 }
 
-function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias, onPopClick, onOpenDrawer, onOpenGerenciarPops, onOpenAvisos, totalAlertas, onLogout, darkMode, setDarkMode, theme }) {
+function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias, onPopClick, onOpenDrawer, onOpenGerenciarPops, onOpenAvisos, onGerarRelatorioGeral, totalAlertas, onLogout, darkMode, setDarkMode, theme }) {
   const [busca, setBusca] = useState('');
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
@@ -777,6 +923,7 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
           <h1 style={{ margin: 0, fontSize: '16px' }}>| Olá, {tecnico.split('@')[0].toUpperCase()}</h1>
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <button onClick={onGerarRelatorioGeral} style={{ background: '#17a2b8', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>📊 Relatório Geral</button>
           <button onClick={onOpenAvisos} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '14px' }}>
             🔔
             {totalAlertas > 0 && (
@@ -941,12 +1088,10 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
     "amaterasu": "https://maps.app.goo.gl/4nzRYccPH7rexHu69",
     "balder": "https://maps.app.goo.gl/U7jXJQkAmv7uC4J38",
     "telesto": "https://maps.app.goo.gl/j77DkZtEqtc5Woha9",
-    "tupã1": "https://maps.app.goo.gl/7vuANWjiAjiiXRvu7",
     "tupi": "https://maps.app.goo.gl/7vuANWjiAjiiXRvu7",
     "terra": "https://maps.app.goo.gl/3S7P9dL3ACQZbK4b9",
     "marduk": "https://maps.app.goo.gl/xGopvBFEbQT5FYzH9",
     "ceuci": "https://maps.app.goo.gl/C4MvcYVJsectbuY47",
-    "dereter": "https://maps.app.goo.gl/5qqVzmDBgq5ybSfF6",
     "demeter": "https://maps.app.goo.gl/5qqVzmDBgq5ybSfF6",
     "neftis": "https://maps.app.goo.gl/VRZezD9Fw99wu6BCA",
     "sobek": ""
@@ -958,7 +1103,6 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
     const carregarDadosPop = async () => {
       let snap = await getDoc(docRef);
       
-      // Se for o Balder e não houver dados salvos ainda, migra automaticamente do antigo 'odin' ou 'odim'
       if (!snap.exists() && pop.nome.toLowerCase() === 'balder') {
         let snapAntigo = await getDoc(doc(db, "pops_dados", "odin"));
         if (!snapAntigo.exists()) {
@@ -1448,7 +1592,6 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
   return (
   <div className="container-movel" style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', width: '100%', margin: 0, padding: '15px 10px', fontFamily: 'sans-serif', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
     
-    {/* CONTAINER LIMITADO DENTRO DA ÁREA CENTRAL */}
     <div style={{ width: '100%', maxWidth: '900px', boxSizing: 'border-box' }}>
       
       <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px', padding: '4px 0', width: '100%', boxSizing: 'border-box' }}>
@@ -1461,7 +1604,6 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         </button>
       </div>
 
-      {/* MENU LATERAL DE TROCA DE POPS */}
       {menuPopsLateralAberto && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 1250, display: 'flex' }}>
           <div style={{ width: '310px', background: theme.cardBg, color: theme.textMain, height: '100%', padding: '15px', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column', borderRight: `1px solid ${theme.border}` }}>
@@ -1515,7 +1657,6 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
       <p style={{ color: theme.textMain, fontSize: '15px', fontWeight: 'bold', marginBottom: '15px' }}>{cargoLabel}: {nomeTecnicoLogado}</p>
 
-      {/* MODAL DE FOTOS */}
       {modalFotosAberto && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 1200, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px', boxSizing: 'border-box' }}>
           <div style={{ background: theme.cardBg, color: theme.textMain, padding: '20px', borderRadius: '6px', width: '100%', maxWidth: '500px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
@@ -1561,7 +1702,6 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         </div>
       )}
 
-      {/* MODAL DE TELA CHEIA PARA A IMAGEM */}
       {fotoTelaCheiaUrl && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.95)', zIndex: 1300, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px', boxSizing: 'border-box' }}>
           <button 
