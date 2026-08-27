@@ -186,7 +186,7 @@ const popsIniciaisPadrao = [
   { id: 14, nome: "osiris", endereco: "rua praça da bíblia, grupo correio - Morro dos Ventos - pbs" },
   { id: 15, nome: "set", endereco: "rua m, n 224 - União - Escritório - pbs" },
   { id: 16, nome: "amaterasu", endereco: "av. 31 de março, 220, Centro / Escritório - itg" },
-  { id: 17, nome: "odin", endereco: "av. Oscar Tompson Filho, 582 - Morada da Paz - Escritório - rdc" },
+  { id: 17, nome: "balder", endereco: "R. Dr. Pedro Paulo Barcaúí • Vila Paulista, 68552-700 - Em frente a MEDTRAFEGO - rdc" },
   { id: 18, nome: "telesto", endereco: "tv. Brasispampa, 272 - Escritório - sda" },
   { id: 19, nome: "tupã1", endereco: "rua Guajajaras, 55 - Centro - Escritório - xga" },
   { id: 20, nome: "terra", endereco: "Próprio R. JK, 111 - Centro, Canaã dos Carajás - PA, 68537-860 - cna" },
@@ -196,7 +196,8 @@ const popsIniciaisPadrao = [
   { id: 24, nome: "dereter", endereco: "Avenida Castelo Branco - Centro, 68573-003, São Geraldo do Araguaia - sga" },
   { id: 25, nome: "neftis", endereco: "Avenida Inglaterra 333, Novo Horizonte - Parauapebas - PA, 68515-000 - pbs" },
   { id: 26, nome: "bastet", endereco: "apartamento - Rio Verde - pbs" },
-  { id: 27, nome: "hathor", endereco: "vs10 - pbs" }
+  { id: 27, nome: "hathor", endereco: "vs10 - pbs" },
+  { id: 28, nome: "sobek", endereco: "Rio Verde - pbs" }
 ];
 
 export default function App() {
@@ -885,7 +886,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
     "osiris": "https://maps.app.goo.gl/qPccnboXz54qVeR89",
     "set": "https://maps.app.goo.gl/QEBaUwwzKtqiERjw6",
     "amaterasu": "https://maps.app.goo.gl/4nzRYccPH7rexHu69",
-    "odin": "https://maps.app.goo.gl/U7jXJQkAmv7uC4J38",
+    "balder": "https://maps.app.goo.gl/U7jXJQkAmv7uC4J38",
     "telesto": "https://maps.app.goo.gl/j77DkZtEqtc5Woha9",
     "tupã1": "https://maps.app.goo.gl/7vuANWjiAjiiXRvu7",
     "tupi": "https://maps.app.goo.gl/7vuANWjiAjiiXRvu7",
@@ -894,7 +895,8 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
     "ceuci": "https://maps.app.goo.gl/C4MvcYVJsectbuY47",
     "dereter": "https://maps.app.goo.gl/5qqVzmDBgq5ybSfF6",
     "demeter": "https://maps.app.goo.gl/5qqVzmDBgq5ybSfF6",
-    "neftis": "https://maps.app.goo.gl/VRZezD9Fw99wu6BCA"
+    "neftis": "https://maps.app.goo.gl/VRZezD9Fw99wu6BCA",
+    "sobek": ""
   };
 
   const linkGoogleMaps = mapasPops[pop.nome.toLowerCase()] || null;
@@ -1709,7 +1711,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
       const ar = centraisAr[idx] || { modelo: '', btu: '', dataInstalacao: '', dataUltimaLimpeza: '', salvo: false };
       const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
       const resLimp = statusData(proxLimp);
-      const vencidoLimp = resLimp && resLimp.status === 'vencido';
+      const vencidoLimp = resLsimpar && resLimp.status === 'vencido';
 
       return (
         <div key={idx} style={{ background: theme.cardInner, padding: '10px 12px', borderRadius: '6px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
