@@ -379,7 +379,7 @@ export default function App() {
 
   const apagarCheckInIndividual = async (idxOriginal) => {
     const senhaDigitada = window.prompt('Digite a senha para confirmar a exclusão deste check-in:');
-    if (senhaDigitada !== "@fibralink00") {
+    if (senhaDigitada !== "%001mNbBa*+!") {
       if (senhaDigitada !== null) alert('Senha incorreta! Ação cancelada.');
       return;
     }
@@ -720,7 +720,7 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               <button onClick={() => setShowPasswordDialog(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer' }}>Cancelar</button>
               <button onClick={() => {
-                if (passwordInput === "@fibralink00") { setShowPasswordDialog(false); setPasswordInput(''); onOpenGerenciarPops(); }
+                if (passwordInput === "%001mNbBa*+!") { setShowPasswordDialog(false); setPasswordInput(''); onOpenGerenciarPops(); }
                 else { alert('Senha incorreta!'); setPasswordInput(''); }
               }} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>Confirmar</button>
             </div>
@@ -959,7 +959,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
 
   const deletarFotoPop = async (fotoId) => {
     const senha = prompt("Digite a senha do sistema para excluir esta foto:");
-    if (senha !== "@fibralink00") {
+    if (senha !== "%001mNbBa*+!") {
       alert("Senha incorreta! Ação cancelada.");
       return;
     }
