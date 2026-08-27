@@ -127,12 +127,8 @@ const calcularProximaSubstituicaoBateria = (dataFabricacaoStr, popNome = '', tip
   try {
     const { dataObj } = parseDataFabricacaoBateria(dataFabricacaoStr);
     if (dataObj) {
-      let anosAdicionais = 2; // Padrão Chumbo
-      const nomeLower = (popNome || '').toLowerCase();
-      
-      if (nomeLower === 'set' || nomeLower === 'bastet' || tipoBateria === 'Litio') {
-        anosAdicionais = 8;
-      }
+      // Regra geral: Chumbo = 2 anos, Lítio = 8 anos
+      let anosAdicionais = tipoBateria === 'Litio' ? 8 : 2;
 
       const year = dataObj.getFullYear() + anosAdicionais;
       const month = dataObj.getMonth();
@@ -359,11 +355,9 @@ export default function App() {
             }
           }
           const qtdBancos = data.qtdBancos || 4;
-          const popNomeLower = popNome.toLowerCase();
-          const tipoPadraoGlob = (popNomeLower === 'set' || popNomeLower === 'bastet') ? 'Litio' : 'Chumbo';
           for (let i = 1; i <= qtdBancos; i++) {
             const fab = data[`bat_${i}_fab`] || '';
-            const tipoBat = data[`bat_${i}_tipo`] || tipoPadraoGlob;
+            const tipoBat = data[`bat_${i}_tipo`] || 'Chumbo';
             if (fab) {
               listaBateriasTemp.push({ popNome, banco: `Banco ${getLetra(i)}`, fabricacao: fab, proximaSubstituicao: calcularProximaSubstituicaoBateria(fab, popNome, tipoBat) });
             }
@@ -923,11 +917,9 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         }
 
         const loadedBancos = {};
-        const tipoPadraoPop = (nomePopLower === 'set' || nomePopLower === 'bastet') ? 'Litio' : 'Chumbo';
-
         for (let i = 1; i <= (data.qtdBancos || 1); i++) {
           loadedBancos[i] = {
-            tipo: data[`bat_${i}_tipo`] || tipoPadraoPop,
+            tipo: data[`bat_${i}_tipo`] || 'Chumbo',
             dataFabricacao: data[`bat_${i}_fab`] || '',
             voltagens: [
               data[`bat_${i}_v1`] || '',
@@ -1088,7 +1080,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
     Array.from({ length: qtdBancos }, (_, i) => i + 1).forEach(banco => {
       const bModel = bancosBateria[banco];
       if (bModel) {
-        const anosTrocaCalculado = (pop.nome.toLowerCase() === 'set' || pop.nome.toLowerCase() === 'bastet' || bModel.tipo === 'Litio') ? 8 : 2;
+        const anosTrocaCalculado = bModel.tipo === 'Litio' ? 8 : 2;
         const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
         const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao, pop.nome, bModel.tipo);
         const resSub = statusData(proxSub);
@@ -1282,7 +1274,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
     Array.from({ length: qtdBancos }, (_, i) => i + 1).forEach(banco => {
       const bModel = bancosBateria[banco];
       if (bModel) {
-        const anosTrocaCalculado = (pop.nome.toLowerCase() === 'set' || pop.nome.toLowerCase() === 'bastet' || bModel.tipo === 'Litio') ? 8 : 2;
+        const anosTrocaCalculado = bModel.tipo === 'Litio' ? 8 : 2;
         const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
         const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao, pop.nome, bModel.tipo);
         const resSub = statusData(proxSub);
@@ -1564,10 +1556,9 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         ))}
      </div>
      {Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
-      const tipoPadraoPop = (nomePopLower === 'set' || nomePopLower === 'bastet') ? 'Litio' : 'Chumbo';
-      const bModel = bancosBateria[banco] || { tipo: tipoPadraoPop, dataFabricacao: '', voltagens: ['', '', '', ''], salvo: false };
+      const bModel = bancosBateria[banco] || { tipo: 'Chumbo', dataFabricacao: '', voltagens: ['', '', '', ''], salvo: false };
       
-      const anosTrocaCalculado = (nomePopLower === 'set' || nomePopLower === 'bastet' || bModel.tipo === 'Litio') ? 8 : 2;
+      const anosTrocaCalculado = bModel.tipo === 'Litio' ? 8 : 2;
       const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
       const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao, pop.nome, bModel.tipo);
       const resSub = statusData(proxSub);
