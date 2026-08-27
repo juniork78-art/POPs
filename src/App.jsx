@@ -902,7 +902,22 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
   const linkGoogleMaps = mapasPops[pop.nome.toLowerCase()] || null;
 
   useEffect(() => {
-    getDoc(docRef).then((snap) => {
+    const carregarDadosPop = async () => {
+      let snap = await getDoc(docRef);
+      
+      // Se for o Balder e não houver dados salvos ainda, migra automaticamente do antigo 'odin' ou 'odim'
+      if (!snap.exists() && pop.nome.toLowerCase() === 'balder') {
+        let snapAntigo = await getDoc(doc(db, "pops_dados", "odin"));
+        if (!snapAntigo.exists()) {
+          snapAntigo = await getDoc(doc(db, "pops_dados", "odim"));
+        }
+        if (snapAntigo.exists()) {
+          const dadosAntigos = snapAntigo.data();
+          await setDoc(docRef, dadosAntigos);
+          snap = await getDoc(docRef);
+        }
+      }
+
       if (snap.exists()) {
         const data = snap.data();
         if (data.qtdBancos) setQtdBancos(data.qtdBancos);
@@ -960,8 +975,10 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
           };
         }
         setCentraisAr(loadedAr);
-    }
-  });
+      }
+    };
+
+    carregarDadosPop();
   }, [pop.nome]);
 
   const salvarNoFirebase = async (dadosNovos) => {
