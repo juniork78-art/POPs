@@ -387,9 +387,7 @@ export default function App() {
 
         if (dados.incidentesGerais && dados.incidentesGerais.trim() !== '') {
           html += `<p class="vermelho" style="margin-top:6px;">⚠️ Incidentes Registrados:</p>`;
-          html += `<div class="incidente-item"><strong>Incidentes Gerais:</strong> ${dados.incidentesGerais}</div>`;
-        } else {
-          html += `<p style="color: #666; font-style: italic; margin-top: 4px;">Nenhum incidente relatado neste POP.</p>`;
+          html += `<div class="incidente-item">${dados.incidentesGerais}</div>`;
         }
 
         const qtdB = dados.qtdBancos || 1;
@@ -402,7 +400,8 @@ export default function App() {
           const proxSub = calcularProximaSubstituicaoBateria(fab, nome, tipoB);
           const resSub = statusData(proxSub);
           const estiloTroca = resSub?.status === 'vencido' ? 'color: #d9534f; font-weight: bold;' : '';
-          html += `<br>&nbsp;&nbsp;• Banco ${getLetra(b)} (${tipoB}) - Fab: ${fabExibicao} | Próx. Troca: <span style="${estiloTroca}">${proxSub || 'N/A'}</span>`;
+          const textoVencido = resSub?.status === 'vencido' ? ' (VENCIDO)' : '';
+          html += `<br>&nbsp;&nbsp;• Banco ${getLetra(b)} (${tipoB}) - Fab: ${fabExibicao} | Próx. Troca: <span style="${estiloTroca}">${proxSub || 'N/A'}${textoVencido}</span>`;
         }
         html += `</p>`;
 
@@ -415,7 +414,8 @@ export default function App() {
           const proxLimp = calcularProximaLimpezaAr(limp, interAr);
           const resLimp = statusData(proxLimp);
           const estiloLimp = resLimp?.status === 'vencido' ? 'color: #d9534f; font-weight: bold;' : '';
-          html += `<br>&nbsp;&nbsp;• Central ${getLetra(a)} (${dados[`ar_${a}_mod`] || 'Mod. N/I'}) - Última Limpeza: ${limp || 'N/A'} | Próx. Limpeza: <span style="${estiloLimp}">${proxLimp || 'N/A'}</span>`;
+          const textoVencidoLimp = resLimp?.status === 'vencido' ? ' (VENCIDO)' : '';
+          html += `<br>&nbsp;&nbsp;• Central ${getLetra(a)} (${dados[`ar_${a}_mod`] || 'Elgin'}) - Última Limpeza: ${limp || 'N/A'} | Próx. Limpeza: <span style="${estiloLimp}">${proxLimp || 'N/A'}${textoVencidoLimp}</span>`;
         }
         html += `</p>`;
 
@@ -606,7 +606,7 @@ export default function App() {
         onCheckInRealizado={async (novoRegistro, forcarCheckin) => {
           let nomeNormalizado = (novoRegistro.popName || '').toLowerCase();
           if (nomeNormalizado === 'odin' || nomeNormalizado === 'odim') nomeNormalizado = 'balder';
-          
+           
           const registroCorrigido = {
             ...novoRegistro,
             pop: nomeNormalizado,
@@ -731,71 +731,71 @@ export default function App() {
                     );
                   })
                 )}
-            </div>
-          ) : abaDrawer === 'limpezas' ? (
-            <div>
-              <h4 style={{ color: theme.textMuted, fontSize: '15px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px', marginTop: 0 }}>Cronograma Limpezas de Ar</h4>
-              {cronogramaLimpezas.map((item, idx) => {
-                let nomeDoPop = item.popNome;
-                if (nomeDoPop.toLowerCase() === 'odin' || nomeDoPop.toLowerCase() === 'odim') nomeDoPop = 'balder';
-                if (!popPertenceAoUsuario(nomeDoPop)) return null;
-                const sigla = obterSiglaPop(nomeDoPop);
-                const nomeExibicao = sigla ? `${realizarNomeExibicao(nomeDoPop)} - ${sigla}` : realizarNomeExibicao(nomeDoPop);
-                const res = statusData(item.proximaLimpeza);
-                const vencido = res && res.status === 'vencido';
-                const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
-
-                return (
-                  <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '13px', border: `1px solid ${theme.border}` }}>
-                    <p style={{ margin: '0 0 4px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '13px' }}>{nomeExibicao} ({item.central})</p>
-                    <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Última: {item.ultimaLimpeza}</p>
-                    <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
-                      Próxima: {item.proximaLimpeza} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
-                    </p>
-                  </div>
-                );
-              })}
-        </div>
-        ) : (
-          <div>
-            <h4 style={{ color: theme.textMuted, fontSize: '15px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px', marginTop: 0 }}>Cronograma de Baterias</h4>
-            {cronogramaBaterias.map((item, idx) => {
-              let nomeDoPop = item.popNome;
-              if (nomeDoPop.toLowerCase() === 'odin' || nomeDoPop.toLowerCase() === 'odim') nomeDoPop = 'balder';
-              if (!popPertenceAoUsuario(nomeDoPop)) return null;
-              const sigla = obterSiglaPop(nomeDoPop);
-              const nomeExibicao = sigla ? `${realizarNomeExibicao(nomeDoPop)} - ${sigla}` : realizarNomeExibicao(nomeDoPop);
-              const res = statusData(item.proximaSubstituicao);
-              const vencido = res && res.status === 'vencido';
-              const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
-
-              const resInsp = statusData(item.proximaInspecao);
-              const vencidoInsp = resInsp && resInsp.status === 'vencido';
-              const alertaInspAmanha = resInsp && (resInsp.status === 'amanha' || resInsp.status === 'hoje');
-
-              const { textoExato } = parseDataFabricacaoBateria(item.fabricacao);
-        
-              return (
-                <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '13px', border: `1px solid ${theme.border}` }}>
-                  <p style={{ margin: '0 0 4px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '13px' }}>{nomeExibicao} ({item.banco})</p>
-                  <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Fabricação: {item.fabricacao} {textoExato ? `(${textoExato})` : ''}</p>
-                  <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: '0 0 4px 0', color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
-                    Troca: {item.proximaSubstituicao} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
-                  </p>
-                  <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Data de Inspeção: {item.ultimaInspecao || 'N/A'}</p>
-                  <p className={vencidoInsp ? 'alerta-vencido' : alertaInspAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencidoInsp ? undefined : alertaInspAmanha ? undefined : '#28a745' }}>
-                    Próxima Inspeção: {item.proximaInspecao || 'N/A'} {vencidoInsp ? `(Expirado há ${resInsp.dias}d)` : alertaInspAmanha ? `(${resInsp.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
-                  </p>
               </div>
-              );
-            })}
+            ) : abaDrawer === 'limpezas' ? (
+              <div>
+                <h4 style={{ color: theme.textMuted, fontSize: '15px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px', marginTop: 0 }}>Cronograma Limpezas de Ar</h4>
+                {cronogramaLimpezas.map((item, idx) => {
+                  let nomeDoPop = item.popNome;
+                  if (nomeDoPop.toLowerCase() === 'odin' || nomeDoPop.toLowerCase() === 'odim') nomeDoPop = 'balder';
+                  if (!popPertenceAoUsuario(nomeDoPop)) return null;
+                  const sigla = obterSiglaPop(nomeDoPop);
+                  const nomeExibicao = sigla ? `${realizarNomeExibicao(nomeDoPop)} - ${sigla}` : realizarNomeExibicao(nomeDoPop);
+                  const res = statusData(item.proximaLimpeza);
+                  const vencido = res && res.status === 'vencido';
+                  const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
+
+                  return (
+                    <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '13px', border: `1px solid ${theme.border}` }}>
+                      <p style={{ margin: '0 0 4px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '13px' }}>{nomeExibicao} ({item.central})</p>
+                      <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Última: {item.ultimaLimpeza}</p>
+                      <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
+                        Próxima: {item.proximaLimpeza} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div>
+                <h4 style={{ color: theme.textMuted, fontSize: '15px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px', marginTop: 0 }}>Cronograma de Baterias</h4>
+                {cronogramaBaterias.map((item, idx) => {
+                  let nomeDoPop = item.popNome;
+                  if (nomeDoPop.toLowerCase() === 'odin' || nomeDoPop.toLowerCase() === 'odim') nomeDoPop = 'balder';
+                  if (!popPertenceAoUsuario(nomeDoPop)) return null;
+                  const sigla = obterSiglaPop(nomeDoPop);
+                  const nomeExibicao = sigla ? `${realizarNomeExibicao(nomeDoPop)} - ${sigla}` : realizarNomeExibicao(nomeDoPop);
+                  const res = statusData(item.proximaSubstituicao);
+                  const vencido = res && res.status === 'vencido';
+                  const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
+
+                  const resInsp = statusData(item.proximaInspecao);
+                  const vencidoInsp = resInsp && resInsp.status === 'vencido';
+                  const alertaInspAmanha = resInsp && (resInsp.status === 'amanha' || resInsp.status === 'hoje');
+
+                  const { textoExato } = parseDataFabricacaoBateria(item.fabricacao);
+            
+                  return (
+                    <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '13px', border: `1px solid ${theme.border}` }}>
+                      <p style={{ margin: '0 0 4px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '13px' }}>{nomeExibicao} ({item.banco})</p>
+                      <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Fabricação: {item.fabricacao} {textoExato ? `(${textoExato})` : ''}</p>
+                      <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: '0 0 4px 0', color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
+                        Troca: {item.proximaSubstituicao} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
+                      </p>
+                      <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Data de Inspeção: {item.ultimaInspecao || 'N/A'}</p>
+                      <p className={vencidoInsp ? 'alerta-vencido' : alertaInspAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencidoInsp ? undefined : alertaInspAmanha ? undefined : '#28a745' }}>
+                        Próxima Inspeção: {item.proximaInspecao || 'N/A'} {vencidoInsp ? `(Expirado há ${resInsp.dias}d)` : alertaInspAmanha ? `(${resInsp.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <div style={{ flex: 1 }} onClick={() => setDrawerAberto(false)}></div>
         </div>
-        )}
-      </div>
-      <div style={{ flex: 1 }} onClick={() => setDrawerAberto(false)}></div>
-  </div>
-    )}
- </div>
+      )}
+    </div>
   );
 }
 
@@ -852,9 +852,9 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
         <img src="/logo.png" alt="Logo Fibralink" style={{ width: '150px', marginBottom: '15px', objectFit: 'contain' }} />
         <h2 style={{ marginBottom: '20px', fontSize: '18px' }}>InfraManager POP</h2>
         {erro && <p style={{ color: '#ff6b6b', fontSize: '13px', marginBottom: '10px' }}>{erro}</p>}
-        
+         
         <input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', padding: '10px', marginBottom: '15px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-        
+         
         <div style={{ position: 'relative', marginBottom: '15px' }}>
           <input type={mostrarSenha ? "text" : "password"} placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} required style={{ width: '100%', padding: '10px', paddingRight: '40px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
           <button type="button" onClick={() => setMostrarSenha(!mostrarSenha)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '15px' }}>
@@ -863,7 +863,7 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
         </div>
 
         <button type="submit" style={{ width: '100%', padding: '12px', background: '#007bff', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', marginBottom: '15px', fontSize: '14px' }}>Entrar</button>
-        
+         
         <button type="button" onClick={() => { setShowTrocarSenhaModal(true); setErroTroca(''); setSucessoTroca(''); }} style={{ background: 'transparent', border: 'none', color: '#4dabf7', cursor: 'pointer', fontSize: '13px', textDecoration: 'underline' }}>
           Esqueceu/Alterar Senha?
         </button>
@@ -875,10 +875,10 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
             <h3 style={{ marginTop: 0, fontSize: '17px', textAlign: 'center' }}>Alterar Senha</h3>
             {erroTroca && <p style={{ color: '#ff6b6b', fontSize: '13px', marginBottom: '10px' }}>{erroTroca}</p>}
             {sucessoTroca && <p style={{ color: '#28a745', fontSize: '13px', marginBottom: '10px' }}>{sucessoTroca}</p>}
-            
+             
             <form onSubmit={handleTrocarSenha}>
               <input type="email" placeholder="Confirme seu E-mail" value={emailTroca} onChange={(e) => setEmailTroca(e.target.value)} required style={{ width: '100%', padding: '9px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
-              
+               
               <div style={{ position: 'relative', marginBottom: '10px' }}>
                 <input type={mostrarSenhaTroca ? "text" : "password"} placeholder="Senha Antiga" value={senhaAntiga} onChange={(e) => setSenhaAntiga(e.target.value)} required style={{ width: '100%', padding: '9px', paddingRight: '35px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
               </div>
@@ -886,7 +886,7 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
               <div style={{ position: 'relative', marginBottom: '10px' }}>
                 <input type={mostrarSenhaTroca ? "text" : "password"} placeholder="Senha Nova" value={senhaNova} onChange={(e) => setSenhaNova(e.target.value)} required style={{ width: '100%', padding: '9px', paddingRight: '35px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
               </div>
-              
+               
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '15px', fontSize: '13px' }}>
                 <input type="checkbox" id="chkMostrarTroca" checked={mostrarSenhaTroca} onChange={() => setMostrarSenhaTroca(!mostrarSenhaTroca)} />
                 <label htmlFor="chkMostrarTroca" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -902,7 +902,7 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
           </div>
         </div>
       )}
-  </div>
+    </div>
   );
 }
 
@@ -940,7 +940,7 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px', boxSizing: 'border-box' }}>
           <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '310px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
             <h3 style={{ marginTop: 0, fontSize: '16px' }}>Senha Necessária</h3>
-            
+             
             <div style={{ position: 'relative', margin: '15px 0' }}>
               <input type={mostrarSenhaGerenciar ? "text" : "password"} placeholder="Senha do Sistema" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} style={{ width: '100%', padding: '9px', paddingRight: '35px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
               <button type="button" onClick={() => setMostrarSenhaGerenciar(!mostrarSenhaGerenciar)} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '14px' }}>
@@ -955,19 +955,19 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
                 else { alert('Senha incorreta!'); setPasswordInput(''); }
               }} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>Confirmar</button>
             </div>
+          </div>
         </div>
+      )}
+      <input type="text" placeholder="Pesquisar POP" value={busca} onChange={(e) => setBusca(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '4px', border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.inputText, marginBottom: '15px', boxSizing: 'border-box', fontSize: '14px' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
+        {popsFiltrados.map((pop) => (
+          <div key={pop.id} onClick={() => onPopClick(pop)} style={{ background: theme.cardBg, padding: '14px', borderRadius: '6px', border: `1px solid ${theme.border}`, cursor: 'pointer', width: '100%', boxSizing: 'border-box' }}>
+            <h3 style={{ margin: '0 0 6px 0', color: '#4dabf7', textTransform: 'uppercase', fontSize: '15px' }}>{pop.nome}</h3>
+            <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>{pop.endereco}</p>
+          </div>
+        ))}
       </div>
-    )}
-    <input type="text" placeholder="Pesquisar POP" value={busca} onChange={(e) => setBusca(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '4px', border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.inputText, marginBottom: '15px', boxSizing: 'border-box', fontSize: '14px' }} />
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
-      {popsFiltrados.map((pop) => (
-        <div key={pop.id} onClick={() => onPopClick(pop)} style={{ background: theme.cardBg, padding: '14px', borderRadius: '6px', border: `1px solid ${theme.border}`, cursor: 'pointer', width: '100%', boxSizing: 'border-box' }}>
-          <h3 style={{ margin: '0 0 6px 0', color: '#4dabf7', textTransform: 'uppercase', fontSize: '15px' }}>{pop.nome}</h3>
-          <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>{pop.endereco}</p>
-        </div>
-      ))}
     </div>
- </div>
   );
 }
 
@@ -1016,7 +1016,7 @@ function TelaGerenciarPops({ listaPops, onBack, theme }) {
           </div>
         ))}
       </div>
-  </div>
+    </div>
   );
 }
 
@@ -1024,7 +1024,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
   const isDuandys = tecnico.toLowerCase().includes('duandys');
   const cargoLabel = isDuandys ? "Gestor" : "Técnico";
   const nomeTecnicoLogado = tecnico.split('@')[0].replace('.', ' ').toUpperCase();
-  
+   
   const [tipoData, setTipoData] = useState('atual');
   const [dataManualInspecao, setDataManualInspecao] = useState('');
   const [ultimaDataSalva, setUltimaDataSalva] = useState('');
@@ -1099,7 +1099,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
   useEffect(() => {
     const carregarDadosPop = async () => {
       let snap = await getDoc(docRef);
-      
+       
       if (!snap.exists() && pop.nome.toLowerCase() === 'balder') {
         let snapAntigo = await getDoc(doc(db, "pops_dados", "odin"));
         if (!snapAntigo.exists()) {
@@ -1176,23 +1176,23 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
   }, [pop.nome]);
 
   const salvarNoFirebase = async (dadosNovos) => {
-  try {
-    await setDoc(docRef, dadosNovos, { merge: true });
-  } catch (e) {
-    console.error("Erro ao salvar:", e);
-  }
+    try {
+      await setDoc(docRef, dadosNovos, { merge: true });
+    } catch (e) {
+      console.error("Erro ao salvar:", e);
+    }
   };
 
   const salvarStatusAtivosFirebase = async () => {
-  await salvarNoFirebase({
-    statusAtivos,
-    ativosPresentes,
-    detalhesIncidentes,
-    incidentesGerais,
-    precisaLimpeza,
-    anotacoes
-  });
-  alert("Status dos ativos e observações salvos com sucesso!");
+    await salvarNoFirebase({
+      statusAtivos,
+      ativosPresentes,
+      detalhesIncidentes,
+      incidentesGerais,
+      precisaLimpeza,
+      anotacoes
+    });
+    alert("Status dos ativos e observações salvos com sucesso!");
   };
 
   const handleFileChange = (e) => {
@@ -1231,241 +1231,36 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
   };
 
   const obterDadosCheckInOriginal = () => {
-  if (ultimosCheckIns && ultimosCheckIns.length > 0) {
-    const checkInPop = ultimosCheckIns.find(item => {
-      let nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '').toLowerCase().trim();
-      if (nomeDoPop === 'odin' || nomeDoPop === 'odim') nomeDoPop = 'balder';
-      return nomeDoPop === pop.nome.toLowerCase().trim();
-    });
-    if (checkInPop) {
-      return {
-        tecnico: checkInPop.tecnico || nomeTecnicoLogado,
-        dataHora: checkInPop.dataHora || '',
-        proximaInspecao: checkInPop.proximaInspecao || ''
-      };
+    if (ultimosCheckIns && ultimosCheckIns.length > 0) {
+      const checkInPop = ultimosCheckIns.find(item => {
+        let nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '').toLowerCase().trim();
+        if (nomeDoPop === 'odin' || nomeDoPop === 'odim') nomeDoPop = 'balder';
+        return nomeDoPop === pop.nome.toLowerCase().trim();
+      });
+      if (checkInPop) {
+        return {
+          tecnico: checkInPop.tecnico || nomeTecnicoLogado,
+          dataHora: checkInPop.dataHora || '',
+          proximaInspecao: checkInPop.proximaInspecao || ''
+        };
+      }
     }
-  }
-  const agora = new Date();
-  const dataProx = new Date(agora);
-  dataProx.setDate(dataProx.getDate() + 90);
-  const dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
-  return {
-    tecnico: nomeTecnicoLogado,
-    dataHora: ultimaDataSalva ? `${ultimaDataSalva} (Manual)` : `${String(agora.getDate()).padStart(2, '0')}/${String(agora.getMonth() + 1).padStart(2, '0')}/${agora.getFullYear()}`,
-    proximaInspecao: dataProxStr
-  };
+    const agora = new Date();
+    const dataProx = new Date(agora);
+    dataProx.setDate(dataProx.getDate() + 90);
+    const dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
+    return {
+      tecnico: nomeTecnicoLogado,
+      dataHora: ultimaDataSalva ? `${ultimaDataSalva} (Manual)` : `${String(agora.getDate()).padStart(2, '0')}/${String(agora.getMonth() + 1).padStart(2, '0')}/${agora.getFullYear()}`,
+      proximaInspecao: dataProxStr
+    };
   };
 
   const gerarPdfUltimaInspecao = async () => {
-  const dadosOriginais = obterDadosCheckInOriginal();
-  const dataInspecaoFinal = dadosOriginais.dataHora;
-  const dataProxStr = dadosOriginais.proximaInspecao;
-  const tecnicoOriginal = dadosOriginais.tecnico;
-
-  const janelaPdf = window.open('', '_blank');
-  if (janelaPdf) {
-    let htmlRelatorio = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Relatório de Inspeção - ${pop.nome.toUpperCase()}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 30px; color: #000; line-height: 1.6; }
-          .header-rel { display: flex; justifyContent: space-between; align-items: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 15px; }
-          h1 { color: #0056b3; text-transform: uppercase; margin: 0; font-size: 22px; }
-          h2 { font-size: 15px; color: #333; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 3px; text-transform: uppercase; }
-          p { margin: 6px 0; }
-          .negrito { font-weight: bold; }
-          .vermelho { color: #d9534f; font-weight: bold; }
-          .bloco { margin-bottom: 12px; background: #f9f9f9; padding: 10px 15px; border-left: 4px solid #0056b3; border-radius: 4px; }
-        </style>
-      </head>
-      <body>
-        <div class="header-rel">
-          <h1>Relatório de Inspeção - POP: ${pop.nome.toUpperCase()}</h1>
-          <img src="/logo.png" alt="Logo" style="width: 120px; object-fit: contain;" />
-        </div>
-        <p><span class="negrito">Endereço:</span> ${pop.endereco}</p>
-        <p><span class="negrito">${cargoLabel}:</span> ${tecnicoOriginal}</p>
-        <p><span class="negrito">Data da Inspeção:</span> ${dataInspecaoFinal}</p>
-        <p><span class="negrito">Próxima Inspeção Recomendada:</span> ${dataProxStr}</p>
-
-        <h2>Status dos Ativos no POP</h2>
-    `;
-
-    Object.keys(statusAtivos).forEach(ativo => {
-      if (ativosPresentes[ativo]) {
-        const st = statusAtivos[ativo];
-        const det = detalhesIncidentes[ativo];
-        htmlRelatorio += `<div class="bloco"><span class="negrito">${ativo}:</span> <span style="color: ${st === 'OK' ? '#28a745' : '#d9534f'}; font-weight: bold;">${st}</span>`;
-        if (st === 'Incidente' && det) {
-          htmlRelatorio += `<br><span class="vermelho">Incidente Relatado: ${det}</span>`;
-        }
-        htmlRelatorio += `</div>`;
-      }
-    });
-
-    htmlRelatorio += `<h2>Bancos de Baterias</h2>`;
-    Array.from({ length: qtdBancos }, (_, i) => i + 1).forEach(banco => {
-      const bModel = bancosBateria[banco];
-      if (bModel) {
-        const anosTrocaCalculado = bModel.tipo === 'Lítio' ? 8 : 2;
-        const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
-        const fabExibicao = textoExato ? `${bModel.dataFabricacao} (${textoExato})` : (bModel.dataFabricacao || 'Não informada');
-        const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao, pop.nome, bModel.tipo);
-        const resSub = statusData(proxSub);
-        const vencidoSub = resSub && resSub.status === 'vencido';
-
-        const proxInsp = calcularProximaInspecaoBateria(bModel.dataUltimaInspecao);
-        const resInsp = statusData(proxInsp);
-        const vencidoInsp = resInsp && resInsp.status === 'vencido';
-
-        const voltagensHtml = bModel.tipo !== 'Lítio' 
-          ? `<br>Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]` 
-          : '';
-
-        htmlRelatorio += `
-          <div class="bloco">
-            <span class="negrito">Banco ${getLetra(banco)} (${bModel.tipo})</span><br>
-            Data de Fabricação: ${fabExibicao}<br>
-            <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+${anosTrocaCalculado} anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
-            Data da Última Inspeção: ${bModel.dataUltimaInspecao || 'N/A'}<br>
-            <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (3 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span>
-            ${voltagensHtml}
-          </div>
-        `;
-      }
-    });
-
-    htmlRelatorio += `<h2>Centrais de Ar Condicionado</h2>`;
-    Array.from({ length: qtdAr }, (_, i) => i + 1).forEach(idx => {
-      const ar = centraisAr[idx];
-      if (ar) {
-        const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
-        const resLimp = statusData(proxLimp);
-        const vencidoLimp = resLimp && resLimp.status === 'vencido';
-
-        htmlRelatorio += `
-          <div class="bloco">
-            <span class="negrito">Central ${getLetra(idx)}</span> (${ar.modelo || 'Modelo não informado'} - ${ar.btu || 'BTU não inf.'})<br>
-            Data de Instalação: ${ar.dataInstalacao || 'N/A'}<br>
-            Data da Última Limpeza: ${ar.dataUltimaLimpeza || 'N/A'}<br>
-            <span class="${vencidoLimp ? 'vermelho' : ''}">Próxima Limpeza (${intervaloAr} meses): ${proxLimp || 'N/A'} ${vencidoLimp ? `(Expirado há ${resLimp.dias} dias)` : ''}</span>
-          </div>
-        `;
-      }
-    });
-
-    htmlRelatorio += `
-      <h2>Observações e Incidentes Gerais</h2>
-      <div class="bloco">
-        <p><span class="negrito">Incidentes Gerais:</span> ${incidentesGerais || 'Nenhum incidente relatado.'}</p>
-        <p><span class="negrito">Limpeza Necessária:</span> <span class="${precisaLimpeza ? 'vermelho' : ''}">${precisaLimpeza ? 'SIM' : 'NÃO'}</span></p>
-        <p><span class="negrito">Anotações Extras:</span> ${anotacoes || 'Nenhuma anotação.'}</p>
-      </div>
-    </body></html>`;
-
-    janelaPdf.document.write(htmlRelatorio);
-    janelaPdf.document.close();
-    janelaPdf.focus();
-    setTimeout(() => {
-      janelaPdf.print();
-    }, 600);
-  }
-  };
-
-  const finalizarInspecao = async () => {
-  let dataInspecaoFinal = '';
-  let dataProxStr = '';
-  let forcarCheckin = false;
-  let dataParaSalvar = '';
-  const tecnicoOriginal = nomeTecnicoLogado;
-
-  if (tipoData === 'manual' && dataManualInspecao.trim() !== '') {
-    const dataFormatada = dataManualInspecao.trim();
-    dataInspecaoFinal = `${dataFormatada} (Manual)`;
-    dataParaSalvar = dataFormatada;
-     
-    if (dataFormatada !== ultimaDataSalva) {
-      forcarCheckin = true;
-    }
-
-    try {
-      const parts = dataFormatada.split('/');
-      if (parts.length === 3) {
-        const day = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10) - 1;
-        const year = parseInt(parts[2], 10);
-        const dataProx = new Date(year, month, day);
-        dataProx.setDate(dataProx.getDate() + 90);
-        dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
-      }
-    } catch (e) {}
-  } else {
-    forcarCheckin = true;
-    const obterLocalizacao = () => new Promise((resolve) => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => resolve(`GPS: ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`),
-          () => resolve("Sem GPS"),
-          { timeout: 10000 }
-        );
-      } else {
-        resolve("Sem GPS");
-      }
-    });
-
-    const coords = await obterLocalizacao();
-    const agora = new Date();
-    const diaStr = String(agora.getDate()).padStart(2, '0');
-    const mesStr = String(agora.getMonth() + 1).padStart(2, '0');
-    const anoStr = agora.getFullYear();
-    const horaStr = String(agora.getHours()).padStart(2, '0');
-    const minStr = String(agora.getMinutes()).padStart(2, '0');
-
-    const dataSimples = `${diaStr}/${mesStr}/${anoStr}`;
-    dataParaSalvar = dataSimples;
-    dataInspecaoFinal = `${dataSimples} ${horaStr}:${minStr} (${coords})`;
-
-    const dataProx = new Date(agora);
-    dataProx.setDate(dataProx.getDate() + 90);
-    dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
-  }
-
-  if (!dataProxStr) {
-    const agora = new Date();
-    const dataProx = new Date(agora);
-    dataProx.setDate(dataProx.getDate() + 90);
-    dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
-  }
-
-  try {
-    await salvarNoFirebase({
-      statusAtivos,
-      ativosPresentes,
-      detalhesIncidentes,
-      incidentesGerais,
-      precisaLimpeza,
-      anotacoes,
-      ultimaDataInspecao: dataParaSalvar
-    });
-
-    setDataManualInspecao(dataParaSalvar);
-    setUltimaDataSalva(dataParaSalvar);
-    setTipoData('manual');
-
-    const novoRegistro = {
-      pop: pop.nome,
-      popName: pop.nome,
-      popNome: pop.nome,
-      dataHora: dataInspecaoFinal,
-      tecnico: tecnicoOriginal,
-      proximaInspecao: dataProxStr
-    };
-
-    await onCheckInRealizado(novoRegistro, forcarCheckin);
-
-    alert("Check-in e dados de inspeção salvos com sucesso!");
+    const dadosOriginais = obterDadosCheckInOriginal();
+    const dataInspecaoFinal = dadosOriginais.dataHora;
+    const dataProxStr = dadosOriginais.proximaInspecao;
+    const tecnicoOriginal = dadosOriginais.tecnico;
 
     const janelaPdf = window.open('', '_blank');
     if (janelaPdf) {
@@ -1510,13 +1305,508 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         }
       });
 
-    htmlRelatorio += `<h2>Bancos de Baterias</h2>`;
-    Array.from({ length: qtdBancos }, (_, i) => i + 1).forEach(banco => {
-      const bModel = bancosBateria[banco];
-      if (bModel) {
+      htmlRelatorio += `<h2>Bancos de Baterias</h2>`;
+      Array.from({ length: qtdBancos }, (_, i) => i + 1).forEach(banco => {
+        const bModel = bancosBateria[banco];
+        if (bModel) {
+          const anosTrocaCalculado = bModel.tipo === 'Lítio' ? 8 : 2;
+          const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
+          const fabExibicao = textoExato ? `${bModel.dataFabricacao} (${textoExato})` : (bModel.dataFabricacao || 'Não informada');
+          const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao, pop.nome, bModel.tipo);
+          const resSub = statusData(proxSub);
+          const vencidoSub = resSub && resSub.status === 'vencido';
+
+          const proxInsp = calcularProximaInspecaoBateria(bModel.dataUltimaInspecao);
+          const resInsp = statusData(proxInsp);
+          const vencidoInsp = resInsp && resInsp.status === 'vencido';
+
+          const voltagensHtml = bModel.tipo !== 'Lítio' 
+            ? `<br>Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]` 
+            : '';
+
+          htmlRelatorio += `
+            <div class="bloco">
+              <span class="negrito">Banco ${getLetra(banco)} (${bModel.tipo})</span><br>
+              Data de Fabricação: ${fabExibicao}<br>
+              <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+${anosTrocaCalculado} anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
+              Data da Última Inspeção: ${bModel.dataUltimaInspecao || 'N/A'}<br>
+              <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (3 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span>
+              ${voltagensHtml}
+            </div>
+          `;
+        }
+      });
+
+      htmlRelatorio += `<h2>Centrais de Ar Condicionado</h2>`;
+      Array.from({ length: qtdAr }, (_, i) => i + 1).forEach(idx => {
+        const ar = centraisAr[idx];
+        if (ar) {
+          const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
+          const resLimp = statusData(proxLimp);
+          const vencidoLimp = resLimp && resLimp.status === 'vencido';
+
+          htmlRelatorio += `
+            <div class="bloco">
+              <span class="negrito">Central ${getLetra(idx)}</span> (${ar.modelo || 'Modelo não informado'} - ${ar.btu || 'BTU não inf.'})<br>
+              Data de Instalação: ${ar.dataInstalacao || 'N/A'}<br>
+              Data da Última Limpeza: ${ar.dataUltimaLimpeza || 'N/A'}<br>
+              <span class="${vencidoLimp ? 'vermelho' : ''}">Próxima Limpeza (${intervaloAr} meses): ${proxLimp || 'N/A'} ${vencidoLimp ? `(Expirado há ${resLimp.dias} dias)` : ''}</span>
+            </div>
+          `;
+        }
+      });
+
+      htmlRelatorio += `
+        <h2>Observações e Incidentes Gerais</h2>
+        <div class="bloco">
+          <p><span class="negrito">Incidentes Gerais:</span> ${incidentesGerais || 'Nenhum incidente relatado.'}</p>
+          <p><span class="negrito">Limpeza Necessária:</span> <span class="${precisaLimpeza ? 'vermelho' : ''}">${precisaLimpeza ? 'SIM' : 'NÃO'}</span></p>
+          <p><span class="negrito">Anotações Extras:</span> ${anotacoes || 'Nenhuma anotação.'}</p>
+        </div>
+      </body></html>`;
+
+      janelaPdf.document.write(htmlRelatorio);
+      janelaPdf.document.close();
+      janelaPdf.focus();
+      setTimeout(() => {
+        janelaPdf.print();
+      }, 600);
+    }
+  };
+
+  const finalizarInspecao = async () => {
+    let dataInspecaoFinal = '';
+    let dataProxStr = '';
+    let forcarCheckin = false;
+    let dataParaSalvar = '';
+    const tecnicoOriginal = nomeTecnicoLogado;
+
+    if (tipoData === 'manual' && dataManualInspecao.trim() !== '') {
+      const dataFormatada = dataManualInspecao.trim();
+      dataInspecaoFinal = `${dataFormatada} (Manual)`;
+      dataParaSalvar = dataFormatada;
+       
+      if (dataFormatada !== ultimaDataSalva) {
+        forcarCheckin = true;
+      }
+
+      try {
+        const parts = dataFormatada.split('/');
+        if (parts.length === 3) {
+          const day = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1;
+          const year = parseInt(parts[2], 10);
+          const dataProx = new Date(year, month, day);
+          dataProx.setDate(dataProx.getDate() + 90);
+          dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
+        }
+      } catch (e) {}
+    } else {
+      forcarCheckin = true;
+      const obterLocalizacao = () => new Promise((resolve) => {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => resolve(`GPS: ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`),
+            () => resolve("Sem GPS"),
+            { timeout: 10000 }
+          );
+        } else {
+          resolve("Sem GPS");
+        }
+      });
+
+      const coords = await obterLocalizacao();
+      const agora = new Date();
+      const diaStr = String(agora.getDate()).padStart(2, '0');
+      const mesStr = String(agora.getMonth() + 1).padStart(2, '0');
+      const anoStr = agora.getFullYear();
+      const horaStr = String(agora.getHours()).padStart(2, '0');
+      const minStr = String(agora.getMinutes()).padStart(2, '0');
+
+      const dataSimples = `${diaStr}/${mesStr}/${anoStr}`;
+      dataParaSalvar = dataSimples;
+      dataInspecaoFinal = `${dataSimples} ${horaStr}:${minStr} (${coords})`;
+
+      const dataProx = new Date(agora);
+      dataProx.setDate(dataProx.getDate() + 90);
+      dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
+    }
+
+    if (!dataProxStr) {
+      const agora = new Date();
+      const dataProx = new Date(agora);
+      dataProx.setDate(dataProx.getDate() + 90);
+      dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
+    }
+
+    try {
+      await salvarNoFirebase({
+        statusAtivos,
+        ativosPresentes,
+        detalhesIncidentes,
+        incidentesGerais,
+        precisaLimpeza,
+        anotacoes,
+        ultimaDataInspecao: dataParaSalvar
+      });
+
+      setDataManualInspecao(dataParaSalvar);
+      setUltimaDataSalva(dataParaSalvar);
+      setTipoData('manual');
+
+      const novoRegistro = {
+        pop: pop.nome,
+        popName: pop.nome,
+        popNome: pop.nome,
+        dataHora: dataInspecaoFinal,
+        tecnico: tecnicoOriginal,
+        proximaInspecao: dataProxStr
+      };
+
+      await onCheckInRealizado(novoRegistro, forcarCheckin);
+
+      alert("Check-in e dados de inspeção salvos com sucesso!");
+
+      const janelaPdf = window.open('', '_blank');
+      if (janelaPdf) {
+        let htmlRelatorio = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Relatório de Inspeção - ${pop.nome.toUpperCase()}</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 30px; color: #000; line-height: 1.6; }
+              .header-rel { display: flex; justifyContent: space-between; align-items: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 15px; }
+              h1 { color: #0056b3; text-transform: uppercase; margin: 0; font-size: 22px; }
+              h2 { font-size: 15px; color: #333; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 3px; text-transform: uppercase; }
+              p { margin: 6px 0; }
+              .negrito { font-weight: bold; }
+              .vermelho { color: #d9534f; font-weight: bold; }
+              .bloco { margin-bottom: 12px; background: #f9f9f9; padding: 10px 15px; border-left: 4px solid #0056b3; border-radius: 4px; }
+            </style>
+          </head>
+          <body>
+            <div class="header-rel">
+              <h1>Relatório de Inspeção - POP: ${pop.nome.toUpperCase()}</h1>
+              <img src="/logo.png" alt="Logo" style="width: 120px; object-fit: contain;" />
+            </div>
+            <p><span class="negrito">Endereço:</span> ${pop.endereco}</p>
+            <p><span class="negrito">${cargoLabel}:</span> ${tecnicoOriginal}</p>
+            <p><span class="negrito">Data da Inspeção:</span> ${dataInspecaoFinal}</p>
+            <p><span class="negrito">Próxima Inspeção Recomendada:</span> ${dataProxStr}</p>
+
+            <h2>Status dos Ativos no POP</h2>
+        `;
+
+        Object.keys(statusAtivos).forEach(ativo => {
+          if (ativosPresentes[ativo]) {
+            const st = statusAtivos[ativo];
+            const det = detalhesIncidentes[ativo];
+            htmlRelatorio += `<div class="bloco"><span class="negrito">${ativo}:</span> <span style="color: ${st === 'OK' ? '#28a745' : '#d9534f'}; font-weight: bold;">${st}</span>`;
+            if (st === 'Incidente' && det) {
+              htmlRelatorio += `<br><span class="vermelho">Incidente Relatado: ${det}</span>`;
+            }
+            htmlRelatorio += `</div>`;
+          }
+        });
+
+        htmlRelatorio += `<h2>Bancos de Baterias</h2>`;
+        Array.from({ length: qtdBancos }, (_, i) => i + 1).forEach(banco => {
+          const bModel = bancosBateria[banco];
+          if (bModel) {
+            const anosTrocaCalculado = bModel.tipo === 'Lítio' ? 8 : 2;
+            const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
+            const fabExibicao = textoExato ? `${bModel.dataFabricacao} (${textoExato})` : (bModel.dataFabricacao || 'Não informada');
+            const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao, pop.nome, bModel.tipo);
+            const resSub = statusData(proxSub);
+            const vencidoSub = resSub && resSub.status === 'vencido';
+
+            const proxInsp = calcularProximaInspecaoBateria(bModel.dataUltimaInspecao);
+            const resInsp = statusData(proxInsp);
+            const vencidoInsp = resInsp && resInsp.status === 'vencido';
+
+            const voltagensHtml = bModel.tipo !== 'Lítio' 
+              ? `<br>Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]` 
+              : '';
+
+            htmlRelatorio += `
+              <div class="bloco">
+                <span class="negrito">Banco ${getLetra(banco)} (${bModel.tipo})</span><br>
+                Data de Fabricação: ${fabExibicao}<br>
+                <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+${anosTrocaCalculado} anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
+                Data da Última Inspeção: ${bModel.dataUltimaInspecao || 'N/A'}<br>
+                <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (3 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span>
+                ${voltagensHtml}
+              </div>
+            `;
+          }
+        });
+
+        htmlRelatorio += `<h2>Centrais de Ar Condicionado</h2>`;
+        Array.from({ length: qtdAr }, (_, i) => i + 1).forEach(idx => {
+          const ar = centraisAr[idx];
+          if (ar) {
+            const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
+            const resLimp = statusData(proxLimp);
+            const vencidoLimp = resLimp && resLimp.status === 'vencido';
+
+            htmlRelatorio += `
+              <div class="bloco">
+                <span class="negrito">Central ${getLetra(idx)}</span> (${ar.modelo || 'Modelo não informado'} - ${ar.btu || 'BTU não inf.'})<br>
+                Data de Instalação: ${ar.dataInstalacao || 'N/A'}<br>
+                Data da Última Limpeza: ${ar.dataUltimaLimpeza || 'N/A'}<br>
+                <span class="${vencidoLimp ? 'vermelho' : ''}">Próxima Limpeza (${intervaloAr} meses): ${proxLimp || 'N/A'} ${vencidoLimp ? `(Expirado há ${resLimp.dias} dias)` : ''}</span>
+              </div>
+            `;
+          }
+        });
+
+        htmlRelatorio += `
+          <h2>Observações e Incidentes Gerais</h2>
+          <div class="bloco">
+            <p><span class="negrito">Incidentes Gerais:</span> ${incidentesGerais || 'Nenhum incidente relatado.'}</p>
+            <p><span class="negrito">Limpeza Necessária:</span> <span class="${precisaLimpeza ? 'vermelho' : ''}">${precisaLimpeza ? 'SIM' : 'NÃO'}</span></p>
+            <p><span class="negrito">Anotações Extras:</span> ${anotacoes || 'Nenhuma anotação.'}</p>
+          </div>
+        </body></html>`;
+
+        janelaPdf.document.write(htmlRelatorio);
+        janelaPdf.document.close();
+        janelaPdf.focus();
+        setTimeout(() => {
+          janelaPdf.print();
+        }, 600);
+      }
+
+      onBack();
+
+    } catch (error) {
+      alert("Erro ao registrar o check-in: " + error.message);
+    }
+  };
+
+  const isPedro = tecnico.toLowerCase().includes('pedro');
+  const popsFiltradosMenu = listaPops.filter(p => (isPedro ? p.endereco.toLowerCase().endsWith('- pbs') : true) && (p.nome.toLowerCase().includes(buscaPopLateral.toLowerCase()) || p.endereco.toLowerCase().includes(buscaPopLateral.toLowerCase())));
+
+  return (
+    <div className="container-movel" style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', width: '100%', margin: 0, padding: '15px 10px', fontFamily: 'sans-serif', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+       
+      <div style={{ width: '100%', maxWidth: '900px', boxSizing: 'border-box' }}>
+         
+        <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px', padding: '4px 0', width: '100%', boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button type="button" onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>← Voltar</button>
+            <button type="button" onClick={() => setMenuPopsLateralAberto(true)} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>📁 Trocar POP</button>
+          </div>
+          <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
+            {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
+          </button>
+        </div>
+
+        {menuPopsLateralAberto && (
+          <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 1250, display: 'flex' }}>
+            <div style={{ width: '310px', background: theme.cardBg, color: theme.textMain, height: '100%', padding: '15px', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column', borderRight: `1px solid ${theme.border}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <h3 style={{ margin: 0, fontSize: '16px' }}>Selecionar POP</h3>
+                <button onClick={() => setMenuPopsLateralAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, fontSize: '18px', cursor: 'pointer' }}>✕</button>
+              </div>
+              <input type="text" placeholder="Filtrar POP..." value={buscaPopLateral} onChange={(e) => setBuscaPopLateral(e.target.value)} style={{ width: '100%', padding: '8px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px', borderRadius: '4px' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', flex: 1 }}>
+                {popsFiltradosMenu.map((p) => (
+                  <div key={p.id} onClick={() => { onSelectPop(p); setMenuPopsLateralAberto(false); }} style={{ background: p.nome.toLowerCase() === pop.nome.toLowerCase() ? '#007bff' : theme.cardInner, color: p.nome.toLowerCase() === pop.nome.toLowerCase() ? '#fff' : theme.textMain, padding: '10px', borderRadius: '4px', cursor: 'pointer', border: `1px solid ${theme.border}` }}>
+                    <p style={{ margin: '0 0 3px 0', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '13px' }}>{p.nome}</p>
+                    <p style={{ margin: 0, fontSize: '11px', opacity: 0.9 }}>{p.endereco}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ flex: 1 }} onClick={() => setMenuPopsLateralAberto(false)}></div>
+          </div>
+        )}
+         
+        <div className="card-movel" style={{ background: theme.cardBg, color: theme.textMain, padding: '15px', width: '100%', borderRadius: '6px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', width: '100%', boxSizing: 'border-box' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', margin: 0, fontSize: '18px' }}>Inspeção: {pop.nome}</h2>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {linkGoogleMaps && (
+                  <a 
+                    href={linkGoogleMaps} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="no-print"
+                    style={{ background: '#007bff', color: '#fff', padding: '5px 10px', borderRadius: '4px', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    📍 Localização
+                  </a>
+                )}
+                <button 
+                  type="button"
+                  onClick={() => setModalFotosAberto(true)}
+                  className="no-print"
+                  style={{ background: '#6c757d', color: '#fff', padding: '5px 10px', borderRadius: '4px', border: 'none', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  📷 Fotos {fotosPop.length > 0 ? `(${fotosPop.length})` : ''}
+                </button>
+              </div>
+            </div>
+            <img src="/logo.png" alt="Logo" style={{ width: '90px', objectFit: 'contain' }} />
+        </div>
+        <p style={{ color: theme.textMuted, fontSize: '14px', marginBottom: '15px' }}>{pop.endereco}</p>
+
+        <p style={{ color: theme.textMain, fontSize: '15px', fontWeight: 'bold', marginBottom: '15px' }}>{cargoLabel}: {nomeTecnicoLogado}</p>
+
+        {modalFotosAberto && (
+          <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 1200, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px', boxSizing: 'border-box' }}>
+            <div style={{ background: theme.cardBg, color: theme.textMain, padding: '20px', borderRadius: '6px', width: '100%', maxWidth: '500px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h3 style={{ margin: 0, color: '#4dabf7', fontSize: '16px' }}>Fotos do POP: {pop.nome.toUpperCase()}</h3>
+                <button onClick={() => setModalFotosAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, fontSize: '18px', cursor: 'pointer' }}>✕</button>
+              </div>
+
+              <div style={{ marginBottom: '15px', background: theme.cardInner, padding: '10px', borderRadius: '4px', border: `1px solid ${theme.border}` }}>
+                <label style={{ display: 'block', fontSize: '12px', marginBottom: '6px', fontWeight: 'bold' }}>Carregar Nova Foto</label>
+                <input type="file" accept="image/*" onChange={handleFileChange} style={{ width: '100%', marginBottom: '10px', fontSize: '12px', color: theme.textMain }} />
+                {fotoCarregadaBase64 && (
+                  <div style={{ marginBottom: '10px', textAlign: 'center' }}>
+                    <img src={fotoCarregadaBase64} alt="Pré-visualização" style={{ maxWidth: '100%', maxHeight: '110px', objectFit: 'contain', borderRadius: '4px', cursor: 'pointer' }} onClick={() => setFotoTelaCheiaUrl(fotoCarregadaBase64)} title="Clique para ampliar" />
+                  </div>
+                    )}
+                <button type="button" onClick={salvarFotoPop} style={{ width: '100%', padding: '8px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>Salvar Foto</button>
+              </div>
+
+              <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '13px', color: theme.textMuted }}>Fotos Salvas</h4>
+                {fotosPop.length === 0 ? (
+                  <p style={{ fontSize: '12px', color: theme.textMuted, textAlign: 'center' }}>Nenhuma foto salva para este POP.</p>
+                    ) : (
+                  fotosPop.map((foto) => (
+                    <div key={foto.id} style={{ background: theme.cardInner, padding: '8px', borderRadius: '4px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
+                      <img 
+                        src={foto.url} 
+                        alt="POP" 
+                        style={{ width: '70px', height: '45px', objectFit: 'cover', borderRadius: '4px', cursor: 'pointer' }} 
+                        onClick={() => setFotoTelaCheiaUrl(foto.url)}
+                        title="Clique para abrir em tela cheia"
+                      />
+                      <div style={{ flex: 1, fontSize: '12px', color: theme.textMuted }}>
+                        Salva em: {foto.data}
+                      </div>
+                      <button type="button" onClick={() => deletarFotoPop(foto.id)} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '5px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Deletar</button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {fotoTelaCheiaUrl && (
+          <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.95)', zIndex: 1300, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px', boxSizing: 'border-box' }}>
+            <button 
+              onClick={() => setFotoTelaCheiaUrl(null)} 
+              style={{ position: 'absolute', top: '15px', right: '15px', background: '#dc3545', border: 'none', color: '#fff', fontSize: '16px', fontWeight: 'bold', padding: '8px 14px', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              ✕ Fechar
+            </button>
+            <img src={fotoTelaCheiaUrl} alt="Tela Cheia" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '4px' }} />
+          </div>
+        )}
+         
+        <div className="no-print" style={{ marginBottom: '18px', background: theme.cardInner, padding: '10px 12px', borderRadius: '6px', border: `1px solid ${theme.border}`, width: '100%', boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '6px', width: '100%', boxSizing: 'border-box' }}>
+            <label style={{ fontSize: '12px', color: theme.textMuted, fontWeight: 'bold' }}>Tipo de Data da Inspeção</label>
+            <button type="button" onClick={gerarPdfUltimaInspecao} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
+              📄 Gerar PDF da Última Inspeção
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: '15px', marginBottom: '8px', flexWrap: 'wrap' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '13px' }}>
+              <input type="radio" name="tipoData" checked={tipoData === 'atual'} onChange={() => setTipoData('atual')} /> Data Atual + GPS
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '13px' }}>
+              <input type="radio" name="tipoData" checked={tipoData === 'manual'} onChange={() => setTipoData('manual')} /> Data Manual Salva
+            </label>
+        </div>
+
+        {tipoData === 'manual' && (
+          <div>
+            <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>Informe a data que foi feita a inspeção</label>
+            <input type="text" value={dataManualInspecao} onChange={(e) => setDataManualInspecao(e.target.value)} placeholder="ex: 20/08/2026" style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
+          </div>
+        )}
+        </div>
+
+        <h3 style={{ fontSize: '16px', marginBottom: '10px' }}>Status dos Ativos no POP</h3>
+        {Object.keys(statusAtivos).map((ativo) => {
+          const presente = ativosPresentes[ativo];
+          return (
+            <div key={ativo} style={{ background: theme.cardInner, padding: '10px 12px', borderRadius: '6px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+                  <input type="checkbox" checked={presente} onChange={(e) => setAtivosPresentes({ ...ativosPresentes, [ativo]: e.target.checked })} />
+                  {ativo}
+                </label>
+                {presente && (
+                  <div className="no-print" style={{ display: 'flex', gap: '6px' }}>
+                    <button 
+                      type="button" 
+                      onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'OK' })} 
+                      style={{ 
+                        background: statusAtivos[ativo] === 'OK' ? '#28a745' : theme.cardBg, 
+                        border: `1px solid ${theme.border}`, 
+                        color: statusAtivos[ativo] === 'OK' ? '#fff' : theme.textMain, 
+                        padding: '4px 10px', 
+                        borderRadius: '4px', 
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      OK
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'Incidente' })} 
+                      style={{ 
+                        background: statusAtivos[ativo] === 'Incidente' ? '#dc3545' : theme.cardBg, 
+                        border: `1px solid ${theme.border}`, 
+                        color: statusAtivos[ativo] === 'Incidente' ? '#fff' : theme.textMain, 
+                        padding: '4px 10px', 
+                        borderRadius: '4px', 
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      Incidente
+                    </button>
+                  </div>
+                )}
+              </div>
+              {presente && statusAtivos[ativo] === 'Incidente' && (
+                <input type="text" placeholder={`Relatar incidente em ${ativo}`} value={detalhesIncidentes[ativo] || ''} onChange={(e) => setDetalhesIncidentes({ ...detalhesIncidentes, [ativo]: e.target.value })} style={{ width: '100%', marginTop: '8px', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
+                  )}
+            </div>
+          );
+        })}
+
+       <button type="button" onClick={salvarStatusAtivosFirebase} className="no-print" style={{ width: '100%', padding: '10px', background: '#17a2b8', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', marginTop: '6px', marginBottom: '18px', fontSize: '14px', boxSizing: 'border-box' }}>
+       Salvar Status dos Ativos
+       </button>
+
+       <div style={{ marginTop: '15px', width: '100%', boxSizing: 'border-box' }}>
+        <h3 style={{ fontSize: '16px', marginBottom: '10px' }}>Bancos de Baterias</h3>
+        <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+          {[1, 2, 3, 4].map((num) => (
+            <button key={num} type="button" onClick={() => { setQtdBancos(num); salvarNoFirebase({ qtdBancos: num }); }} style={{ padding: '6px 12px', background: qtdBancos === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>{num}</button>
+          ))}
+       </div>
+       {Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
+        const bModel = bancosBateria[banco] || { tipo: 'Chumbo', dataFabricacao: '', dataUltimaInspecao: '', voltagens: ['', '', '', ''], salvo: false };
+         
         const anosTrocaCalculado = bModel.tipo === 'Lítio' ? 8 : 2;
         const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
-        const fabExibicao = textoExato ? `${bModel.dataFabricacao} (${textoExato})` : (bModel.dataFabricacao || 'Não informada');
         const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao, pop.nome, bModel.tipo);
         const resSub = statusData(proxSub);
         const vencidoSub = resSub && resSub.status === 'vencido';
@@ -1525,464 +1815,174 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         const resInsp = statusData(proxInsp);
         const vencidoInsp = resInsp && resInsp.status === 'vencido';
 
-        const voltagensHtml = bModel.tipo !== 'Lítio' 
-          ? `<br>Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]` 
-          : '';
-
-        htmlRelatorio += `
-          <div class="bloco">
-            <span class="negrito">Banco ${getLetra(banco)} (${bModel.tipo})</span><br>
-            Data de Fabricação: ${fabExibicao}<br>
-            <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+${anosTrocaCalculado} anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
-            Data da Última Inspeção: ${bModel.dataUltimaInspecao || 'N/A'}<br>
-            <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (3 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span>
-            ${voltagensHtml}
+        return (
+          <div key={banco} style={{ background: theme.cardInner, padding: '10px 12px', borderRadius: '6px', marginBottom: '12px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px', width: '100%', boxSizing: 'border-box' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold' }}>Banco {getLetra(banco)}</h4>
+                <select 
+                  disabled={bModel.salvo}
+                  value={bModel.tipo}
+                  onChange={(e) => {
+                    const novoTipo = e.target.value;
+                    setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, tipo: novoTipo } });
+                  }}
+                  style={{ padding: '4px 6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '12px' }}
+                >
+                  <option value="Chumbo">Chumbo</option>
+                  <option value="Lítio">Lítio</option>
+                </select>
+              </div>
+              <button type="button" onClick={() => {
+                const novoSalvo = !bModel.salvo;
+                const novoEstado = { ...bancosBateria, [banco]: { ...bModel, salvo: novoSalvo } };
+                setBancosBateria(novoEstado);
+                salvarNoFirebase({ 
+                  qtdBancos,
+                  [`bat_${banco}_tipo`]: bModel.tipo,
+                  [`bat_${banco}_fab`]: bModel.dataFabricacao, 
+                  [`bat_${banco}_insp`]: bModel.dataUltimaInspecao,
+                  [`bat_${banco}_v1`]: bModel.voltagens[0],
+                  [`bat_${banco}_v2`]: bModel.voltagens[1],
+                  [`bat_${banco}_v3`]: bModel.voltagens[2],
+                  [`bat_${banco}_v4`]: bModel.voltagens[3],
+                  [`bat_${banco}_salvo`]: novoSalvo 
+                });
+            }} className="no-print" style={{ background: bModel.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
+              {bModel.salvo ? 'Editar' : 'Salvar'}
+            </button>
           </div>
-        `;
-      }
-    });
 
-    htmlRelatorio += `<h2>Centrais de Ar Condicionado</h2>`;
-    Array.from({ length: qtdAr }, (_, i) => i + 1).forEach(idx => {
-      const ar = centraisAr[idx];
-      if (ar) {
+          <div style={{ marginBottom: '6px', width: '100%', boxSizing: 'border-box' }}>
+            <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '3px' }}>Data de Fabricação (Ex: 34/24 ou dd/MM/aaaa)</label>
+            <input type="text" disabled={bModel.salvo} placeholder="ex: 34/24 ou 05/08/2024" value={bModel.dataFabricacao} onChange={(e) => {
+              const novoVal = e.target.value;
+              setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, dataFabricacao: novoVal } });
+          }} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
+          </div>
+
+          {textoExato && (
+            <p style={{ fontSize: '12px', color: '#28a745', margin: '0 0 4px 0', fontWeight: 'bold' }}>
+              Por extenso: ({textoExato})
+            </p>
+          )}
+             
+          <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoSub ? undefined : '#4dabf7', margin: '0 0 6px 0', fontWeight: 'bold' }}>
+            Próxima Substituição (+{anosTrocaCalculado} anos): {proxSub || 'Preencha a data'} {vencidoSub && `(Exp. há ${resSub.dias}d)`}
+          </p>
+
+          <div style={{ marginBottom: '6px', width: '100%', boxSizing: 'border-box' }}>
+            <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '3px' }}>Data da Última Inspeção da Bateria (dd/MM/aaaa)</label>
+            <input type="text" disabled={bModel.salvo} placeholder="dd/MM/aaaa" value={bModel.dataUltimaInspecao} onChange={(e) => {
+              const novoVal = e.target.value;
+              setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, dataUltimaInspecao: novoVal } });
+            }} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
+          </div>
+
+          <p className={vencidoInsp ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoInsp ? undefined : '#4dabf7', margin: '0 0 8px 0', fontWeight: 'bold' }}>
+            Próxima Inspeção (3 meses): {proxInsp || 'Preencha a última inspeção'} {vencidoInsp && `(Exp. há ${resInsp.dias}d)`}
+          </p>
+
+          {bModel.tipo !== 'Lítio' && (
+            <>
+              <div style={{ fontSize: '12px', color: theme.textMuted, marginBottom: '5px', fontWeight: 'bold' }}>Voltagem das 4 Baterias do Banco:</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', boxSizing: 'border-box', width: '100%' }}>
+                {[0, 1, 2, 3].map((vIdx) => (
+                  <input 
+                    key={vIdx} 
+                    type="text" 
+                    disabled={bModel.salvo}
+                    placeholder={`Bat ${vIdx + 1}`} 
+                    value={bModel.voltagens[vIdx] || ''} 
+                    onChange={(e) => {
+                      const novasVols = [...bModel.voltagens];
+                      novasVols[vIdx] = e.target.value;
+                      setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, voltagens: novasVols } });
+                    }} 
+                  style={{ width: '100%', padding: '7px 4px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', textAlign: 'center', fontSize: '12px' }} 
+                />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        );
+       })}
+       </div>
+
+       <div style={{ marginTop: '18px', width: '100%', boxSizing: 'border-box' }}>
+        <h3 style={{ fontSize: '16px', marginBottom: '10px' }}>Centrais de Ar</h3>
+        <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+          {[1, 2, 3, 4].map((num) => (
+            <button key={num} type="button" onClick={() => { setQtdAr(num); salvarNoFirebase({ qtdAr: num }); }} style={{ padding: '6px 12px', background: qtdAr === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>{num}</button>
+          ))}
+       </div>
+       {Array.from({ length: qtdAr }, (_, i) => i + 1).map((idx) => {
+        const ar = centraisAr[idx] || { modelo: '', btu: '', dataInstalacao: '', dataUltimaLimpeza: '', salvo: false };
         const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
         const resLimp = statusData(proxLimp);
         const vencidoLimp = resLimp && resLimp.status === 'vencido';
 
-        htmlRelatorio += `
-          <div class="bloco">
-            <span class="negrito">Central ${getLetra(idx)}</span> (${ar.modelo || 'Modelo não informado'} - ${ar.btu || 'BTU não inf.'})<br>
-            Data de Instalação: ${ar.dataInstalacao || 'N/A'}<br>
-            Data da Última Limpeza: ${ar.dataUltimaLimpeza || 'N/A'}<br>
-            <span class="${vencidoLimp ? 'vermelho' : ''}">Próxima Limpeza (${intervaloAr} meses): ${proxLimp || 'N/A'} ${vencidoLimp ? `(Expirado há ${resLimp.dias} dias)` : ''}</span>
-          </div>
-        `;
-      }
-    });
-
-    htmlRelatorio += `
-      <h2>Observações e Incidentes Gerais</h2>
-      <div class="bloco">
-        <p><span class="negrito">Incidentes Gerais:</span> ${incidentesGerais || 'Nenhum incidente relatado.'}</p>
-        <p><span class="negrito">Limpeza Necessária:</span> <span class="${precisaLimpeza ? 'vermelho' : ''}">${precisaLimpeza ? 'SIM' : 'NÃO'}</span></p>
-        <p><span class="negrito">Anotações Extras:</span> ${anotacoes || 'Nenhuma anotação.'}</p>
-      </div>
-    </body></html>`;
-
-    janelaPdf.document.write(htmlRelatorio);
-    janelaPdf.document.close();
-    janelaPdf.focus();
-    setTimeout(() => {
-        janelaPdf.print();
-      }, 600);
-    }
-
-    onBack();
-
-  } catch (error) {
-    alert("Erro ao registrar o check-in: " + error.message);
-  }
-  };
-
-  const isPedro = tecnico.toLowerCase().includes('pedro');
-  const popsFiltradosMenu = listaPops.filter(p => (isPedro ? p.endereco.toLowerCase().endsWith('- pbs') : true) && (p.nome.toLowerCase().includes(buscaPopLateral.toLowerCase()) || p.endereco.toLowerCase().includes(buscaPopLateral.toLowerCase())));
-
-  return (
-  <div className="container-movel" style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', width: '100%', margin: 0, padding: '15px 10px', fontFamily: 'sans-serif', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-     
-    <div style={{ width: '100%', maxWidth: '900px', boxSizing: 'border-box' }}>
-       
-      <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px', padding: '4px 0', width: '100%', boxSizing: 'border-box' }}>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button type="button" onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>← Voltar</button>
-          <button type="button" onClick={() => setMenuPopsLateralAberto(true)} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>📁 Trocar POP</button>
-        </div>
-        <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
-          {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
-        </button>
-      </div>
-
-      {menuPopsLateralAberto && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 1250, display: 'flex' }}>
-          <div style={{ width: '310px', background: theme.cardBg, color: theme.textMain, height: '100%', padding: '15px', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column', borderRight: `1px solid ${theme.border}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <h3 style={{ margin: 0, fontSize: '16px' }}>Selecionar POP</h3>
-              <button onClick={() => setMenuPopsLateralAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, fontSize: '18px', cursor: 'pointer' }}>✕</button>
-            </div>
-            <input type="text" placeholder="Filtrar POP..." value={buscaPopLateral} onChange={(e) => setBuscaPopLateral(e.target.value)} style={{ width: '100%', padding: '8px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px', borderRadius: '4px' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', flex: 1 }}>
-              {popsFiltradosMenu.map((p) => (
-                <div key={p.id} onClick={() => { onSelectPop(p); setMenuPopsLateralAberto(false); }} style={{ background: p.nome.toLowerCase() === pop.nome.toLowerCase() ? '#007bff' : theme.cardInner, color: p.nome.toLowerCase() === pop.nome.toLowerCase() ? '#fff' : theme.textMain, padding: '10px', borderRadius: '4px', cursor: 'pointer', border: `1px solid ${theme.border}` }}>
-                  <p style={{ margin: '0 0 3px 0', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '13px' }}>{p.nome}</p>
-                  <p style={{ margin: 0, fontSize: '11px', opacity: 0.9 }}>{p.endereco}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div style={{ flex: 1 }} onClick={() => setMenuPopsLateralAberto(false)}></div>
-        </div>
-      )}
-         
-      <div className="card-movel" style={{ background: theme.cardBg, color: theme.textMain, padding: '15px', width: '100%', borderRadius: '6px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', width: '100%', boxSizing: 'border-box' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', margin: 0, fontSize: '18px' }}>Inspeção: {pop.nome}</h2>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              {linkGoogleMaps && (
-                <a 
-                  href={linkGoogleMaps} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="no-print"
-                  style={{ background: '#007bff', color: '#fff', padding: '5px 10px', borderRadius: '4px', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}
-                >
-                  📍 Localização
-                </a>
-              )}
-              <button 
-                type="button"
-                onClick={() => setModalFotosAberto(true)}
-                className="no-print"
-                style={{ background: '#6c757d', color: '#fff', padding: '5px 10px', borderRadius: '4px', border: 'none', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-              >
-                📷 Fotos {fotosPop.length > 0 ? `(${fotosPop.length})` : ''}
-              </button>
-            </div>
-          </div>
-          <img src="/logo.png" alt="Logo" style={{ width: '90px', objectFit: 'contain' }} />
-      </div>
-      <p style={{ color: theme.textMuted, fontSize: '14px', marginBottom: '15px' }}>{pop.endereco}</p>
-
-      <p style={{ color: theme.textMain, fontSize: '15px', fontWeight: 'bold', marginBottom: '15px' }}>{cargoLabel}: {nomeTecnicoLogado}</p>
-
-      {modalFotosAberto && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 1200, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px', boxSizing: 'border-box' }}>
-          <div style={{ background: theme.cardBg, color: theme.textMain, padding: '20px', borderRadius: '6px', width: '100%', maxWidth: '500px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <h3 style={{ margin: 0, color: '#4dabf7', fontSize: '16px' }}>Fotos do POP: {pop.nome.toUpperCase()}</h3>
-              <button onClick={() => setModalFotosAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, fontSize: '18px', cursor: 'pointer' }}>✕</button>
-            </div>
-
-            <div style={{ marginBottom: '15px', background: theme.cardInner, padding: '10px', borderRadius: '4px', border: `1px solid ${theme.border}` }}>
-              <label style={{ display: 'block', fontSize: '12px', marginBottom: '6px', fontWeight: 'bold' }}>Carregar Nova Foto</label>
-              <input type="file" accept="image/*" onChange={handleFileChange} style={{ width: '100%', marginBottom: '10px', fontSize: '12px', color: theme.textMain }} />
-              {fotoCarregadaBase64 && (
-                <div style={{ marginBottom: '10px', textAlign: 'center' }}>
-                  <img src={fotoCarregadaBase64} alt="Pré-visualização" style={{ maxWidth: '100%', maxHeight: '110px', objectFit: 'contain', borderRadius: '4px', cursor: 'pointer' }} onClick={() => setFotoTelaCheiaUrl(fotoCarregadaBase64)} title="Clique para ampliar" />
-                </div>
-                  )}
-              <button type="button" onClick={salvarFotoPop} style={{ width: '100%', padding: '8px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>Salvar Foto</button>
-            </div>
-
-            <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <h4 style={{ margin: '0 0 6px 0', fontSize: '13px', color: theme.textMuted }}>Fotos Salvas</h4>
-              {fotosPop.length === 0 ? (
-                <p style={{ fontSize: '12px', color: theme.textMuted, textAlign: 'center' }}>Nenhuma foto salva para este POP.</p>
-                  ) : (
-                fotosPop.map((foto) => (
-                  <div key={foto.id} style={{ background: theme.cardInner, padding: '8px', borderRadius: '4px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
-                    <img 
-                      src={foto.url} 
-                      alt="POP" 
-                      style={{ width: '70px', height: '45px', objectFit: 'cover', borderRadius: '4px', cursor: 'pointer' }} 
-                      onClick={() => setFotoTelaCheiaUrl(foto.url)}
-                      title="Clique para abrir em tela cheia"
-                    />
-                    <div style={{ flex: 1, fontSize: '12px', color: theme.textMuted }}>
-                      Salva em: {foto.data}
-                    </div>
-                    <button type="button" onClick={() => deletarFotoPop(foto.id)} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '5px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Deletar</button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {fotoTelaCheiaUrl && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.95)', zIndex: 1300, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px', boxSizing: 'border-box' }}>
-          <button 
-            onClick={() => setFotoTelaCheiaUrl(null)} 
-            style={{ position: 'absolute', top: '15px', right: '15px', background: '#dc3545', border: 'none', color: '#fff', fontSize: '16px', fontWeight: 'bold', padding: '8px 14px', borderRadius: '4px', cursor: 'pointer' }}
-          >
-            ✕ Fechar
-          </button>
-          <img src={fotoTelaCheiaUrl} alt="Tela Cheia" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '4px' }} />
-        </div>
-      )}
-         
-      <div className="no-print" style={{ marginBottom: '18px', background: theme.cardInner, padding: '10px 12px', borderRadius: '6px', border: `1px solid ${theme.border}`, width: '100%', boxSizing: 'border-box' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '6px', width: '100%', boxSizing: 'border-box' }}>
-          <label style={{ fontSize: '12px', color: theme.textMuted, fontWeight: 'bold' }}>Tipo de Data da Inspeção</label>
-          <button type="button" onClick={gerarPdfUltimaInspecao} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
-            📄 Gerar PDF da Última Inspeção
-          </button>
-        </div>
-        <div style={{ display: 'flex', gap: '15px', marginBottom: '8px', flexWrap: 'wrap' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '13px' }}>
-            <input type="radio" name="tipoData" checked={tipoData === 'atual'} onChange={() => setTipoData('atual')} /> Data Atual + GPS
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '13px' }}>
-            <input type="radio" name="tipoData" checked={tipoData === 'manual'} onChange={() => setTipoData('manual')} /> Data Manual Salva
-          </label>
-      </div>
-
-      {tipoData === 'manual' && (
-        <div>
-          <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>Informe a data que foi feita a inspeção</label>
-          <input type="text" value={dataManualInspecao} onChange={(e) => setDataManualInspecao(e.target.value)} placeholder="ex: 20/08/2026" style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
-        </div>
-      )}
-      </div>
-
-      <h3 style={{ fontSize: '16px', marginBottom: '10px' }}>Status dos Ativos no POP</h3>
-      {Object.keys(statusAtivos).map((ativo) => {
-        const presente = ativosPresentes[ativo];
         return (
-          <div key={ativo} style={{ background: theme.cardInner, padding: '10px 12px', borderRadius: '6px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
-                <input type="checkbox" checked={presente} onChange={(e) => setAtivosPresentes({ ...ativosPresentes, [ativo]: e.target.checked })} />
-                {ativo}
-              </label>
-              {presente && (
-                <div className="no-print" style={{ display: 'flex', gap: '6px' }}>
-                  <button 
-                    type="button" 
-                    onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'OK' })} 
-                    style={{ 
-                      background: statusAtivos[ativo] === 'OK' ? '#28a745' : theme.cardBg, 
-                      border: `1px solid ${theme.border}`, 
-                      color: statusAtivos[ativo] === 'OK' ? '#fff' : theme.textMain, 
-                      padding: '4px 10px', 
-                      borderRadius: '4px', 
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    OK
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'Incidente' })} 
-                    style={{ 
-                      background: statusAtivos[ativo] === 'Incidente' ? '#dc3545' : theme.cardBg, 
-                      border: `1px solid ${theme.border}`, 
-                      color: statusAtivos[ativo] === 'Incidente' ? '#fff' : theme.textMain, 
-                      padding: '4px 10px', 
-                      borderRadius: '4px', 
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    Incidente
-                  </button>
-                </div>
-              )}
-            </div>
-            {presente && statusAtivos[ativo] === 'Incidente' && (
-              <input type="text" placeholder={`Relatar incidente em ${ativo}`} value={detalhesIncidentes[ativo] || ''} onChange={(e) => setDetalhesIncidentes({ ...detalhesIncidentes, [ativo]: e.target.value })} style={{ width: '100%', marginTop: '8px', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
-                )}
+          <div key={idx} style={{ background: theme.cardInner, padding: '10px 12px', borderRadius: '6px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', width: '100%', boxSizing: 'border-box' }}>
+              <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold' }}>Central {getLetra(idx)}</h4>
+              <button type="button" onClick={() => {
+                const novoSalvo = !ar.salvo;
+                setCentraisAr({ ...centraisAr, [idx]: { ...ar, salvo: novoSalvo } });
+                salvarNoFirebase({ 
+                  qtdAr,
+                  [`ar_${idx}_mod`]: ar.modelo, 
+                  [`ar_${idx}_btu`]: ar.btu, 
+                  [`ar_${idx}_inst`]: ar.dataInstalacao, 
+                  [`ar_${idx}_limp`]: ar.dataUltimaLimpeza, 
+                  [`ar_${idx}_salvo`]: novoSalvo 
+                });
+            }} className="no-print" style={{ background: ar.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
+              {ar.salvo ? 'Editar' : 'Salvar'}
+            </button>
           </div>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', marginTop: '8px', boxSizing: 'border-box', flexWrap: 'wrap', width: '100%' }}>
+            <div style={{ flex: 1, minWidth: '120px' }}>
+              <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>Modelo</label>
+              <input type="text" disabled={ar.salvo} placeholder="Modelo" value={ar.modelo} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, modelo: e.target.value } })} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
+            </div>
+            <div style={{ flex: 1, minWidth: '120px' }}>
+              <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>BTU</label>
+              <input type="text" disabled={ar.salvo} placeholder="BTU" value={ar.btu} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, btu: e.target.value } })} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
+            </div>
+        </div>
+        <div style={{ marginBottom: '8px', width: '100%', boxSizing: 'border-box' }}>
+          <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>Data de Instalação (dd/MM/aaaa)</label>
+          <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataInstalacao} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataInstalacao: e.target.value } })} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
+        </div>
+        <div style={{ marginBottom: '4px', width: '100%', boxSizing: 'border-box' }}>
+          <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>Data da Última Limpeza (dd/MM/aaaa)</label>
+          <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataUltimaLimpeza: e.target.value } })} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
+        </div>
+        <p className={vencidoLimp ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoLimp ? undefined : '#4dabf7', margin: '6px 0 6px 0', fontWeight: 'bold' }}>
+          Próxima Limpeza ({intervaloAr} meses): {proxLimp || 'Preencha a última limpeza'} {vencidoLimp && `(Exp. há ${resLimp.dias}d)`}
+        </p>
+       </div>
         );
-      })}
+       })}
+       </div>
 
-     <button type="button" onClick={salvarStatusAtivosFirebase} className="no-print" style={{ width: '100%', padding: '10px', background: '#17a2b8', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', marginTop: '6px', marginBottom: '18px', fontSize: '14px', boxSizing: 'border-box' }}>
-     Salvar Status dos Ativos
-     </button>
-
-     <div style={{ marginTop: '15px', width: '100%', boxSizing: 'border-box' }}>
-      <h3 style={{ fontSize: '16px', marginBottom: '10px' }}>Bancos de Baterias</h3>
-      <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-        {[1, 2, 3, 4].map((num) => (
-          <button key={num} type="button" onClick={() => { setQtdBancos(num); salvarNoFirebase({ qtdBancos: num }); }} style={{ padding: '6px 12px', background: qtdBancos === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>{num}</button>
-        ))}
-     </div>
-     {Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
-      const bModel = bancosBateria[banco] || { tipo: 'Chumbo', dataFabricacao: '', dataUltimaInspecao: '', voltagens: ['', '', '', ''], salvo: false };
-       
-      const anosTrocaCalculado = bModel.tipo === 'Lítio' ? 8 : 2;
-      const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
-      const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao, pop.nome, bModel.tipo);
-      const resSub = statusData(proxSub);
-      const vencidoSub = resSub && resSub.status === 'vencido';
-
-      const proxInsp = calcularProximaInspecaoBateria(bModel.dataUltimaInspecao);
-      const resInsp = statusData(proxInsp);
-      const vencidoInsp = resInsp && resInsp.status === 'vencido';
-
-      return (
-        <div key={banco} style={{ background: theme.cardInner, padding: '10px 12px', borderRadius: '6px', marginBottom: '12px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px', width: '100%', boxSizing: 'border-box' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-              <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold' }}>Banco {getLetra(banco)}</h4>
-              <select 
-                disabled={bModel.salvo}
-                value={bModel.tipo}
-                onChange={(e) => {
-                  const novoTipo = e.target.value;
-                  setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, tipo: novoTipo } });
-                }}
-                style={{ padding: '4px 6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '12px' }}
-              >
-                <option value="Chumbo">Chumbo</option>
-                <option value="Lítio">Lítio</option>
-              </select>
-            </div>
-            <button type="button" onClick={() => {
-              const novoSalvo = !bModel.salvo;
-              const novoEstado = { ...bancosBateria, [banco]: { ...bModel, salvo: novoSalvo } };
-              setBancosBateria(novoEstado);
-              salvarNoFirebase({ 
-                qtdBancos,
-                [`bat_${banco}_tipo`]: bModel.tipo,
-                [`bat_${banco}_fab`]: bModel.dataFabricacao, 
-                [`bat_${banco}_insp`]: bModel.dataUltimaInspecao,
-                [`bat_${banco}_v1`]: bModel.voltagens[0],
-                [`bat_${banco}_v2`]: bModel.voltagens[1],
-                [`bat_${banco}_v3`]: bModel.voltagens[2],
-                [`bat_${banco}_v4`]: bModel.voltagens[3],
-                [`bat_${banco}_salvo`]: novoSalvo 
-              });
-          }} className="no-print" style={{ background: bModel.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
-            {bModel.salvo ? 'Editar' : 'Salvar'}
-          </button>
-        </div>
-
-        <div style={{ marginBottom: '6px', width: '100%', boxSizing: 'border-box' }}>
-          <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '3px' }}>Data de Fabricação (Ex: 34/24 ou dd/MM/aaaa)</label>
-          <input type="text" disabled={bModel.salvo} placeholder="ex: 34/24 ou 05/08/2024" value={bModel.dataFabricacao} onChange={(e) => {
-            const novoVal = e.target.value;
-            setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, dataFabricacao: novoVal } });
-        }} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
-        </div>
-
-        {textoExato && (
-          <p style={{ fontSize: '12px', color: '#28a745', margin: '0 0 4px 0', fontWeight: 'bold' }}>
-            Por extenso: ({textoExato})
-          </p>
-        )}
+       <div style={{ marginTop: '18px', width: '100%', boxSizing: 'border-box' }}>
+        <input type="text" placeholder="Relatar Incidentes Gerais" value={incidentesGerais} onChange={(e) => setIncidentesGerais(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
            
-        <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoSub ? undefined : '#4dabf7', margin: '0 0 6px 0', fontWeight: 'bold' }}>
-          Próxima Substituição (+{anosTrocaCalculado} anos): {proxSub || 'Preencha a data'} {vencidoSub && `(Exp. há ${resSub.dias}d)`}
-        </p>
-
-        <div style={{ marginBottom: '6px', width: '100%', boxSizing: 'border-box' }}>
-          <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '3px' }}>Data da Última Inspeção da Bateria (dd/MM/aaaa)</label>
-          <input type="text" disabled={bModel.salvo} placeholder="dd/MM/aaaa" value={bModel.dataUltimaInspecao} onChange={(e) => {
-            const novoVal = e.target.value;
-            setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, dataUltimaInspecao: novoVal } });
-          }} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontSize: '14px', fontWeight: 'bold' }}>
+          <input type="checkbox" checked={precisaLimpeza} onChange={(e) => setPrecisaLimpeza(e.target.checked)} id="limpCheck" />
+          <label htmlFor="limpCheck" style={{ cursor: 'pointer' }}>Limpeza Necessária</label>
         </div>
 
-        <p className={vencidoInsp ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoInsp ? undefined : '#4dabf7', margin: '0 0 8px 0', fontWeight: 'bold' }}>
-          Próxima Inspeção (3 meses): {proxInsp || 'Preencha a última inspeção'} {vencidoInsp && `(Exp. há ${resInsp.dias}d)`}
-        </p>
+        <textarea placeholder="Anotações Extras" rows="3" value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '18px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
 
-        {bModel.tipo !== 'Lítio' && (
-          <>
-            <div style={{ fontSize: '12px', color: theme.textMuted, marginBottom: '5px', fontWeight: 'bold' }}>Voltagem das 4 Baterias do Banco:</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', boxSizing: 'border-box', width: '100%' }}>
-              {[0, 1, 2, 3].map((vIdx) => (
-                <input 
-                  key={vIdx} 
-                  type="text" 
-                  disabled={bModel.salvo}
-                  placeholder={`Bat ${vIdx + 1}`} 
-                  value={bModel.voltagens[vIdx] || ''} 
-                  onChange={(e) => {
-                    const novasVols = [...bModel.voltagens];
-                    novasVols[vIdx] = e.target.value;
-                    setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, voltagens: novasVols } });
-                  }} 
-                style={{ width: '100%', padding: '7px 4px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', textAlign: 'center', fontSize: '12px' }} 
-              />
-              ))}
-            </div>
-          </>
-        )}
+        <button type="button" onClick={finalizarInspecao} className="no-print" style={{ width: '100%', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', cursor: 'pointer', boxSizing: 'border-box' }}>
+          Finalizar, Salvar e Gerar Relatório
+        </button>
+       </div>
       </div>
-      );
-     })}
-     </div>
-
-     <div style={{ marginTop: '18px', width: '100%', boxSizing: 'border-box' }}>
-      <h3 style={{ fontSize: '16px', marginBottom: '10px' }}>Centrais de Ar</h3>
-      <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-        {[1, 2, 3, 4].map((num) => (
-          <button key={num} type="button" onClick={() => { setQtdAr(num); salvarNoFirebase({ qtdAr: num }); }} style={{ padding: '6px 12px', background: qtdAr === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>{num}</button>
-        ))}
-     </div>
-     {Array.from({ length: qtdAr }, (_, i) => i + 1).map((idx) => {
-      const ar = centraisAr[idx] || { modelo: '', btu: '', dataInstalacao: '', dataUltimaLimpeza: '', salvo: false };
-      const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
-      const resLimp = statusData(proxLimp);
-      const vencidoLimp = resLimp && resLimp.status === 'vencido';
-
-      return (
-        <div key={idx} style={{ background: theme.cardInner, padding: '10px 12px', borderRadius: '6px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', width: '100%', boxSizing: 'border-box' }}>
-            <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold' }}>Central {getLetra(idx)}</h4>
-            <button type="button" onClick={() => {
-              const novoSalvo = !ar.salvo;
-              setCentraisAr({ ...centraisAr, [idx]: { ...ar, salvo: novoSalvo } });
-              salvarNoFirebase({ 
-                qtdAr,
-                [`ar_${idx}_mod`]: ar.modelo, 
-                [`ar_${idx}_btu`]: ar.btu, 
-                [`ar_${idx}_inst`]: ar.dataInstalacao, 
-                [`ar_${idx}_limp`]: ar.dataUltimaLimpeza, 
-                [`ar_${idx}_salvo`]: novoSalvo 
-              });
-          }} className="no-print" style={{ background: ar.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
-            {ar.salvo ? 'Editar' : 'Salvar'}
-          </button>
-        </div>
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', marginTop: '8px', boxSizing: 'border-box', flexWrap: 'wrap', width: '100%' }}>
-          <div style={{ flex: 1, minWidth: '120px' }}>
-            <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>Modelo</label>
-            <input type="text" disabled={ar.salvo} placeholder="Modelo" value={ar.modelo} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, modelo: e.target.value } })} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
-          </div>
-          <div style={{ flex: 1, minWidth: '120px' }}>
-            <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>BTU</label>
-            <input type="text" disabled={ar.salvo} placeholder="BTU" value={ar.btu} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, btu: e.target.value } })} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
-          </div>
-      </div>
-      <div style={{ marginBottom: '8px', width: '100%', boxSizing: 'border-box' }}>
-        <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>Data de Instalação (dd/MM/aaaa)</label>
-        <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataInstalacao} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataInstalacao: e.target.value } })} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
-      </div>
-      <div style={{ marginBottom: '4px', width: '100%', boxSizing: 'border-box' }}>
-        <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '3px' }}>Data da Última Limpeza (dd/MM/aaaa)</label>
-        <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataUltimaLimpeza: e.target.value } })} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
-      </div>
-      <p className={vencidoLimp ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoLimp ? undefined : '#4dabf7', margin: '6px 0 6px 0', fontWeight: 'bold' }}>
-        Próxima Limpeza ({intervaloAr} meses): {proxLimp || 'Preencha a última limpeza'} {vencidoLimp && `(Exp. há ${resLimp.dias}d)`}
-      </p>
-     </div>
-      );
-     })}
-     </div>
-
-     <div style={{ marginTop: '18px', width: '100%', boxSizing: 'border-box' }}>
-      <input type="text" placeholder="Relatar Incidentes Gerais" value={incidentesGerais} onChange={(e) => setIncidentesGerais(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
-         
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontSize: '14px', fontWeight: 'bold' }}>
-        <input type="checkbox" checked={precisaLimpeza} onChange={(e) => setPrecisaLimpeza(e.target.checked)} id="limpCheck" />
-        <label htmlFor="limpCheck" style={{ cursor: 'pointer' }}>Limpeza Necessária</label>
-      </div>
-
-      <textarea placeholder="Anotações Extras" rows="3" value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '18px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
-
-      <button type="button" onClick={finalizarInspecao} className="no-print" style={{ width: '100%', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', cursor: 'pointer', boxSizing: 'border-box' }}>
-        Finalizar, Salvar e Gerar Relatório
-      </button>
-     </div>
     </div>
-  </div>
   );
 }
