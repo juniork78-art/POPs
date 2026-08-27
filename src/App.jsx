@@ -376,13 +376,6 @@ export default function App() {
 
       dadosPorCidade[sigla].forEach(item => {
         const { nome, endereco, checkIn, dados } = item;
-        
-        let temIncidentesAtivos = false;
-        if (dados.statusAtivos) {
-          Object.keys(dados.statusAtivos).forEach(atv => {
-            if (dados.statusAtivos[atv] === 'Incidente') temIncidentesAtivos = true;
-          });
-        }
 
         html += `
           <div class="bloco-pop">
@@ -392,19 +385,9 @@ export default function App() {
             <p><span class="negrito">Próxima Inspeção:</span> ${checkIn ? checkIn.proximaInspecao : 'N/A'}</p>
         `;
 
-        if (temIncidentesAtivos || (dados.incidentesGerais && dados.incidentesGerais.trim() !== '')) {
+        if (dados.incidentesGerais && dados.incidentesGerais.trim() !== '') {
           html += `<p class="vermelho" style="margin-top:6px;">⚠️ Incidentes Registrados:</p>`;
-          if (dados.statusAtivos) {
-            Object.keys(dados.statusAtivos).forEach(atv => {
-              if (dados.statusAtivos[atv] === 'Incidente') {
-                const det = dados.detalhesIncidentes?.[atv] || 'Sem detalhes';
-                html += `<div class="incidente-item"><strong>Ativo (${atv}):</strong> ${det}</div>`;
-              }
-            });
-          }
-          if (dados.incidentesGerais) {
-            html += `<div class="incidente-item"><strong>Incidentes Gerais:</strong> ${dados.incidentesGerais}</div>`;
-          }
+          html += `<div class="incidente-item"><strong>Incidentes Gerais:</strong> ${dados.incidentesGerais}</div>`;
         } else {
           html += `<p style="color: #666; font-style: italic; margin-top: 4px;">Nenhum incidente relatado neste POP.</p>`;
         }
@@ -772,7 +755,7 @@ export default function App() {
                   </div>
                 );
               })}
-          </div>
+        </div>
         ) : (
           <div>
             <h4 style={{ color: theme.textMuted, fontSize: '15px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px', marginTop: 0 }}>Cronograma de Baterias</h4>
