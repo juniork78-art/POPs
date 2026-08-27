@@ -844,7 +844,19 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
     "cratos": "https://maps.app.goo.gl/RZbZszmk6z5XNBi96",
     "helius": "https://maps.app.goo.gl/3VW9MpLCKunzaHko8",
     "limos": "https://maps.app.goo.gl/v2b7uLHvRzb5418P8",
-    "fanes": "https://maps.app.goo.gl/RQBieTdyzTPBzUzv8"
+    "fanes": "https://maps.app.goo.gl/RQBieTdyzTPBzUzv8",
+    "anubis": "https://maps.app.goo.gl/AXLsWWbPrXQ1QVNL8",
+    "osiris": "https://maps.app.goo.gl/qPccnboXz54qVeR89",
+    "set": "https://maps.app.goo.gl/QEBaUwwzKtqiERjw6",
+    "amaterasu": "https://maps.app.goo.gl/4nzRYccPH7rexHu69",
+    "odin": "https://maps.app.goo.gl/U7jXJQkAmv7uC4J38",
+    "telesto": "https://maps.app.goo.gl/j77DkZtEqtc5Woha9",
+    "tupã1": "https://maps.app.goo.gl/7vuANWjiAjiiXRvu7",
+    "terra": "https://maps.app.goo.gl/3S7P9dL3ACQZbK4b9",
+    "marduk": "https://maps.app.goo.gl/xGopvBFEbQT5FYzH9",
+    "ceuci": "https://maps.app.goo.gl/C4MvcYVJsectbuY47",
+    "dereter": "https://maps.app.goo.gl/5qqVzmDBgq5ybSfF6",
+    "neftis": "https://maps.app.goo.gl/VRZezD9Fw99wu6BCA"
   };
 
   const linkGoogleMaps = mapasPops[pop.nome.toLowerCase()] || null;
