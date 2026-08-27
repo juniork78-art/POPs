@@ -1711,7 +1711,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
       const ar = centraisAr[idx] || { modelo: '', btu: '', dataInstalacao: '', dataUltimaLimpeza: '', salvo: false };
       const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
       const resLimp = statusData(proxLimp);
-      const vencidoLimp = resLsimpar && resLimp.status === 'vencido';
+      const vencidoLimp = resLimp && resLimp.status === 'vencido';
 
       return (
         <div key={idx} style={{ background: theme.cardInner, padding: '10px 12px', borderRadius: '6px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
