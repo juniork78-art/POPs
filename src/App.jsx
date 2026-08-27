@@ -330,7 +330,8 @@ export default function App() {
           const popNome = d.id;
           const data = d.data();
           const qtdAr = data.qtdAr || 4;
-          const intervaloAr = (popNome.toLowerCase() === 'helius' || popNome.toLowerCase() === 'limos') ? 5 : 8;
+          const nomeLower = popNome.toLowerCase();
+          const intervaloAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : 8;
           for (let i = 1; i <= qtdAr; i++) {
             const ultimaLimp = data[`ar_${i}_limp`] || '';
             if (ultimaLimp) {
@@ -827,7 +828,8 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
   const [qtdBancos, setQtdBancos] = useState(1);
   const [bancosBateria, setBancosBateria] = useState({ 1: { tipo: 'Chumbo', dataFabricacao: '', voltagens: ['', '', '', ''], salvo: false } });
 
-  const intervaloAr = (pop.nome.toLowerCase() === 'helius' || pop.nome.toLowerCase() === 'limos') ? 5 : 8;
+  const nomePopLower = pop.nome.toLowerCase();
+  const intervaloAr = (nomePopLower === 'helius' || nomePopLower === 'limos' || nomePopLower === 'fanes') ? 5 : 8;
   const [qtdAr, setQtdAr] = useState(1);
   const [centraisAr, setCentraisAr] = useState({ 1: { modelo: '', btu: '', dataInstalacao: '', dataUltimaLimpeza: '', salvo: false } });
 
@@ -895,7 +897,6 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
         }
 
         const loadedBancos = {};
-        const nomePopLower = pop.nome.toLowerCase();
         const tipoPadraoPop = (nomePopLower === 'set' || nomePopLower === 'bastet') ? 'Litio' : 'Chumbo';
 
         for (let i = 1; i <= (data.qtdBancos || 1); i++) {
@@ -1501,7 +1502,6 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
       ))}
    </div>
    {Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
-    const nomePopLower = pop.nome.toLowerCase();
     const tipoPadraoPop = (nomePopLower === 'set' || nomePopLower === 'bastet') ? 'Litio' : 'Chumbo';
     const bModel = bancosBateria[banco] || { tipo: tipoPadraoPop, dataFabricacao: '', voltagens: ['', '', '', ''], salvo: false };
     
