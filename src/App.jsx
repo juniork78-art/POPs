@@ -18,12 +18,6 @@ import {
 
 const style = document.createElement('style');
 style.innerHTML = `
-  html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    overflow-x: hidden !important;
-  }
   @keyframes piscar {
     0% { opacity: 1; }
     50% { opacity: 0.3; }
@@ -49,14 +43,15 @@ style.innerHTML = `
   }
   @media (max-width: 600px) {
     .container-movel {
-      padding: 6px !important;
+      padding: 0px !important;
       width: 100% !important;
       max-width: 100% !important;
-      box-sizing: border-box !important;
     }
     .card-movel {
-      padding: 8px !important;
-      border-radius: 4px !important;
+      padding: 6px !important;
+      border-radius: 0px !important;
+      border-left: none !important;
+      border-right: none !important;
       width: 100% !important;
       box-sizing: border-box !important;
     }
@@ -445,7 +440,7 @@ export default function App() {
   const totalAlertas = vencidos.length + amanha.length;
 
   return (
-    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', width: '100%', margin: 0, padding: 0, boxSizing: 'border-box' }}>
+    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh' }}>
       <TelaListaPops 
         tecnico={usuarioLogado} 
         listaPops={listaPops} 
@@ -634,7 +629,7 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
   };
 
   return (
-    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', width: '100vw', margin: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px', position: 'relative', boxSizing: 'border-box' }}>
+    <div style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px', position: 'relative' }}>
       <button type="button" onClick={setDarkMode} style={{ position: 'absolute', top: '15px', right: '15px', background: theme.cardBg, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
         {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
       </button>
@@ -661,7 +656,7 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
       </form>
 
       {showTrocarSenhaModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px', boxSizing: 'border-box' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '350px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
             <h3 style={{ marginTop: 0, fontSize: '16px', textAlign: 'center' }}>Alterar Senha</h3>
             {erroTroca && <p style={{ color: '#ff6b6b', fontSize: '12px', marginBottom: '10px' }}>{erroTroca}</p>}
@@ -705,14 +700,14 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
   const isPedro = tecnico.toLowerCase().includes('pedro');
   const popsFiltrados = listaPops.filter(p => (isPedro ? p.endereco.toLowerCase().endsWith('- pbs') : true) && (p.nome.toLowerCase().includes(busca.toLowerCase()) || p.endereco.toLowerCase().includes(busca.toLowerCase())));
   return (
-    <div className="container-movel" style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', width: '100%', margin: 0, padding: '10px', boxSizing: 'border-box' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', borderBottom: `1px solid ${theme.border}`, paddingBottom: '10px', flexWrap: 'wrap', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+    <div className="container-movel" style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', padding: '20px' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${theme.border}`, paddingBottom: '15px', flexWrap: 'wrap', gap: '15px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <button onClick={onOpenDrawer} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>☰ Menu</button>
-          <img src="/logo.png" alt="Logo Fibralink" style={{ width: '90px', objectFit: 'contain' }} />
-          <h1 style={{ margin: 0, fontSize: '15px' }}>| Olá, {tecnico.split('@')[0].toUpperCase()}</h1>
+          <img src="/logo.png" alt="Logo Fibralink" style={{ width: '100px', objectFit: 'contain' }} />
+          <h1 style={{ margin: 0, fontSize: '16px' }}>| Olá, {tecnico.split('@')[0].toUpperCase()}</h1>
         </div>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
           <button onClick={onOpenAvisos} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '14px' }}>
             🔔
             {totalAlertas > 0 && (
@@ -727,7 +722,7 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
         </div>
       </header>
       {showPasswordDialog && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px', boxSizing: 'border-box' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '300px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
             <h3 style={{ marginTop: 0 }}>Senha Necessária</h3>
             
@@ -748,11 +743,11 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
           </div>
         </div>
       )}
-      <input type="text" placeholder="Pesquisar POP" value={busca} onChange={(e) => setBusca(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.inputText, marginBottom: '15px', boxSizing: 'border-box' }} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
+      <input type="text" placeholder="Pesquisar POP" value={busca} onChange={(e) => setBusca(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.inputText, marginBottom: '20px', boxSizing: 'border-box' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px' }}>
         {popsFiltrados.map((pop) => (
-          <div key={pop.id} onClick={() => onPopClick(pop)} style={{ background: theme.cardBg, padding: '12px', borderRadius: '6px', border: `1px solid ${theme.border}`, cursor: 'pointer', width: '100%', boxSizing: 'border-box' }}>
-            <h3 style={{ margin: '0 0 6px 0', color: '#4dabf7', textTransform: 'uppercase' }}>{pop.nome}</h3>
+          <div key={pop.id} onClick={() => onPopClick(pop)} style={{ background: theme.cardBg, padding: '15px', borderRadius: '8px', border: `1px solid ${theme.border}`, cursor: 'pointer' }}>
+            <h3 style={{ margin: '0 0 8px 0', color: '#4dabf7', textTransform: 'uppercase' }}>{pop.nome}</h3>
             <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{pop.endereco}</p>
           </div>
         ))}
@@ -776,15 +771,15 @@ function TelaGerenciarPops({ listaPops, onBack, theme }) {
     setShowDialog(false);
   };
   return (
-    <div className="container-movel" style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', width: '100%', padding: '15px', margin: 0, boxSizing: 'border-box' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', width: '100%', boxSizing: 'border-box' }}>
+    <div className="container-movel" style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', padding: '20px', maxWidth: '800px', margin: '0 auto', boxSizing: 'border-box' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>← Voltar</button>
         <h2>Gerenciar POPs</h2>
         <button onClick={() => { setPopEdicao({ id: Date.now() }); setNome(''); setEndereco(''); setShowDialog(true); }} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}>+ Novo POP</button>
       </div>
       {showDialog && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px', boxSizing: 'border-box' }}>
-          <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '350px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px' }}>
+          <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '350px', border: `1px solid ${theme.border}` }}>
             <h3>Editar/Novo POP</h3>
             <input type="text" placeholder="Nome" value={nome} onChange={(e) => setNome(e.target.value)} style={{ width: '100%', padding: '8px', margin: '10px 0', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
             <input type="text" placeholder="Endereço" value={endereco} onChange={(e) => setEndereco(e.target.value)} style={{ width: '100%', padding: '8px', margin: '10px 0 20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box' }} />
@@ -795,9 +790,9 @@ function TelaGerenciarPops({ listaPops, onBack, theme }) {
           </div>
         </div>
       )}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {listaPops.map((pop) => (
-          <div key={pop.id} style={{ background: theme.cardBg, color: theme.textMain, padding: '12px', borderRadius: '6px', border: `1px solid ${theme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', boxSizing: 'border-box' }}>
+          <div key={pop.id} style={{ background: theme.cardBg, color: theme.textMain, padding: '15px', borderRadius: '8px', border: `1px solid ${theme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h4 style={{ margin: '0 0 5px 0', color: '#4dabf7', textTransform: 'uppercase' }}>{pop.nome}</h4>
               <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{pop.endereco}</p>
@@ -1337,16 +1332,16 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
   };
 
   return (
-  <div className="container-movel" style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', width: '100%', margin: 0, padding: '4px', fontFamily: 'sans-serif', boxSizing: 'border-box' }}>
-    <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px', padding: '4px', width: '100%', boxSizing: 'border-box' }}>
+  <div className="container-movel" style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', padding: '0px', fontFamily: 'sans-serif', maxWidth: '750px', margin: '0 auto', boxSizing: 'border-box' }}>
+    <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px', padding: '4px' }}>
       <button type="button" onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>← Voltar</button>
       <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '5px 10px', borderRadius: '20px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
         {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
       </button>
     </div>
       
-    <div className="card-movel" style={{ background: theme.cardBg, color: theme.textMain, padding: '6px', width: '100%', borderRadius: '0px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', width: '100%', boxSizing: 'border-box' }}>
+    <div className="card-movel" style={{ background: theme.cardBg, color: theme.textMain, padding: '6px', borderRadius: '0px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <h2 style={{ textTransform: 'uppercase', color: '#4dabf7', margin: 0, fontSize: '16px' }}>Inspeção: {pop.nome}</h2>
           <div style={{ display: 'flex', gap: '4px' }}>
@@ -1380,7 +1375,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
     {/* MODAL DE FOTOS */}
     {modalFotosAberto && (
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 1200, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px', boxSizing: 'border-box' }}>
-        <div style={{ background: theme.cardBg, color: theme.textMain, padding: '15px', borderRadius: '6px', width: '100%', maxWidth: '500px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+        <div style={{ background: theme.cardBg, color: theme.textMain, padding: '15px', borderRadius: '6px', width: '100%', maxWidth: '500px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', border: `1px solid ${theme.border}` }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
             <h3 style={{ margin: 0, color: '#4dabf7', fontSize: '15px' }}>Fotos do POP: {pop.nome.toUpperCase()}</h3>
             <button onClick={() => setModalFotosAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, fontSize: '16px', cursor: 'pointer' }}>✕</button>
@@ -1403,7 +1398,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
               <p style={{ fontSize: '11px', color: theme.textMuted, textAlign: 'center' }}>Nenhuma foto salva para este POP.</p>
             ) : (
               fotosPop.map((foto) => (
-                <div key={foto.id} style={{ background: theme.cardInner, padding: '6px', borderRadius: '4px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', width: '100%', boxSizing: 'border-box' }}>
+                <div key={foto.id} style={{ background: theme.cardInner, padding: '6px', borderRadius: '4px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                   <img 
                     src={foto.url} 
                     alt="POP" 
@@ -1436,8 +1431,8 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
       </div>
     )}
       
-    <div className="no-print" style={{ marginBottom: '15px', background: theme.cardInner, padding: '8px', borderRadius: '4px', border: `1px solid ${theme.border}`, width: '100%', boxSizing: 'border-box' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '4px', width: '100%', boxSizing: 'border-box' }}>
+    <div className="no-print" style={{ marginBottom: '15px', background: theme.cardInner, padding: '8px', borderRadius: '4px', border: `1px solid ${theme.border}` }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '4px' }}>
         <label style={{ fontSize: '11px', color: theme.textMuted }}>Tipo de Data da Inspeção</label>
         <button type="button" onClick={gerarPdfUltimaInspecao} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>
           📄 Gerar PDF da Última Inspeção
@@ -1464,7 +1459,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
     {Object.keys(statusAtivos).map((ativo) => {
       const presente = ativosPresentes[ativo];
       return (
-        <div key={ativo} style={{ background: theme.cardInner, padding: '8px', borderRadius: '4px', marginBottom: '8px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
+        <div key={ativo} style={{ background: theme.cardInner, padding: '8px', borderRadius: '4px', marginBottom: '8px', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
               <input type="checkbox" checked={presente} onChange={(e) => setAtivosPresentes({ ...ativosPresentes, [ativo]: e.target.checked })} />
@@ -1512,11 +1507,11 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
       );
     })}
 
-   <button type="button" onClick={salvarStatusAtivosFirebase} className="no-print" style={{ width: '100%', padding: '8px', background: '#17a2b8', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', marginTop: '6px', marginBottom: '15px', fontSize: '13px', boxSizing: 'border-box' }}>
+   <button type="button" onClick={salvarStatusAtivosFirebase} className="no-print" style={{ width: '100%', padding: '8px', background: '#17a2b8', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', marginTop: '6px', marginBottom: '15px', fontSize: '13px' }}>
     Salvar Status dos Ativos
    </button>
 
-   <div style={{ marginTop: '15px', width: '100%', boxSizing: 'border-box' }}>
+   <div style={{ marginTop: '15px' }}>
     <h3 style={{ fontSize: '15px', marginBottom: '8px' }}>Bancos de Baterias</h3>
     <div className="no-print" style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
       {[1, 2, 3, 4].map((num) => (
@@ -1534,8 +1529,8 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
     const vencidoSub = resSub && resSub.status === 'vencido';
 
     return (
-      <div key={banco} style={{ background: theme.cardInner, padding: '8px', borderRadius: '4px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '8px', width: '100%', boxSizing: 'border-box' }}>
+      <div key={banco} style={{ background: theme.cardInner, padding: '8px', borderRadius: '4px', marginBottom: '10px', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <h4 style={{ margin: 0, fontSize: '13px' }}>Banco {getLetra(banco)}</h4>
             <select 
@@ -1570,7 +1565,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
         </button>
       </div>
 
-      <div style={{ marginBottom: '4px', width: '100%', boxSizing: 'border-box' }}>
+      <div style={{ marginBottom: '4px' }}>
         <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data de Fabricação (Ex: 39/25 ou dd/MM/aaaa)</label>
         <input type="text" disabled={bModel.salvo} placeholder="ex: 39/25 ou 05/08/2024" value={bModel.dataFabricacao} onChange={(e) => {
           const novoVal = e.target.value;
@@ -1589,7 +1584,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
       </p>
 
       <div style={{ fontSize: '11px', color: theme.textMuted, marginBottom: '4px' }}>Voltagem das 4 Baterias do Banco:</div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', boxSizing: 'border-box', width: '100%' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', boxSizing: 'border-box' }}>
         {[0, 1, 2, 3].map((vIdx) => (
           <input 
             key={vIdx} 
@@ -1611,7 +1606,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
    })}
    </div>
 
-   <div style={{ marginTop: '15px', width: '100%', boxSizing: 'border-box' }}>
+   <div style={{ marginTop: '15px' }}>
     <h3 style={{ fontSize: '15px', marginBottom: '8px' }}>Centrais de Ar</h3>
     <div className="no-print" style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
       {[1, 2, 3, 4].map((num) => (
@@ -1625,8 +1620,8 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
     const vencidoLimp = resLimp && resLimp.status === 'vencido';
 
     return (
-      <div key={idx} style={{ background: theme.cardInner, padding: '8px', borderRadius: '4px', marginBottom: '8px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', width: '100%', boxSizing: 'border-box' }}>
+      <div key={idx} style={{ background: theme.cardInner, padding: '8px', borderRadius: '4px', marginBottom: '8px', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
           <h4 style={{ margin: 0, fontSize: '13px' }}>Central {getLetra(idx)}</h4>
           <button type="button" onClick={() => {
             const novoSalvo = !ar.salvo;
@@ -1643,7 +1638,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
           {ar.salvo ? 'Editar' : 'Salvar'}
         </button>
       </div>
-      <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', marginTop: '6px', boxSizing: 'border-box', flexWrap: 'wrap', width: '100%' }}>
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', marginTop: '6px', boxSizing: 'border-box', flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: '110px' }}>
           <label style={{ display: 'block', fontSize: '10px', color: theme.textMuted, marginBottom: '2px' }}>Modelo</label>
           <input type="text" disabled={ar.salvo} placeholder="Modelo" value={ar.modelo} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, modelo: e.target.value } })} style={{ width: '100%', padding: '5px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
@@ -1653,11 +1648,11 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
           <input type="text" disabled={ar.salvo} placeholder="BTU" value={ar.btu} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, btu: e.target.value } })} style={{ width: '100%', padding: '5px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
         </div>
     </div>
-    <div style={{ marginBottom: '6px', width: '100%', boxSizing: 'border-box' }}>
+    <div style={{ marginBottom: '6px' }}>
       <label style={{ display: 'block', fontSize: '10px', color: theme.textMuted, marginBottom: '2px' }}>Data de Instalação (dd/MM/aaaa)</label>
       <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataInstalacao} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataInstalacao: e.target.value } })} style={{ width: '100%', padding: '5px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
     </div>
-    <div style={{ marginBottom: '3px', width: '100%', boxSizing: 'border-box' }}>
+    <div style={{ marginBottom: '3px' }}>
       <label style={{ display: 'block', fontSize: '10px', color: theme.textMuted, marginBottom: '2px' }}>Data da Última Limpeza (dd/MM/aaaa)</label>
       <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataUltimaLimpeza: e.target.value } })} style={{ width: '100%', padding: '5px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
     </div>
@@ -1669,7 +1664,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
    })}
    </div>
 
-   <div style={{ marginTop: '15px', width: '100%', boxSizing: 'border-box' }}>
+   <div style={{ marginTop: '15px' }}>
     <input type="text" placeholder="Relatar Incidentes Gerais" value={incidentesGerais} onChange={(e) => setIncidentesGerais(e.target.value)} style={{ width: '100%', padding: '8px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
      
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', fontSize: '13px' }}>
@@ -1679,7 +1674,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, onBack, onCheckInRealizad
 
     <textarea placeholder="Anotações Extras" rows="3" value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '8px', marginBottom: '15px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
 
-    <button type="button" onClick={finalizarInspecao} className="no-print" style={{ width: '100%', padding: '12px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '15px', borderRadius: '4px', cursor: 'pointer', boxSizing: 'border-box' }}>
+    <button type="button" onClick={finalizarInspecao} className="no-print" style={{ width: '100%', padding: '12px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '15px', borderRadius: '4px', cursor: 'pointer' }}>
       Finalizar, Salvar e Gerar Relatório
     </button>
    </div>
