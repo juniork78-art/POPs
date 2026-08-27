@@ -127,13 +127,27 @@ const calcularProximaSubstituicaoBateria = (dataFabricacaoStr, popNome = '', tip
   try {
     const { dataObj } = parseDataFabricacaoBateria(dataFabricacaoStr);
     if (dataObj) {
-      // Regra geral: Chumbo = 2 anos, Lítio = 8 anos
       let anosAdicionais = tipoBateria === 'Litio' ? 8 : 2;
 
       const year = dataObj.getFullYear() + anosAdicionais;
       const month = dataObj.getMonth();
       const day = dataObj.getDate();
       const date = new Date(year, month, day);
+      return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+    }
+    return '';
+  } catch (e) { return ''; }
+};
+
+const calcularProximaInspecaoBateria = (dataUltimaInspecaoStr) => {
+  try {
+    const parts = (dataUltimaInspecaoStr || '').split('/');
+    if (parts.length === 3) {
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1 + 3; // Intervalo fixo de 3 meses
+      const year = parseInt(parts[2], 10) + Math.floor(month / 12);
+      const adjustedMonth = month % 12;
+      const date = new Date(year, adjustedMonth, day);
       return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
     }
     return '';
@@ -846,7 +860,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
   const [detalhesIncidentes, setDetalhesIncidentes] = useState({});
   const [qtdBancos, setQtdBancos] = useState(1);
-  const [bancosBateria, setBancosBateria] = useState({ 1: { tipo: 'Chumbo', dataFabricacao: '', voltagens: ['', '', '', ''], salvo: false } });
+  const [bancosBateria, setBancosBateria] = useState({ 1: { tipo: 'Chumbo', dataFabricacao: '', dataUltimaInspecao: '', voltagens: ['', '', '', ''], salvo: false } });
 
   const nomePopLower = pop.nome.toLowerCase();
   const intervaloAr = (nomePopLower === 'helius' || nomePopLower === 'limos' || nomePopLower === 'fanes') ? 5 : 8;
@@ -921,6 +935,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
           loadedBancos[i] = {
             tipo: data[`bat_${i}_tipo`] || 'Chumbo',
             dataFabricacao: data[`bat_${i}_fab`] || '',
+            dataUltimaInspecao: data[`bat_${i}_insp`] || '',
             voltagens: [
               data[`bat_${i}_v1`] || '',
               data[`bat_${i}_v2`] || '',
@@ -1042,7 +1057,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         <title>Relatório de Inspeção - ${pop.nome.toUpperCase()}</title>
         <style>
           body { font-family: Arial, sans-serif; padding: 30px; color: #000; line-height: 1.6; }
-          .header-rel { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 15px; }
+          .header-rel { display: flex; justifyContent: space-between; align-items: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 15px; }
           h1 { color: #0056b3; text-transform: uppercase; margin: 0; font-size: 22px; }
           h2 { font-size: 15px; color: #333; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 3px; text-transform: uppercase; }
           p { margin: 6px 0; }
@@ -1086,11 +1101,17 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         const resSub = statusData(proxSub);
         const vencidoSub = resSub && resSub.status === 'vencido';
 
+        const proxInsp = calcularProximaInspecaoBateria(bModel.dataUltimaInspecao);
+        const resInsp = statusData(proxInsp);
+        const vencidoInsp = resInsp && resInsp.status === 'vencido';
+
         htmlRelatorio += `
           <div class="bloco">
             <span class="negrito">Banco ${getLetra(banco)} (${bModel.tipo})</span><br>
             Data de Fabricação: ${textoExato || 'Não informada'}<br>
             <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+${anosTrocaCalculado} anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
+            Data da Última Inspeção: ${bModel.dataUltimaInspecao || 'N/A'}<br>
+            <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (3 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span><br>
             Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]
           </div>
         `;
@@ -1236,7 +1257,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
           <title>Relatório de Inspeção - ${pop.nome.toUpperCase()}</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 30px; color: #000; line-height: 1.6; }
-            .header-rel { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 15px; }
+            .header-rel { display: flex; justifyContent: space-between; align-items: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 15px; }
             h1 { color: #0056b3; text-transform: uppercase; margin: 0; font-size: 22px; }
             h2 { font-size: 15px; color: #333; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 3px; text-transform: uppercase; }
             p { margin: 6px 0; }
@@ -1280,11 +1301,17 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         const resSub = statusData(proxSub);
         const vencidoSub = resSub && resSub.status === 'vencido';
 
+        const proxInsp = calcularProximaInspecaoBateria(bModel.dataUltimaInspecao);
+        const resInsp = statusData(proxInsp);
+        const vencidoInsp = resInsp && resInsp.status === 'vencido';
+
         htmlRelatorio += `
           <div class="bloco">
             <span class="negrito">Banco ${getLetra(banco)} (${bModel.tipo})</span><br>
             Data de Fabricação: ${textoExato || 'Não informada'}<br>
             <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+${anosTrocaCalculado} anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
+            Data da Última Inspeção: ${bModel.dataUltimaInspecao || 'N/A'}<br>
+            <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (3 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span><br>
             Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]
           </div>
         `;
@@ -1556,13 +1583,17 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         ))}
      </div>
      {Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
-      const bModel = bancosBateria[banco] || { tipo: 'Chumbo', dataFabricacao: '', voltagens: ['', '', '', ''], salvo: false };
+      const bModel = bancosBateria[banco] || { tipo: 'Chumbo', dataFabricacao: '', dataUltimaInspecao: '', voltagens: ['', '', '', ''], salvo: false };
       
       const anosTrocaCalculado = bModel.tipo === 'Litio' ? 8 : 2;
       const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
       const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao, pop.nome, bModel.tipo);
       const resSub = statusData(proxSub);
       const vencidoSub = resSub && resSub.status === 'vencido';
+
+      const proxInsp = calcularProximaInspecaoBateria(bModel.dataUltimaInspecao);
+      const resInsp = statusData(proxInsp);
+      const vencidoInsp = resInsp && resInsp.status === 'vencido';
 
       return (
         <div key={banco} style={{ background: theme.cardInner, padding: '10px 12px', borderRadius: '6px', marginBottom: '12px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
@@ -1590,6 +1621,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 qtdBancos,
                 [`bat_${banco}_tipo`]: bModel.tipo,
                 [`bat_${banco}_fab`]: bModel.dataFabricacao, 
+                [`bat_${banco}_insp`]: bModel.dataUltimaInspecao,
                 [`bat_${banco}_v1`]: bModel.voltagens[0],
                 [`bat_${banco}_v2`]: bModel.voltagens[1],
                 [`bat_${banco}_v3`]: bModel.voltagens[2],
@@ -1615,8 +1647,20 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
           </p>
         )}
          
-        <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoSub ? undefined : '#4dabf7', margin: '0 0 8px 0', fontWeight: 'bold' }}>
+        <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoSub ? undefined : '#4dabf7', margin: '0 0 6px 0', fontWeight: 'bold' }}>
           Próxima Substituição (+{anosTrocaCalculado} anos): {proxSub || 'Preencha a data'} {vencidoSub && `(Exp. há ${resSub.dias}d)`}
+        </p>
+
+        <div style={{ marginBottom: '6px', width: '100%', boxSizing: 'border-box' }}>
+          <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '3px' }}>Data da Última Inspeção da Bateria (dd/MM/aaaa)</label>
+          <input type="text" disabled={bModel.salvo} placeholder="dd/MM/aaaa" value={bModel.dataUltimaInspecao} onChange={(e) => {
+            const novoVal = e.target.value;
+            setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, dataUltimaInspecao: novoVal } });
+          }} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
+        </div>
+
+        <p className={vencidoInsp ? 'alerta-vencido' : ''} style={{ fontSize: '12px', color: vencidoInsp ? undefined : '#4dabf7', margin: '0 0 8px 0', fontWeight: 'bold' }}>
+          Próxima Inspeção (3 meses): {proxInsp || 'Preencha a última inspeção'} {vencidoInsp && `(Exp. há ${resInsp.dias}d)`}
         </p>
 
         <div style={{ fontSize: '12px', color: theme.textMuted, marginBottom: '5px', fontWeight: 'bold' }}>Voltagem das 4 Baterias do Banco:</div>
