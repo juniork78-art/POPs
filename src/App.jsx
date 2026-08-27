@@ -415,9 +415,11 @@ export default function App() {
         for (let b = 1; b <= qtdB; b++) {
           const fab = dados[`bat_${b}_fab`];
           const tipoB = dados[`bat_${b}_tipo`] || 'Chumbo';
+          const { textoExato } = parseDataFabricacaoBateria(fab);
+          const fabExibicao = textoExato ? `${fab} (${textoExato})` : (fab || 'N/A');
           const proxSub = calcularProximaSubstituicaoBateria(fab, nome, tipoB);
           const resSub = statusData(proxSub);
-          html += `<br>&nbsp;&nbsp;• Banco ${getLetra(b)} (${tipoB}) - Fab: ${fab || 'N/A'} | Próx. Troca: ${proxSub || 'N/A'} ${resSub?.status === 'vencido' ? '(VENCIDO)' : ''}`;
+          html += `<br>&nbsp;&nbsp;• Banco ${getLetra(b)} (${tipoB}) - Fab: ${fabExibicao} | Próx. Troca: ${proxSub || 'N/A'} ${resSub?.status === 'vencido' ? '(VENCIDO)' : ''}`;
         }
         html += `</p>`;
 
@@ -766,48 +768,50 @@ export default function App() {
                       <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
                         Próxima: {item.proximaLimpeza} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
                       </p>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div>
-                <h4 style={{ color: theme.textMuted, fontSize: '15px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px', marginTop: 0 }}>Cronograma de Baterias</h4>
-                {cronogramaBaterias.map((item, idx) => {
-                  let nomeDoPop = item.popNome;
-                  if (nomeDoPop.toLowerCase() === 'odin' || nomeDoPop.toLowerCase() === 'odim') nomeDoPop = 'balder';
-                  if (!popPertenceAoUsuario(nomeDoPop)) return null;
-                  const sigla = obterSiglaPop(nomeDoPop);
-                  const nomeExibicao = sigla ? `${realizarNomeExibicao(nomeDoPop)} - ${sigla}` : realizarNomeExibicao(nomeDoPop);
-                  const res = statusData(item.proximaSubstituicao);
-                  const vencido = res && res.status === 'vencido';
-                  const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
-
-                  const resInsp = statusData(item.proximaInspecao);
-                  const vencidoInsp = resInsp && resInsp.status === 'vencido';
-                  const alertaInspAmanha = resInsp && (resInsp.status === 'amanha' || resInsp.status === 'hoje');
-
-                  return (
-                    <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '13px', border: `1px solid ${theme.border}` }}>
-                      <p style={{ margin: '0 0 4px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '13px' }}>{nomeExibicao} ({item.banco})</p>
-                      <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Fabricação: {item.fabricacao}</p>
-                      <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: '0 0 4px 0', color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
-                        Troca: {item.proximaSubstituicao} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
-                      </p>
-                      <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Data de Inspeção: {item.ultimaInspecao || 'N/A'}</p>
-                      <p className={vencidoInsp ? 'alerta-vencido' : alertaInspAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencidoInsp ? undefined : alertaInspAmanha ? undefined : '#28a745' }}>
-                        Próxima Inspeção: {item.proximaInspecao || 'N/A'} {vencidoInsp ? `(Expirado há ${resInsp.dias}d)` : alertaInspAmanha ? `(${resInsp.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
-                      </p>
-                    </div>
-                  );
-                })}
+                  </div>
+                );
+              })}
             </div>
-          )}
-        </div>
-        <div style={{ flex: 1 }} onClick={() => setDrawerAberto(false)}></div>
+          ) : (
+            <div>
+              <h4 style={{ color: theme.textMuted, fontSize: '15px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px', marginTop: 0 }}>Cronograma de Baterias</h4>
+              {cronogramaBaterias.map((item, idx) => {
+                let nomeDoPop = item.popNome;
+                if (nomeDoPop.toLowerCase() === 'odin' || nomeDoPop.toLowerCase() === 'odim') nomeDoPop = 'balder';
+                if (!popPertenceAoUsuario(nomeDoPop)) return null;
+                const sigla = obterSiglaPop(nomeDoPop);
+                const nomeExibicao = sigla ? `${realizarNomeExibicao(nomeDoPop)} - ${sigla}` : realizarNomeExibicao(nomeDoPop);
+                const res = statusData(item.proximaSubstituicao);
+                const vencido = res && res.status === 'vencido';
+                const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
+
+                const resInsp = statusData(item.proximaInspecao);
+                const vencidoInsp = resInsp && resInsp.status === 'vencido';
+                const alertaInspAmanha = resInsp && (resInsp.status === 'amanha' || resInsp.status === 'hoje');
+
+                const { textoExato } = parseDataFabricacaoBateria(item.fabricacao);
+        
+                return (
+                  <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '13px', border: `1px solid ${theme.border}` }}>
+                    <p style={{ margin: '0 0 4px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '13px' }}>{nomeExibicao} ({item.banco})</p>
+                    <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Fabricação: {item.fabricacao} {textoExato ? `(${textoExato})` : ''}</p>
+                    <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: '0 0 4px 0', color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
+                      Troca: {item.proximaSubstituicao} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
+                    </p>
+                    <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Data de Inspeção: {item.ultimaInspecao || 'N/A'}</p>
+                    <p className={vencidoInsp ? 'alerta-vencido' : alertaInspAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencidoInsp ? undefined : alertaInspAmanha ? undefined : '#28a745' }}>
+                      Próxima Inspeção: {item.proximaInspecao || 'N/A'} {vencidoInsp ? `(Expirado há ${resInsp.dias}d)` : alertaInspAmanha ? `(${resInsp.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
+                    </p>
+                  </div>
+                );
+              })}
+          </div>
+        )}
       </div>
-      )}
+      <div style={{ flex: 1 }} onClick={() => setDrawerAberto(false)}></div>
     </div>
+    )}
+  </div>
   );
 }
 
@@ -1323,6 +1327,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
       if (bModel) {
         const anosTrocaCalculado = bModel.tipo === 'Lítio' ? 8 : 2;
         const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
+        const fabExibicao = textoExato ? `${bModel.dataFabricacao} (${textoExato})` : (bModel.dataFabricacao || 'Não informada');
         const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao, pop.nome, bModel.tipo);
         const resSub = statusData(proxSub);
         const vencidoSub = resSub && resSub.status === 'vencido';
@@ -1338,7 +1343,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         htmlRelatorio += `
           <div class="bloco">
             <span class="negrito">Banco ${getLetra(banco)} (${bModel.tipo})</span><br>
-            Data de Fabricação: ${textoExato || 'Não informada'}<br>
+            Data de Fabricação: ${fabExibicao}<br>
             <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+${anosTrocaCalculado} anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
             Data da Última Inspeção: ${bModel.dataUltimaInspecao || 'N/A'}<br>
             <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (3 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span>
@@ -1527,6 +1532,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
       if (bModel) {
         const anosTrocaCalculado = bModel.tipo === 'Lítio' ? 8 : 2;
         const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
+        const fabExibicao = textoExato ? `${bModel.dataFabricacao} (${textoExato})` : (bModel.dataFabricacao || 'Não informada');
         const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao, pop.nome, bModel.tipo);
         const resSub = statusData(proxSub);
         const vencidoSub = resSub && resSub.status === 'vencido';
@@ -1542,7 +1548,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         htmlRelatorio += `
           <div class="bloco">
             <span class="negrito">Banco ${getLetra(banco)} (${bModel.tipo})</span><br>
-            Data de Fabricação: ${textoExato || 'Não informada'}<br>
+            Data de Fabricação: ${fabExibicao}<br>
             <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+${anosTrocaCalculado} anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
             Data da Última Inspeção: ${bModel.dataUltimaInspecao || 'N/A'}<br>
             <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (3 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span>
@@ -1864,8 +1870,8 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         </div>
 
         <div style={{ marginBottom: '6px', width: '100%', boxSizing: 'border-box' }}>
-          <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '3px' }}>Data de Fabricação (Ex: 39/25 ou dd/MM/aaaa)</label>
-          <input type="text" disabled={bModel.salvo} placeholder="ex: 39/25 ou 05/08/2024" value={bModel.dataFabricacao} onChange={(e) => {
+          <label style={{ display: 'block', fontSize: '12px', color: theme.textMuted, marginBottom: '3px' }}>Data de Fabricação (Ex: 34/24 ou dd/MM/aaaa)</label>
+          <input type="text" disabled={bModel.salvo} placeholder="ex: 34/24 ou 05/08/2024" value={bModel.dataFabricacao} onChange={(e) => {
             const novoVal = e.target.value;
             setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, dataFabricacao: novoVal } });
         }} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
@@ -1873,7 +1879,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
         {textoExato && (
           <p style={{ fontSize: '12px', color: '#28a745', margin: '0 0 4px 0', fontWeight: 'bold' }}>
-            Convertido: {textoExato}
+            Por extenso: ({textoExato})
           </p>
         )}
          
