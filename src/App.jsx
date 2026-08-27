@@ -246,7 +246,7 @@ export default function App() {
 
   const obterSiglaPop = (nomePop) => {
     if (!nomePop) return '';
-    const popObj = listaPops.find(p => p.nome.toLowerCase() === nomePop.toLowerCase());
+    const popObj = listaPops.find(p => p.nome.toLowerCase() === nomePop.toLowerCase() || (nomePop.toLowerCase() === 'odin' && p.nome.toLowerCase() === 'balder') || (nomePop.toLowerCase() === 'odim' && p.nome.toLowerCase() === 'balder'));
     if (popObj && popObj.endereco) {
       const partes = popObj.endereco.split('-');
       const ultimaParte = partes[partes.length - 1].trim();
@@ -254,7 +254,7 @@ export default function App() {
         return ultimaParte.toUpperCase();
       }
     }
-    const popPadrao = popsIniciaisPadrao.find(p => p.nome.toLowerCase() === nomePop.toLowerCase());
+    const popPadrao = popsIniciaisPadrao.find(p => p.nome.toLowerCase() === nomePop.toLowerCase() || (nomePop.toLowerCase() === 'odin' && p.nome.toLowerCase() === 'balder') || (nomePop.toLowerCase() === 'odim' && p.nome.toLowerCase() === 'balder'));
     if (popPadrao && popPadrao.endereco) {
       const partes = popPadrao.endereco.split('-');
       const ultimaParte = partes[partes.length - 1].trim();
@@ -269,7 +269,7 @@ export default function App() {
     if (!usuarioLogado) return true;
     const isPedro = usuarioLogado.toLowerCase().includes('pedro');
     if (!isPedro) return true;
-    const popObj = listaPops.find(p => p.nome.toLowerCase() === nomePop.toLowerCase());
+    const popObj = listaPops.find(p => p.nome.toLowerCase() === nomePop.toLowerCase() || (nomePop.toLowerCase() === 'odin' && p.nome.toLowerCase() === 'balder') || (nomePop.toLowerCase() === 'odim' && p.nome.toLowerCase() === 'balder'));
     if (popObj) return popObj.endereco.toLowerCase().endsWith('- pbs');
     return false;
   };
@@ -280,8 +280,9 @@ export default function App() {
     const processarItem = (nomePop, baseMsg, dataStr) => {
       const res = statusData(dataStr);
       if (nomePop && res && popPertenceAoUsuario(nomePop)) {
-        const sigla = obterSiglaPop(nomePop);
-        const nomeFormatado = sigla ? `${nomePop.toUpperCase()} - ${sigla}` : nomePop.toUpperCase();
+        const nomeReal = (nomePop.toLowerCase() === 'odin' || nomePop.toLowerCase() === 'odim') ? 'balder' : nomePop;
+        const sigla = obterSiglaPop(nomeReal);
+        const nomeFormatado = sigla ? `${realizarNomeExibicao(nomeReal)} - ${sigla}` : realizarNomeExibicao(nomeReal);
         const msgFinal = baseMsg.replace(`POP: ${nomePop.toUpperCase()}`, `POP: ${nomeFormatado}`);
 
         if (res.status === 'vencido') {
@@ -304,6 +305,13 @@ export default function App() {
       cronogramaBaterias.forEach(b => processarItem(b.popNome, `POP: ${b.popNome.toUpperCase()} - Banco de Bateria (${b.banco}) expirado`, b.proximaSubstituicao));
     }
     return { vencidos, amanha };
+  };
+
+  const realizarNomeExibicao = (nome) => {
+    if (!nome) return '';
+    const n = nome.toLowerCase();
+    if (n === 'odin' || n === 'odim') return 'BALDER';
+    return n.toUpperCase();
   };
 
   useEffect(() => {
@@ -350,15 +358,40 @@ export default function App() {
         else setDoc(doc(db, "config", "lista_pops"), { pops: popsIniciaisPadrao });
       });
 
-      const unsubCheckins = onSnapshot(doc(db, "historico_global", "checkins"), (snap) => {
-        if (snap.exists() && snap.data().lista) setUltimosCheckIns(snap.data().lista);
+      const unsubCheckins = onSnapshot(doc(db, "historico_global", "checkins"), async (snap) => {
+        if (snap.exists() && snap.data().lista) {
+          let listaOriginal = snap.data().lista;
+          let precisaAtualizar = false;
+
+          // Normaliza dinamicamente odin/odim para balder no histórico
+          const listaAtualizada = listaOriginal.map(item => {
+            const nomePop = item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '';
+            if (nomePop.toLowerCase() === 'odin' || nomePop.toLowerCase() === 'odim') {
+              precisaAtualizar = true;
+              return {
+                ...item,
+                pop: 'balder',
+                popName: 'balder',
+                popNome: 'balder'
+              };
+            }
+            return item;
+          });
+
+          setUltimosCheckIns(listaAtualizada);
+
+          if (precisaAtualizar) {
+            await setDoc(doc(db, "historico_global", "checkins"), { lista: listaAtualizada });
+          }
+        }
       });
 
       const unsubPopsDados = onSnapshot(collection(db, "pops_dados"), (snapshot) => {
         const listaLimpezasTemp = [];
         const listaBateriasTemp = [];
         snapshot.forEach((d) => {
-          const popNome = d.id;
+          let popNome = d.id;
+          if (popNome.toLowerCase() === 'odin' || popNome.toLowerCase() === 'odim') popNome = 'balder';
           const data = d.data();
           const qtdAr = data.qtdAr || 4;
           const nomeLower = popNome.toLowerCase();
@@ -397,10 +430,11 @@ export default function App() {
     const vistos = new Set();
     const novaLista = [];
     for (const item of ultimosCheckIns) {
-      const nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '').toLowerCase().trim();
+      let nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '').toLowerCase().trim();
+      if (nomeDoPop === 'odin' || nomeDoPop === 'odim') nomeDoPop = 'balder';
       if (nomeDoPop && !vistos.has(nomeDoPop)) {
         vistos.add(nomeDoPop);
-        novaLista.push(item);
+        novaLista.push({ ...item, pop: nomeDoPop, popName: nomeDoPop, popNome: nomeDoPop });
       }
     }
     setUltimosCheckIns(novaLista);
@@ -436,11 +470,25 @@ export default function App() {
         onSelectPop={(novoPop) => setPopSelecionado(novoPop)}
         onBack={() => { setPopSelecionado(null); window.history.back(); }} 
         onCheckInRealizado={async (novoRegistro, forcarCheckin) => {
+          let nomeNormalizado = (novoRegistro.popName || '').toLowerCase();
+          if (nomeNormalizado === 'odin' || nomeNormalizado === 'odim') nomeNormalizado = 'balder';
+          
+          const registroCorrigido = {
+            ...novoRegistro,
+            pop: nomeNormalizado,
+            popName: nomeNormalizado,
+            popNome: nomeNormalizado
+          };
+
           let novaLista = [...ultimosCheckIns];
-          if (forcarCheckin) novaLista = [novoRegistro, ...ultimosCheckIns];
+          if (forcarCheckin) novaLista = [registroCorrigido, ...ultimosCheckIns];
           else {
-            const idx = novaLista.findIndex(item => (item.popNome || item.pop || '').toLowerCase() === novoRegistro.popName?.toLowerCase() && item.dataHora === novoRegistro.dataHora);
-            if (idx === -1) novaLista = [novoRegistro, ...ultimosCheckIns];
+            const idx = novaLista.findIndex(item => {
+              let pName = (item.popNome || item.pop || '').toLowerCase();
+              if (pName === 'odin' || pName === 'odim') pName = 'balder';
+              return pName === nomeNormalizado && item.dataHora === registroCorrigido.dataHora;
+            });
+            if (idx === -1) novaLista = [registroCorrigido, ...ultimosCheckIns];
           }
           setUltimosCheckIns(novaLista);
           await setDoc(doc(db, "historico_global", "checkins"), { lista: novaLista });
@@ -526,10 +574,11 @@ export default function App() {
                   <p style={{ color: theme.textMuted, fontSize: '14px' }}>Nenhum check-in registrado.</p>
                 ) : (
                   ultimosCheckIns.map((item, idx) => {
-                    const nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '');
+                    let nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '');
+                    if (nomeDoPop.toLowerCase() === 'odin' || nomeDoPop.toLowerCase() === 'odim') nomeDoPop = 'balder';
                     if (!popPertenceAoUsuario(nomeDoPop)) return null;
                     const sigla = obterSiglaPop(nomeDoPop);
-                    const nomeExibicao = sigla ? `${nomeDoPop.toUpperCase()} - ${sigla}` : nomeDoPop.toUpperCase();
+                    const nomeExibicao = sigla ? `${realizarNomeExibicao(nomeDoPop)} - ${sigla}` : realizarNomeExibicao(nomeDoPop);
                     const res = statusData(item.proximaInspecao);
                     const vencido = res && res.status === 'vencido';
                     const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
@@ -552,9 +601,11 @@ export default function App() {
               <div>
                 <h4 style={{ color: theme.textMuted, fontSize: '15px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px', marginTop: 0 }}>Cronograma Limpezas de Ar</h4>
                 {cronogramaLimpezas.map((item, idx) => {
-                  if (!popPertenceAoUsuario(item.popNome)) return null;
-                  const sigla = obterSiglaPop(item.popNome);
-                  const nomeExibicao = sigla ? `${item.popNome.toUpperCase()} - ${sigla}` : item.popNome.toUpperCase();
+                  let nomeDoPop = item.popNome;
+                  if (nomeDoPop.toLowerCase() === 'odin' || nomeDoPop.toLowerCase() === 'odim') nomeDoPop = 'balder';
+                  if (!popPertenceAoUsuario(nomeDoPop)) return null;
+                  const sigla = obterSiglaPop(nomeDoPop);
+                  const nomeExibicao = sigla ? `${realizarNomeExibicao(nomeDoPop)} - ${sigla}` : realizarNomeExibicao(nomeDoPop);
                   const res = statusData(item.proximaLimpeza);
                   const vencido = res && res.status === 'vencido';
                   const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
@@ -574,9 +625,11 @@ export default function App() {
               <div>
                 <h4 style={{ color: theme.textMuted, fontSize: '15px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px', marginTop: 0 }}>Cronograma de Baterias</h4>
                 {cronogramaBaterias.map((item, idx) => {
-                  if (!popPertenceAoUsuario(item.popNome)) return null;
-                  const sigla = obterSiglaPop(item.popNome);
-                  const nomeExibicao = sigla ? `${item.popNome.toUpperCase()} - ${sigla}` : item.popNome.toUpperCase();
+                  let nomeDoPop = item.popNome;
+                  if (nomeDoPop.toLowerCase() === 'odin' || nomeDoPop.toLowerCase() === 'odim') nomeDoPop = 'balder';
+                  if (!popPertenceAoUsuario(nomeDoPop)) return null;
+                  const sigla = obterSiglaPop(nomeDoPop);
+                  const nomeExibicao = sigla ? `${realizarNomeExibicao(nomeDoPop)} - ${sigla}` : realizarNomeExibicao(nomeDoPop);
                   const res = statusData(item.proximaSubstituicao);
                   const vencido = res && res.status === 'vencido';
                   const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
@@ -1039,7 +1092,8 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
   const obterDadosCheckInOriginal = () => {
   if (ultimosCheckIns && ultimosCheckIns.length > 0) {
     const checkInPop = ultimosCheckIns.find(item => {
-      const nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '').toLowerCase().trim();
+      let nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '').toLowerCase().trim();
+      if (nomeDoPop === 'odin' || nomeDoPop === 'odim') nomeDoPop = 'balder';
       return nomeDoPop === pop.nome.toLowerCase().trim();
     });
     if (checkInPop) {
