@@ -319,7 +319,6 @@ export default function App() {
     const janelaPdf = window.open('', '_blank');
     if (!janelaPdf) return;
 
-    // Agrupar dados por cidade (sigla)
     const dadosPorCidade = {};
 
     listaPops.forEach(pop => {
@@ -379,7 +378,6 @@ export default function App() {
       dadosPorCidade[sigla].forEach(item => {
         const { nome, endereco, checkIn, dados } = item;
         
-        // Verificar se tem incidentes em ativos
         let temIncidentesAtivos = false;
         if (dados.statusAtivos) {
           Object.keys(dados.statusAtivos).forEach(atv => {
@@ -395,7 +393,6 @@ export default function App() {
             <p><span class="negrito">Próxima Inspeção:</span> ${checkIn ? checkIn.proximaInspecao : 'N/A'}</p>
         `;
 
-        // Incidentes em Ativos
         if (temIncidentesAtivos || (dados.incidentesGerais && dados.incidentesGerais.trim() !== '')) {
           html += `<p class="vermelho" style="margin-top:6px;">⚠️ Incidentes Registrados:</p>`;
           if (dados.statusAtivos) {
@@ -413,7 +410,6 @@ export default function App() {
           html += `<p style="color: #666; font-style: italic; margin-top: 4px;">Nenhum incidente relatado neste POP.</p>`;
         }
 
-        // Baterias
         const qtdB = dados.qtdBancos || 1;
         html += `<p style="margin-top: 6px;"><span class="negrito">Bancos de Baterias (${qtdB}):</span>`;
         for (let b = 1; b <= qtdB; b++) {
@@ -425,7 +421,6 @@ export default function App() {
         }
         html += `</p>`;
 
-        // Ar Condicionado
         const qtdA = dados.qtdAr || 1;
         const nomeLower = nome.toLowerCase();
         const interAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : 8;
@@ -550,8 +545,16 @@ export default function App() {
           for (let i = 1; i <= qtdBancos; i++) {
             const fab = data[`bat_${i}_fab`] || '';
             const tipoBat = data[`bat_${i}_tipo`] || 'Chumbo';
+            const ultimaInsp = data[`bat_${i}_insp`] || '';
             if (fab) {
-              listaBateriasTemp.push({ popNome, banco: `Banco ${getLetra(i)}`, fabricacao: fab, proximaSubstituicao: calcularProximaSubstituicaoBateria(fab, popNome, tipoBat) });
+              listaBateriasTemp.push({ 
+                popNome, 
+                banco: `Banco ${getLetra(i)}`, 
+                fabricacao: fab, 
+                proximaSubstituicao: calcularProximaSubstituicaoBateria(fab, popNome, tipoBat),
+                ultimaInspecao: ultimaInsp,
+                proximaInspecao: calcularProximaInspecaoBateria(ultimaInsp)
+              });
             }
           }
         });
@@ -780,12 +783,20 @@ export default function App() {
                   const vencido = res && res.status === 'vencido';
                   const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
 
+                  const resInsp = statusData(item.proximaInspecao);
+                  const vencidoInsp = resInsp && resInsp.status === 'vencido';
+                  const alertaInspAmanha = resInsp && (resInsp.status === 'amanha' || resInsp.status === 'hoje');
+
                   return (
                     <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '13px', border: `1px solid ${theme.border}` }}>
                       <p style={{ margin: '0 0 4px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '13px' }}>{nomeExibicao} ({item.banco})</p>
                       <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Fabricação: {item.fabricacao}</p>
-                      <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
+                      <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: '0 0 4px 0', color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
                         Troca: {item.proximaSubstituicao} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
+                      </p>
+                      <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Data de Inspeção: {item.ultimaInspecao || 'N/A'}</p>
+                      <p className={vencidoInsp ? 'alerta-vencido' : alertaInspAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencidoInsp ? undefined : alertaInspAmanha ? undefined : '#28a745' }}>
+                        Próxima Inspeção: {item.proximaInspecao || 'N/A'} {vencidoInsp ? `(Expirado há ${resInsp.dias}d)` : alertaInspAmanha ? `(${resInsp.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
                       </p>
                     </div>
                   );
@@ -1033,11 +1044,9 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
   const [precisaLimpeza, setPrecisaLimpeza] = useState(false);
   const [anotacoes, setAnotacoes] = useState('');
 
-  // Estado para o Menu Lateral de troca rápida de POPs
   const [menuPopsLateralAberto, setMenuPopsLateralAberto] = useState(false);
   const [buscaPopLateral, setBuscaPopLateral] = useState('');
 
-  // Estados para gerenciar Fotos do POP
   const [fotosPop, setFotosPop] = useState([]);
   const [modalFotosAberto, setModalFotosAberto] = useState(false);
   const [fotoCarregadaBase64, setFotoCarregadaBase64] = useState('');
