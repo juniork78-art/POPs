@@ -1222,10 +1222,8 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
   const [anotacoes, setAnotacoes] = useState('');
 
   const [listaContatos, setListaContatos] = useState([{ nome: '', funcao: '', telefone: '', ultimaInsp: '' }]);
-  const [contatosSalvo, setContatosSalvo] = useState(false);
 
   const [chaveUltimaInsp, setChaveUltimaInsp] = useState('');
-  const [chaveSalvo, setChaveSalvo] = useState(false);
 
   const [menuPopsLateralAberto, setMenuPopsLateralAberto] = useState(false);
   const [buscaPopLateral, setBuscaPopLateral] = useState('');
@@ -1318,10 +1316,8 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         } else if (data.contato_nome !== undefined) {
           setListaContatos([{ nome: data.contato_nome || '', funcao: '', telefone: data.contato_tel || '', ultimaInsp: data.contato_ultima_insp || '' }]);
         }
-        if (data.contatos_salvo !== undefined) setContatosSalvo(data.contatos_salvo);
 
         if (data.chave_ultima_insp !== undefined) setChaveUltimaInsp(data.chave_ultima_insp);
-        if (data.chave_salvo !== undefined) setChaveSalvo(data.chave_salvo);
 
         if (data.statusAtivos) {
           const filtrados = { ...data.statusAtivos };
@@ -1978,36 +1974,29 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
             )}
           </div>
 
-          {/* SEÇÃO DE CONTATOS E CHAVES (COM FUNÇÃO) */}
+          {/* SEÇÃO DE CONTATOS E CHAVES (VISÍVEL E EDITÁVEL PARA TODOS) */}
           <div style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '15px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <h3 style={{ fontSize: '15px', margin: 0, color: '#4dabf7' }}>📞 Contatos e 🔑 Chaves do POP</h3>
               <div style={{ display: 'flex', gap: '6px' }}>
-                {!contatosSalvo && (
-                  <button type="button" onClick={() => setListaContatos([...listaContatos, { nome: '', funcao: '', telefone: '', ultimaInsp: '' }])} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
-                    + Adicionar Contato
-                  </button>
-                )}
+                <button type="button" onClick={() => setListaContatos([...listaContatos, { nome: '', funcao: '', telefone: '', ultimaInsp: '' }])} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
+                  + Adicionar Contato
+                </button>
                 <button type="button" onClick={() => {
-                  const novoSalvo = !contatosSalvo;
-                  setContatosSalvo(novoSalvo);
-                  setChaveSalvo(novoSalvo);
                   salvarNoFirebase({
                     listaContatos,
-                    contatos_salvo: novoSalvo,
-                    chave_ultima_insp: chaveUltimaInsp,
-                    chave_salvo: novoSalvo
+                    chave_ultima_insp: chaveUltimaInsp
                   });
                   alert("Contatos e Chave salvos com sucesso!");
-                }} style={{ background: contatosSalvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
-                  {contatosSalvo ? 'Editar' : 'Salvar Contatos/Chave'}
+                }} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
+                  Salvar Contatos/Chave
                 </button>
               </div>
             </div>
 
             {listaContatos.map((contato, idx) => (
               <div key={idx} style={{ background: theme.cardBg, padding: '10px', borderRadius: '4px', marginBottom: '8px', border: `1px solid ${theme.border}`, position: 'relative' }}>
-                {!contatosSalvo && listaContatos.length > 1 && (
+                {listaContatos.length > 1 && (
                   <button type="button" onClick={() => {
                     const novaLista = listaContatos.filter((_, i) => i !== idx);
                     setListaContatos(novaLista);
@@ -2016,7 +2005,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 <p style={{ margin: '0 0 6px 0', fontSize: '12px', fontWeight: 'bold', color: '#4dabf7' }}>Contato {idx + 1}</p>
                 <div style={{ marginBottom: '6px' }}>
                   <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Nome do Responsável</label>
-                  <input type="text" disabled={contatosSalvo} placeholder="Nome do responsável" value={contato.nome} onChange={(e) => {
+                  <input type="text" placeholder="Nome do responsável" value={contato.nome} onChange={(e) => {
                     const novaLista = [...listaContatos];
                     novaLista[idx].nome = e.target.value;
                     setListaContatos(novaLista);
@@ -2024,7 +2013,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 </div>
                 <div style={{ marginBottom: '6px' }}>
                   <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Função (Ex: Síndica, Gerente, Resp. POP)</label>
-                  <input type="text" disabled={contatosSalvo} placeholder="Ex: Síndica" value={contato.funcao} onChange={(e) => {
+                  <input type="text" placeholder="Ex: Síndica" value={contato.funcao} onChange={(e) => {
                     const novaLista = [...listaContatos];
                     novaLista[idx].funcao = e.target.value;
                     setListaContatos(novaLista);
@@ -2032,7 +2021,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 </div>
                 <div style={{ marginBottom: '6px' }}>
                   <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Telefone</label>
-                  <input type="text" disabled={contatosSalvo} placeholder="(00) 00000-0000" value={contato.telefone} onChange={(e) => {
+                  <input type="text" placeholder="(00) 00000-0000" value={contato.telefone} onChange={(e) => {
                     const novaLista = [...listaContatos];
                     novaLista[idx].telefone = e.target.value;
                     setListaContatos(novaLista);
@@ -2040,7 +2029,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data da Inspeção do Contato (dd/MM/aaaa)</label>
-                  <input type="text" disabled={contatosSalvo} placeholder="dd/MM/aaaa" value={contato.ultimaInsp} onChange={(e) => {
+                  <input type="text" placeholder="dd/MM/aaaa" value={contato.ultimaInsp} onChange={(e) => {
                     const novaLista = [...listaContatos];
                     novaLista[idx].ultimaInsp = e.target.value;
                     setListaContatos(novaLista);
@@ -2056,7 +2045,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
             <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '8px', marginTop: '10px' }}>
               <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data da Inspeção da Chave (dd/MM/aaaa)</label>
-              <input type="text" disabled={chaveSalvo} placeholder="dd/MM/aaaa" value={chaveUltimaInsp} onChange={(e) => setChaveUltimaInsp(e.target.value)} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
+              <input type="text" placeholder="dd/MM/aaaa" value={chaveUltimaInsp} onChange={(e) => setChaveUltimaInsp(e.target.value)} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
               {chaveUltimaInsp && (
                 <p style={{ fontSize: '11px', color: '#4dabf7', margin: '3px 0 0 0', fontWeight: 'bold' }}>
                   Próxima Insp. Chave (3 meses): {calcularProximaInspecaoGeral(chaveUltimaInsp)}
