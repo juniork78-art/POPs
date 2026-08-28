@@ -200,8 +200,6 @@ const popsIniciaisPadrao = [
 
 function App() {
   const [usuarioLogado, setUsuarioLogado] = useState(null);
-  const [popSelecionado, setPopSelecionado] = useState(null);
-  const [telaGerenciarPopsAberta, setTelaGerenciarPopsAberta] = useState(false);
   const [listaPops, setListaPops] = useState(popsIniciaisPadrao);
   const [ultimosCheckIns, setUltimosCheckIns] = useState([]);
   const [cronogramaLimpezas, setCronogramaLimpezas] = useState([]);
@@ -234,6 +232,28 @@ function App() {
     } catch (e) {}
     return true;
   });
+
+  // Novos Estados persistidos com sessionStorage
+  const [popSelecionado, setPopSelecionado] = useState(() => {
+    try {
+      const salvo = sessionStorage.getItem('estado_popSelecionado');
+      return salvo ? JSON.parse(salvo) : null;
+    } catch (e) { return null; }
+  });
+
+  const [telaGerenciarPopsAberta, setTelaGerenciarPopsAberta] = useState(() => {
+    return sessionStorage.getItem('estado_telaGerenciarPops') === 'true';
+  });
+
+  useEffect(() => {
+    if (popSelecionado) sessionStorage.setItem('estado_popSelecionado', JSON.stringify(popSelecionado));
+    else sessionStorage.removeItem('estado_popSelecionado');
+  }, [popSelecionado]);
+
+  useEffect(() => {
+    if (telaGerenciarPopsAberta) sessionStorage.setItem('estado_telaGerenciarPops', 'true');
+    else sessionStorage.removeItem('estado_telaGerenciarPops');
+  }, [telaGerenciarPopsAberta]);
 
   const alternarTema = () => {
     setDarkMode(prev => {
@@ -846,7 +866,13 @@ function App() {
         onOpenAvisos={() => setShowAvisoGlobal(true)}
         onGerarRelatorioGeral={abrirModalFiltroRelatorio}
         totalAlertas={totalAlertas}
-        onLogout={() => { sessionStorage.removeItem('avisoMostrado'); signOut(auth); setUsuarioLogado(null); }} 
+        onLogout={() => { 
+          sessionStorage.removeItem('avisoMostrado'); 
+          sessionStorage.removeItem('estado_popSelecionado');
+          sessionStorage.removeItem('estado_telaGerenciarPops');
+          signOut(auth); 
+          setUsuarioLogado(null); 
+        }} 
         darkMode={darkMode}
         setDarkMode={alternarTema}
         theme={theme}
