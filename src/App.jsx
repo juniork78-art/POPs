@@ -218,6 +218,14 @@ function App() {
 
   const [modalFiltroRelatorioAberto, setModalFiltroRelatorioAberto] = useState(false);
   const [cidadesSelecionadasParaRelatorio, setCidadesSelecionadasParaRelatorio] = useState({});
+  const [filtrosIncidentes, setFiltrosIncidentes] = useState({
+    inspecaoGeral: true,
+    incidentesGerais: true,
+    baterias: true,
+    centraisAr: true,
+    contatos: true,
+    chaves: true
+  });
 
   const [darkMode, setDarkMode] = useState(() => {
     try {
@@ -295,6 +303,14 @@ function App() {
       mapInicial[c] = true;
     });
     setCidadesSelecionadasParaRelatorio(mapInicial);
+    setFiltrosIncidentes({
+      inspecaoGeral: true,
+      incidentesGerais: true,
+      baterias: true,
+      centraisAr: true,
+      contatos: true,
+      chaves: true
+    });
     setModalFiltroRelatorioAberto(true);
   };
 
@@ -366,52 +382,64 @@ function App() {
 
       let temAlgoVencido = false;
 
-      const proxInspGeral = checkInPop ? checkInPop.proximaInspecao : null;
-      const statusInsp = statusData(proxInspGeral);
-      if (statusInsp && statusInsp.status === 'vencido') {
-        temAlgoVencido = true;
-      }
-
-      if (dadosPop.incidentesGerais && dadosPop.incidentesGerais.trim() !== '') {
-        temAlgoVencido = true;
-      }
-
-      const qtdB = dadosPop.qtdBancos || 1;
-      for (let b = 1; b <= qtdB; b++) {
-        const fab = dadosPop[`bat_${b}_fab`];
-        const tipoB = dadosPop[`bat_${b}_tipo`] || 'Chumbo';
-        const proxSub = calcularProximaSubstituicaoBateria(fab, pop.nome, tipoB);
-        const resSub = statusData(proxSub);
-        if (resSub && resSub.status === 'vencido') {
+      if (filtrosIncidentes.inspecaoGeral) {
+        const proxInspGeral = checkInPop ? checkInPop.proximaInspecao : null;
+        const statusInsp = statusData(proxInspGeral);
+        if (statusInsp && statusInsp.status === 'vencido') {
           temAlgoVencido = true;
         }
       }
 
-      const qtdA = dadosPop.qtdAr || 1;
-      const nomeLower = pop.nome.toLowerCase();
-      const interAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : 8;
-      for (let a = 1; a <= qtdA; a++) {
-        const limp = dadosPop[`ar_${a}_limp`];
-        const proxLimp = calcularProximaLimpezaAr(limp, interAr);
-        const resLimp = statusData(proxLimp);
-        if (resLimp && resLimp.status === 'vencido') {
+      if (filtrosIncidentes.incidentesGerais) {
+        if (dadosPop.incidentesGerais && dadosPop.incidentesGerais.trim() !== '') {
           temAlgoVencido = true;
         }
       }
 
-      const listaContatos = dadosPop.listaContatos || [];
-      listaContatos.forEach(contato => {
-        const proxInspContato = calcularProximaInspecaoGeral(contato.ultimaInsp);
-        const resContato = statusData(proxInspContato);
-        if (resContato && resContato.status === 'vencido') {
+      if (filtrosIncidentes.baterias) {
+        const qtdB = dadosPop.qtdBancos || 1;
+        for (let b = 1; b <= qtdB; b++) {
+          const fab = dadosPop[`bat_${b}_fab`];
+          const tipoB = dadosPop[`bat_${b}_tipo`] || 'Chumbo';
+          const proxSub = calcularProximaSubstituicaoBateria(fab, pop.nome, tipoB);
+          const resSub = statusData(proxSub);
+          if (resSub && resSub.status === 'vencido') {
+            temAlgoVencido = true;
+          }
+        }
+      }
+
+      if (filtrosIncidentes.centraisAr) {
+        const qtdA = dadosPop.qtdAr || 1;
+        const nomeLower = pop.nome.toLowerCase();
+        const interAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : 8;
+        for (let a = 1; a <= qtdA; a++) {
+          const limp = dadosPop[`ar_${a}_limp`];
+          const proxLimp = calcularProximaLimpezaAr(limp, interAr);
+          const resLimp = statusData(proxLimp);
+          if (resLimp && resLimp.status === 'vencido') {
+            temAlgoVencido = true;
+          }
+        }
+      }
+
+      if (filtrosIncidentes.contatos) {
+        const listaContatos = dadosPop.listaContatos || [];
+        listaContatos.forEach(contato => {
+          const proxInspContato = calcularProximaInspecaoGeral(contato.ultimaInsp);
+          const resContato = statusData(proxInspContato);
+          if (resContato && resContato.status === 'vencido') {
+            temAlgoVencido = true;
+          }
+        });
+      }
+
+      if (filtrosIncidentes.chaves) {
+        const proxInspChave = calcularProximaInspecaoGeral(dadosPop.chave_ultima_insp);
+        const resChave = statusData(proxInspChave);
+        if (resChave && resChave.status === 'vencido') {
           temAlgoVencido = true;
         }
-      });
-
-      const proxInspChave = calcularProximaInspecaoGeral(dadosPop.chave_ultima_insp);
-      const resChave = statusData(proxInspChave);
-      if (resChave && resChave.status === 'vencido') {
-        temAlgoVencido = true;
       }
 
       if (!temAlgoVencido) return;
@@ -462,7 +490,7 @@ function App() {
 
     const regioes = Object.keys(dadosPorCidade).sort();
     if (regioes.length === 0) {
-      html += `<p style="text-align: center; font-size: 14px; color: #28a745; margin-top: 40px; font-weight: bold;">Nenhum POP com itens vencidos nas cidades selecionadas no momento! 👍</p>`;
+      html += `<p style="text-align: center; font-size: 14px; color: #28a745; margin-top: 40px; font-weight: bold;">Nenhum POP com os itens selecionados está vencido no momento! 👍</p>`;
     } else {
       regioes.forEach(sigla => {
         html += `<h2>Região / Cidade: ${sigla}</h2>`;
@@ -476,69 +504,79 @@ function App() {
               <p><span class="negrito">Endereço:</span> ${endereco}</p>
           `;
 
-          const proxInspGeral = checkIn ? checkIn.proximaInspecao : null;
-          const statusInsp = statusData(proxInspGeral);
-          if (statusInsp && statusInsp.status === 'vencido') {
-            html += `<p><span class="negrito">Última Inspeção:</span> ${checkIn.dataHora} | <span class="vermelho">Próxima Inspeção: ${checkIn.proximaInspecao} (VENCIDO há ${statusInsp.dias} dias)</span></p>`;
-          }
-
-          if (dados.incidentesGerais && dados.incidentesGerais.trim() !== '') {
-            html += `<p class="vermelho" style="margin-top:6px;">⚠️ Incidentes Registrados:</p>`;
-            html += `<div class="incidente-item">${dados.incidentesGerais}</div>`;
-          }
-
-          const qtdB = dados.qtdBancos || 1;
-          let bateriasVencidasHtml = '';
-          let qtdBateriasVencidas = 0;
-          for (let b = 1; b <= qtdB; b++) {
-            const fab = dados[`bat_${b}_fab`];
-            const tipoB = dados[`bat_${b}_tipo`] || 'Chumbo';
-            const proxSub = calcularProximaSubstituicaoBateria(fab, nome, tipoB);
-            const resSub = statusData(proxSub);
-            if (resSub && resSub.status === 'vencido') {
-              qtdBateriasVencidas++;
-              const { textoExato } = parseDataFabricacaoBateria(fab);
-              const fabExibicao = textoExato ? `${fab} (${textoExato})` : (fab || 'N/A');
-              bateriasVencidasHtml += `<br>&nbsp;&nbsp;• Banco ${getLetra(b)} (${tipoB}) - Fab: ${fabExibicao} | Próx. Troca: <span style="color: #d9534f; font-weight: bold;">${proxSub} (VENCIDO há ${resSub.dias}d)</span>`;
+          if (filtrosIncidentes.inspecaoGeral) {
+            const proxInspGeral = checkIn ? checkIn.proximaInspecao : null;
+            const statusInsp = statusData(proxInspGeral);
+            if (statusInsp && statusInsp.status === 'vencido') {
+              html += `<p><span class="negrito">Última Inspeção Geral:</span> ${checkIn.dataHora} | <span class="vermelho">Próxima Inspeção: ${checkIn.proximaInspecao} (VENCIDO há ${statusInsp.dias} dias)</span></p>`;
             }
           }
 
-          if (qtdBateriasVencidas > 0) {
-            html += `<p style="margin-top: 6px;"><span class="negrito">Bancos de Baterias Vencidos (${qtdBateriasVencidas}):</span>${bateriasVencidasHtml}</p>`;
-          }
-
-          const qtdA = dados.qtdAr || 1;
-          const nomeLower = nome.toLowerCase();
-          const interAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : 8;
-          let aresVencidosHtml = '';
-          let qtdAresVencidos = 0;
-          for (let a = 1; a <= qtdA; a++) {
-            const limp = dados[`ar_${a}_limp`];
-            const proxLimp = calcularProximaLimpezaAr(limp, interAr);
-            const resLimp = statusData(proxLimp);
-            if (resLimp && resLimp.status === 'vencido') {
-              qtdAresVencidos++;
-              aresVencidosHtml += `<br>&nbsp;&nbsp;• Central ${getLetra(a)} (${dados[`ar_${a}_mod`] || 'Elgin'}) - Última Limpeza: ${limp || 'N/A'} | Próx. Limpeza: <span style="color: #d9534f; font-weight: bold;">${proxLimp} (VENCIDO há ${resLimp.dias}d)</span>`;
+          if (filtrosIncidentes.incidentesGerais) {
+            if (dados.incidentesGerais && dados.incidentesGerais.trim() !== '') {
+              html += `<p class="vermelho" style="margin-top:6px;">⚠️ Incidentes Registrados:</p>`;
+              html += `<div class="incidente-item">${dados.incidentesGerais}</div>`;
             }
           }
 
-          if (qtdAresVencidos > 0) {
-            html += `<p style="margin-top: 4px;"><span class="negrito">Centrais de Ar Vencidas (${qtdAresVencidos}):</span>${aresVencidosHtml}</p>`;
+          if (filtrosIncidentes.baterias) {
+            const qtdB = dados.qtdBancos || 1;
+            let bateriasVencidasHtml = '';
+            let qtdBateriasVencidas = 0;
+            for (let b = 1; b <= qtdB; b++) {
+              const fab = dados[`bat_${b}_fab`];
+              const tipoB = dados[`bat_${b}_tipo`] || 'Chumbo';
+              const proxSub = calcularProximaSubstituicaoBateria(fab, nome, tipoB);
+              const resSub = statusData(proxSub);
+              if (resSub && resSub.status === 'vencido') {
+                qtdBateriasVencidas++;
+                const { textoExato } = parseDataFabricacaoBateria(fab);
+                const fabExibicao = textoExato ? `${fab} (${textoExato})` : (fab || 'N/A');
+                bateriasVencidasHtml += `<br>&nbsp;&nbsp;• Banco ${getLetra(b)} (${tipoB}) - Fab: ${fabExibicao} | Próx. Troca: <span style="color: #d9534f; font-weight: bold;">${proxSub} (VENCIDO há ${resSub.dias}d)</span>`;
+              }
+            }
+            if (qtdBateriasVencidas > 0) {
+              html += `<p style="margin-top: 6px;"><span class="negrito">Bancos de Baterias Vencidos (${qtdBateriasVencidas}):</span>${bateriasVencidasHtml}</p>`;
+            }
           }
 
-          const listaContatos = dados.listaContatos || [];
-          listaContatos.forEach(contato => {
-            const proxInspContato = calcularProximaInspecaoGeral(contato.ultimaInsp);
-            const resContato = statusData(proxInspContato);
-            if (resContato && resContato.status === 'vencido') {
-              html += `<p style="margin-top: 4px;"><span class="negrito">Contato (${contato.nome || 'N/A'} - ${contato.funcao || 'N/A'}):</span> Próx. Insp: <span class="vermelho">${proxInspContato} (VENCIDO há ${resContato.dias}d)</span></p>`;
+          if (filtrosIncidentes.centraisAr) {
+            const qtdA = dados.qtdAr || 1;
+            const nomeLower = nome.toLowerCase();
+            const interAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : 8;
+            let aresVencidosHtml = '';
+            let qtdAresVencidos = 0;
+            for (let a = 1; a <= qtdA; a++) {
+              const limp = dados[`ar_${a}_limp`];
+              const proxLimp = calcularProximaLimpezaAr(limp, interAr);
+              const resLimp = statusData(proxLimp);
+              if (resLimp && resLimp.status === 'vencido') {
+                qtdAresVencidos++;
+                aresVencidosHtml += `<br>&nbsp;&nbsp;• Central ${getLetra(a)} (${dados[`ar_${a}_mod`] || 'Elgin'}) - Última Limpeza: ${limp || 'N/A'} | Próx. Limpeza: <span style="color: #d9534f; font-weight: bold;">${proxLimp} (VENCIDO há ${resLimp.dias}d)</span>`;
+              }
             }
-          });
+            if (qtdAresVencidos > 0) {
+              html += `<p style="margin-top: 4px;"><span class="negrito">Centrais de Ar Vencidas (${qtdAresVencidos}):</span>${aresVencidosHtml}</p>`;
+            }
+          }
 
-          const proxInspChave = calcularProximaInspecaoGeral(dados.chave_ultima_insp);
-          const resChave = statusData(proxInspChave);
-          if (resChave && resChave.status === 'vencido') {
-            html += `<p style="margin-top: 4px;"><span class="negrito">Chave do POP:</span> Próx. Insp: <span class="vermelho">${proxInspChave} (VENCIDO há ${resChave.dias}d)</span></p>`;
+          if (filtrosIncidentes.contatos) {
+            const listaContatos = dados.listaContatos || [];
+            listaContatos.forEach(contato => {
+              const proxInspContato = calcularProximaInspecaoGeral(contato.ultimaInsp);
+              const resContato = statusData(proxInspContato);
+              if (resContato && resContato.status === 'vencido') {
+                html += `<p style="margin-top: 4px;"><span class="negrito">Contato (${contato.nome || 'N/A'} - ${contato.funcao || 'N/A'}):</span> Próx. Insp: <span class="vermelho">${proxInspContato} (VENCIDO há ${resContato.dias}d)</span></p>`;
+              }
+            });
+          }
+
+          if (filtrosIncidentes.chaves) {
+            const proxInspChave = calcularProximaInspecaoGeral(dados.chave_ultima_insp);
+            const resChave = statusData(proxInspChave);
+            if (resChave && resChave.status === 'vencido') {
+              html += `<p style="margin-top: 4px;"><span class="negrito">Chave do POP:</span> Próx. Insp: <span class="vermelho">${proxInspChave} (VENCIDO há ${resChave.dias}d)</span></p>`;
+            }
           }
 
           if (dados.anotacoes) {
@@ -816,41 +854,74 @@ function App() {
 
       {modalFiltroRelatorioAberto && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 1150, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px', boxSizing: 'border-box' }}>
-          <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '10px', width: '100%', maxWidth: '400px', maxHeight: '90vh', border: `1px solid ${theme.border}`, boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
-            <h3 style={{ marginTop: 0, fontSize: '17px', color: '#4dabf7', textAlign: 'center' }}>Filtro de Cidades/Regiões</h3>
-            <p style={{ fontSize: '13px', color: theme.textMuted, marginBottom: '15px', textAlign: 'center' }}>Selecione as regiões que deseja incluir no relatório de vencidos:</p>
+          <div style={{ background: theme.cardBg, color: theme.textMain, padding: '20px', borderRadius: '10px', width: '100%', maxWidth: '450px', maxHeight: '95vh', border: `1px solid ${theme.border}`, boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+            <h3 style={{ marginTop: 0, fontSize: '17px', color: '#4dabf7', textAlign: 'center', marginBottom: '15px' }}>Filtro de Relatório</h3>
+            
+            <div style={{ overflowY: 'auto', flex: 1, paddingRight: '5px' }}>
+                {/* TIPOS DE INCIDENTES */}
+                <h4 style={{ fontSize: '14px', margin: '0 0 8px 0', color: theme.textMain }}>O que incluir no relatório?</h4>
+                <div style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', border: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={filtrosIncidentes.inspecaoGeral} onChange={() => setFiltrosIncidentes(p => ({...p, inspecaoGeral: !p.inspecaoGeral}))} /> 
+                        Check-ins (Inspeção Geral) Vencidos
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={filtrosIncidentes.incidentesGerais} onChange={() => setFiltrosIncidentes(p => ({...p, incidentesGerais: !p.incidentesGerais}))} /> 
+                        Incidentes Relatados Manualmente
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={filtrosIncidentes.baterias} onChange={() => setFiltrosIncidentes(p => ({...p, baterias: !p.baterias}))} /> 
+                        Bancos de Baterias Vencidos
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={filtrosIncidentes.centraisAr} onChange={() => setFiltrosIncidentes(p => ({...p, centraisAr: !p.centraisAr}))} /> 
+                        Limpezas de Ar Vencidas
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={filtrosIncidentes.contatos} onChange={() => setFiltrosIncidentes(p => ({...p, contatos: !p.contatos}))} /> 
+                        Inspeções de Contatos Vencidas
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={filtrosIncidentes.chaves} onChange={() => setFiltrosIncidentes(p => ({...p, chaves: !p.chaves}))} /> 
+                        Inspeções de Chaves Vencidas
+                    </label>
+                </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-              <button type="button" onClick={() => {
-                const map = {};
-                obterListaTodasCidades().forEach(c => map[c] = true);
-                setCidadesSelecionadasParaRelatorio(map);
-              }} style={{ background: 'transparent', border: 'none', color: '#4dabf7', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Marcar Todas</button>
-              <button type="button" onClick={() => {
-                const map = {};
-                obterListaTodasCidades().forEach(c => map[c] = false);
-                setCidadesSelecionadasParaRelatorio(map);
-              }} style={{ background: 'transparent', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Desmarcar Todas</button>
+                {/* REGIÕES */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <h4 style={{ fontSize: '14px', margin: 0, color: theme.textMain }}>Cidades / Regiões</h4>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button type="button" onClick={() => {
+                        const map = {};
+                        obterListaTodasCidades().forEach(c => map[c] = true);
+                        setCidadesSelecionadasParaRelatorio(map);
+                    }} style={{ background: 'transparent', border: 'none', color: '#4dabf7', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Marcar Todas</button>
+                    <button type="button" onClick={() => {
+                        const map = {};
+                        obterListaTodasCidades().forEach(c => map[c] = false);
+                        setCidadesSelecionadasParaRelatorio(map);
+                    }} style={{ background: 'transparent', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Desmarcar Todas</button>
+                  </div>
+                </div>
+                <div style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', border: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '15px' }}>
+                  {obterListaTodasCidades().map(sigla => (
+                    <label key={sigla} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={!!cidadesSelecionadasParaRelatorio[sigla]} 
+                        onChange={(e) => {
+                          setCidadesSelecionadasParaRelatorio({ ...cidadesSelecionadasParaRelatorio, [sigla]: e.target.checked });
+                        }} 
+                      />
+                      Região / Cidade: {sigla}
+                    </label>
+                  ))}
+                </div>
             </div>
 
-            <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '15px', background: theme.cardInner, padding: '10px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
-              {obterListaTodasCidades().map(sigla => (
-                <label key={sigla} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={!!cidadesSelecionadasParaRelatorio[sigla]} 
-                    onChange={(e) => {
-                      setCidadesSelecionadasParaRelatorio({ ...cidadesSelecionadasParaRelatorio, [sigla]: e.target.checked });
-                    }} 
-                  />
-                  Região / Cidade: {sigla}
-                </label>
-              ))}
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button type="button" onClick={() => setModalFiltroRelatorioAberto(false)} style={{ flex: 1, padding: '10px', background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>Cancelar</button>
-              <button type="button" onClick={gerarRelatorioGeralIncidentesPDF} style={{ flex: 1, padding: '10px', background: '#007bff', border: 'none', color: '#fff', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>Gerar PDF</button>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+              <button type="button" onClick={() => setModalFiltroRelatorioAberto(false)} style={{ flex: 1, padding: '12px', background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>Cancelar</button>
+              <button type="button" onClick={gerarRelatorioGeralIncidentesPDF} style={{ flex: 1, padding: '12px', background: '#007bff', border: 'none', color: '#fff', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>Gerar PDF</button>
             </div>
           </div>
         </div>
