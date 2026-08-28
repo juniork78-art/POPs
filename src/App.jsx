@@ -858,7 +858,6 @@ function App() {
             <h3 style={{ marginTop: 0, fontSize: '17px', color: '#4dabf7', textAlign: 'center', marginBottom: '15px' }}>Filtro de Relatório</h3>
             
             <div style={{ overflowY: 'auto', flex: 1, paddingRight: '5px' }}>
-                {/* TIPOS DE INCIDENTES */}
                 <h4 style={{ fontSize: '14px', margin: '0 0 8px 0', color: theme.textMain }}>O que incluir no relatório?</h4>
                 <div style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', border: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
@@ -887,7 +886,6 @@ function App() {
                     </label>
                 </div>
 
-                {/* REGIÕES */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <h4 style={{ fontSize: '14px', margin: 0, color: theme.textMain }}>Cidades / Regiões</h4>
                   <div style={{ display: 'flex', gap: '10px' }}>
@@ -1242,7 +1240,73 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
   const [passwordInput, setPasswordInput] = useState('');
   const [mostrarSenhaGerenciar, setMostrarSenhaGerenciar] = useState(false);
   const isPedro = tecnico.toLowerCase().includes('pedro');
+  
   const popsFiltrados = listaPops.filter(p => (isPedro ? p.endereco.toLowerCase().endsWith('- pbs') : true) && (p.nome.toLowerCase().includes(busca.toLowerCase()) || p.endereco.toLowerCase().includes(busca.toLowerCase())));
+
+  const temIncidenteVencido = (nomePop) => {
+    let n = nomePop.toLowerCase();
+    if (n === 'odin' || n === 'odim') n = 'balder';
+
+    // 1. Check-ins (Inspeção Geral)
+    const checkInPop = ultimosCheckIns.find(c => {
+      let cn = (c.popNome || c.pop || '').toLowerCase();
+      if (cn === 'odin' || cn === 'odim') cn = 'balder';
+      return cn === n;
+    });
+    if (checkInPop && checkInPop.proximaInspecao) {
+      const res = statusData(checkInPop.proximaInspecao);
+      if (res && res.status === 'vencido') return true;
+    }
+
+    // 2. Baterias
+    const bateriasPop = cronogramaBaterias.filter(b => {
+      let bn = (b.popNome || '').toLowerCase();
+      if (bn === 'odin' || bn === 'odim') bn = 'balder';
+      return bn === n;
+    });
+    for (let b of bateriasPop) {
+      let resSub = statusData(b.proximaSubstituicao);
+      if (resSub && resSub.status === 'vencido') return true;
+      let resInsp = statusData(b.proximaInspecao);
+      if (resInsp && resInsp.status === 'vencido') return true;
+    }
+
+    // 3. Limpezas (Ar)
+    const arPop = cronogramaLimpezas.filter(l => {
+      let ln = (l.popNome || '').toLowerCase();
+      if (ln === 'odin' || ln === 'odim') ln = 'balder';
+      return ln === n;
+    });
+    for (let l of arPop) {
+      let resLimp = statusData(l.proximaLimpeza);
+      if (resLimp && resLimp.status === 'vencido') return true;
+    }
+
+    // 4. Contatos
+    const contatosPop = cronogramaContatos.filter(c => {
+      let cn = (c.popNome || '').toLowerCase();
+      if (cn === 'odin' || cn === 'odim') cn = 'balder';
+      return cn === n;
+    });
+    for (let c of contatosPop) {
+      let resInsp = statusData(c.proximaInspecao);
+      if (resInsp && resInsp.status === 'vencido') return true;
+    }
+
+    // 5. Chaves
+    const chavesPop = cronogramaChaves.filter(c => {
+      let cn = (c.popNome || '').toLowerCase();
+      if (cn === 'odin' || cn === 'odim') cn = 'balder';
+      return cn === n;
+    });
+    for (let c of chavesPop) {
+      let resInsp = statusData(c.proximaInspecao);
+      if (resInsp && resInsp.status === 'vencido') return true;
+    }
+
+    return false;
+  };
+
   return (
     <div className="container-movel" style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', width: '100%', margin: 0, padding: '12px', boxSizing: 'border-box' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', flexWrap: 'wrap', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
@@ -1290,12 +1354,18 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
       )}
       <input type="text" placeholder="Pesquisar POP" value={busca} onChange={(e) => setBusca(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '4px', border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.inputText, marginBottom: '15px', boxSizing: 'border-box', fontSize: '14px' }} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
-        {popsFiltrados.map((pop) => (
-          <div key={pop.id} onClick={() => onPopClick(pop)} style={{ background: theme.cardBg, padding: '14px', borderRadius: '6px', border: `1px solid ${theme.border}`, cursor: 'pointer', width: '100%', boxSizing: 'border-box' }}>
-            <h3 style={{ margin: '0 0 6px 0', color: '#4dabf7', textTransform: 'uppercase', fontSize: '15px' }}>{pop.nome}</h3>
-            <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>{pop.endereco}</p>
-          </div>
-        ))}
+        {popsFiltrados.map((pop) => {
+          const temAlerta = temIncidenteVencido(pop.nome);
+          return (
+            <div key={pop.id} onClick={() => onPopClick(pop)} style={{ position: 'relative', background: theme.cardBg, padding: '14px', borderRadius: '6px', border: `1px solid ${theme.border}`, cursor: 'pointer', width: '100%', boxSizing: 'border-box' }}>
+              {temAlerta && (
+                <div title="Existem incidentes ou vencimentos pendentes neste POP" style={{ position: 'absolute', top: '14px', right: '14px', width: '12px', height: '12px', backgroundColor: '#ff4d4d', borderRadius: '50%', animation: 'piscar 1.5s infinite', boxShadow: '0 0 6px rgba(255, 77, 77, 0.8)' }}></div>
+              )}
+              <h3 style={{ margin: '0 0 6px 0', color: '#4dabf7', textTransform: 'uppercase', fontSize: '15px', paddingRight: temAlerta ? '20px' : '0' }}>{pop.nome}</h3>
+              <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>{pop.endereco}</p>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
