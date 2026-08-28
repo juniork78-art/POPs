@@ -357,7 +357,6 @@ export default function App() {
       if (!popPertenceAoUsuario(pop.nome)) return;
       const sigla = obterSiglaPop(pop.nome) || 'GERAL';
       
-      // Verifica se o usuário selecionou esta cidade no modal de filtro
       if (!cidadesSelecionadasParaRelatorio[sigla]) return;
 
       const dadosPop = dadosGeraisPops[pop.nome] || {};
@@ -439,6 +438,7 @@ export default function App() {
         <style>
           body { font-family: Arial, sans-serif; padding: 25px; color: #000; line-height: 1.5; }
           .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #d9534f; padding-bottom: 12px; margin-bottom: 20px; }
+          .header-left { display: flex; align-items: center; gap: 15px; }
           h1 { color: #d9534f; margin: 0; font-size: 20px; text-transform: uppercase; }
           h2 { color: #333; font-size: 16px; margin-top: 25px; border-bottom: 2px solid #007bff; padding-bottom: 4px; text-transform: uppercase; background: #eef2f5; padding-left: 8px; }
           h3 { color: #0056b3; font-size: 14px; margin: 12px 0 4px 0; text-transform: uppercase; }
@@ -451,7 +451,10 @@ export default function App() {
       </head>
       <body>
         <div class="header">
-          <h1>Relatório de Itens Vencidos e Alertas</h1>
+          <div class="header-left">
+            <img src="/logo.png" alt="Logo Fibralink" style="width: 110px; object-fit: contain;" />
+            <h1>Relatório de Itens Vencidos e Alertas</h1>
+          </div>
           <div>
             <p><strong>Emitido por:</strong> ${usuarioLogado ? usuarioLogado.split('@')[0].toUpperCase() : 'Sistema'}</p>
             <p><strong>Data:</strong> ${new Date().toLocaleDateString()}</p>
@@ -2292,8 +2295,8 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                     </>
                   )}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
 
           <div style={{ marginTop: '18px', width: '100%', boxSizing: 'border-box' }}>
