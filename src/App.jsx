@@ -1520,7 +1520,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
     "ceuci": "https://maps.app.goo.gl/C4MvcYVJsectbuY47",
     "demeter": "https://maps.app.goo.gl/5qqVzmDBgq5ybSfF6",
     "neftis": "https://maps.app.goo.gl/VRZezD9Fw99wu6BCA",
-    "sobek": ""
+    "sobek": "https://maps.app.goo.gl/fCKA38UZsCsVDDbm7"
   };
 
   const linkGoogleMaps = mapasPops[pop.nome.toLowerCase()] || null;
