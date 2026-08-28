@@ -308,7 +308,7 @@ export default function App() {
       cronogramaBaterias.forEach(b => processarItem(b.popNome, `POP: ${b.popNome.toUpperCase()} - Banco de Bateria (${b.banco}) expirado`, b.proximaSubstituicao));
     }
     if (cronogramaContatos) {
-      cronogramaContatos.forEach(c => processarItem(c.popNome, `POP: ${c.popNome.toUpperCase()} - Inspeção de contato (${c.nomeResponsavel}) expirada`, c.proximaInspecao));
+      cronogramaContatos.forEach(c => processarItem(c.popNome, `POP: ${c.popNome.toUpperCase()} - Inspeção de contato (${c.nomeResponsavel} - ${c.funcao}) expirada`, c.proximaInspecao));
     }
     if (cronogramaChaves) {
       cronogramaChaves.forEach(ch => processarItem(ch.popNome, `POP: ${ch.popNome.toUpperCase()} - Inspeção de chave expirada`, ch.proximaInspecao));
@@ -503,7 +503,7 @@ export default function App() {
             const proxInspContato = calcularProximaInspecaoGeral(contato.ultimaInsp);
             const resContato = statusData(proxInspContato);
             if (resContato && resContato.status === 'vencido') {
-              html += `<p style="margin-top: 4px;"><span class="negrito">Contato (${contato.nome || 'N/A'}):</span> Próx. Insp: <span class="vermelho">${proxInspContato} (VENCIDO há ${resContato.dias}d)</span></p>`;
+              html += `<p style="margin-top: 4px;"><span class="negrito">Contato (${contato.nome || 'N/A'} - ${contato.funcao || 'N/A'}):</span> Próx. Insp: <span class="vermelho">${proxInspContato} (VENCIDO há ${resContato.dias}d)</span></p>`;
             }
           });
 
@@ -628,6 +628,7 @@ export default function App() {
             listaContatosTemp.push({
               popNome,
               nomeResponsavel: contato.nome || 'N/A',
+              funcao: contato.funcao || 'N/A',
               telefone: contato.telefone || 'N/A',
               ultimaInspecao: contato.ultimaInsp || '',
               proximaInspecao: calcularProximaInspecaoGeral(contato.ultimaInsp)
@@ -939,7 +940,7 @@ export default function App() {
                     return (
                       <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '13px', border: `1px solid ${theme.border}` }}>
                         <p style={{ margin: '0 0 4px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '13px' }}>POP: {nomeExibicao}</p>
-                        <p style={{ margin: '0 0 3px 0', color: theme.textMain }}><b>Responsável:</b> {item.nomeResponsavel}</p>
+                        <p style={{ margin: '0 0 3px 0', color: theme.textMain }}><b>Responsável:</b> {item.nomeResponsavel} ({item.funcao})</p>
                         <p style={{ margin: '0 0 3px 0', color: theme.textMain }}><b>Telefone:</b> {item.telefone}</p>
                         <p style={{ margin: '0 0 3px 0', color: theme.textMuted }}>Última Insp: {item.ultimaInspecao || 'N/A'}</p>
                         <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
@@ -1220,7 +1221,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
   const [precisaLimpeza, setPrecisaLimpeza] = useState(false);
   const [anotacoes, setAnotacoes] = useState('');
 
-  const [listaContatos, setListaContatos] = useState([{ nome: '', telefone: '', ultimaInsp: '' }]);
+  const [listaContatos, setListaContatos] = useState([{ nome: '', funcao: '', telefone: '', ultimaInsp: '' }]);
   const [contatosSalvo, setContatosSalvo] = useState(false);
 
   const [chaveUltimaInsp, setChaveUltimaInsp] = useState('');
@@ -1315,7 +1316,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         if (data.listaContatos && Array.isArray(data.listaContatos) && data.listaContatos.length > 0) {
           setListaContatos(data.listaContatos);
         } else if (data.contato_nome !== undefined) {
-          setListaContatos([{ nome: data.contato_nome || '', telefone: data.contato_tel || '', ultimaInsp: data.contato_ultima_insp || '' }]);
+          setListaContatos([{ nome: data.contato_nome || '', funcao: '', telefone: data.contato_tel || '', ultimaInsp: data.contato_ultima_insp || '' }]);
         }
         if (data.contatos_salvo !== undefined) setContatosSalvo(data.contatos_salvo);
 
@@ -1503,7 +1504,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
       } else {
         listaContatos.forEach((c, i) => {
           htmlRelatorio += `
-            <p><span class="negrito">Contato ${i + 1}:</span> ${c.nome || 'Não informado'} | Tel: ${c.telefone || 'N/A'} | Última Insp: ${c.ultimaInsp || 'N/A'} (Próxima: ${calcularProximaInspecaoGeral(c.ultimaInsp) || 'N/A'})</p>
+            <p><span class="negrito">Contato ${i + 1} (${c.funcao || 'N/A'}):</span> ${c.nome || 'Não informado'} | Tel: ${c.telefone || 'N/A'} | Última Insp: ${c.ultimaInsp || 'N/A'} (Próxima: ${calcularProximaInspecaoGeral(c.ultimaInsp) || 'N/A'})</p>
           `;
         });
       }
@@ -1726,7 +1727,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         } else {
           listaContatos.forEach((c, i) => {
             htmlRelatorio += `
-              <p><span class="negrito">Contato ${i + 1}:</span> ${c.nome || 'Não informado'} | Tel: ${c.telefone || 'N/A'} | Última Insp: ${c.ultimaInsp || 'N/A'} (Próxima: ${calcularProximaInspecaoGeral(c.ultimaInsp) || 'N/A'})</p>
+              <p><span class="negrito">Contato ${i + 1} (${c.funcao || 'N/A'}):</span> ${c.nome || 'Não informado'} | Tel: ${c.telefone || 'N/A'} | Última Insp: ${c.ultimaInsp || 'N/A'} (Próxima: ${calcularProximaInspecaoGeral(c.ultimaInsp) || 'N/A'})</p>
             `;
           });
         }
@@ -1977,13 +1978,13 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
             )}
           </div>
 
-          {/* SEÇÃO DE CONTATOS E CHAVES (MÚLTIPLOS CONTATOS) */}
+          {/* SEÇÃO DE CONTATOS E CHAVES (COM FUNÇÃO) */}
           <div style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '15px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <h3 style={{ fontSize: '15px', margin: 0, color: '#4dabf7' }}>📞 Contatos e 🔑 Chaves do POP</h3>
               <div style={{ display: 'flex', gap: '6px' }}>
                 {!contatosSalvo && (
-                  <button type="button" onClick={() => setListaContatos([...listaContatos, { nome: '', telefone: '', ultimaInsp: '' }])} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
+                  <button type="button" onClick={() => setListaContatos([...listaContatos, { nome: '', funcao: '', telefone: '', ultimaInsp: '' }])} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
                     + Adicionar Contato
                   </button>
                 )}
@@ -2018,6 +2019,14 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                   <input type="text" disabled={contatosSalvo} placeholder="Nome do responsável" value={contato.nome} onChange={(e) => {
                     const novaLista = [...listaContatos];
                     novaLista[idx].nome = e.target.value;
+                    setListaContatos(novaLista);
+                  }} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
+                </div>
+                <div style={{ marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Função (Ex: Síndica, Gerente, Resp. POP)</label>
+                  <input type="text" disabled={contatosSalvo} placeholder="Ex: Síndica" value={contato.funcao} onChange={(e) => {
+                    const novaLista = [...listaContatos];
+                    novaLista[idx].funcao = e.target.value;
                     setListaContatos(novaLista);
                   }} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
                 </div>
