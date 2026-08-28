@@ -308,7 +308,7 @@ export default function App() {
       cronogramaBaterias.forEach(b => processarItem(b.popNome, `POP: ${b.popNome.toUpperCase()} - Banco de Bateria (${b.banco}) expirado`, b.proximaSubstituicao));
     }
     if (cronogramaContatos) {
-      cronogramaContatos.forEach(c => processarItem(c.popNome, `POP: ${c.popNome.toUpperCase()} - Inspeção de contato expirada`, c.proximaInspecao));
+      cronogramaContatos.forEach(c => processarItem(c.popNome, `POP: ${c.popNome.toUpperCase()} - Inspeção de contato (${c.nomeResponsavel}) expirada`, c.proximaInspecao));
     }
     if (cronogramaChaves) {
       cronogramaChaves.forEach(ch => processarItem(ch.popNome, `POP: ${ch.popNome.toUpperCase()} - Inspeção de chave expirada`, ch.proximaInspecao));
@@ -374,11 +374,14 @@ export default function App() {
         }
       }
 
-      const proxInspContato = calcularProximaInspecaoGeral(dadosPop.contato_ultima_insp);
-      const resContato = statusData(proxInspContato);
-      if (resContato && resContato.status === 'vencido') {
-        temAlgoVencido = true;
-      }
+      const listaContatos = dadosPop.listaContatos || [];
+      listaContatos.forEach(contato => {
+        const proxInspContato = calcularProximaInspecaoGeral(contato.ultimaInsp);
+        const resContato = statusData(proxInspContato);
+        if (resContato && resContato.status === 'vencido') {
+          temAlgoVencido = true;
+        }
+      });
 
       const proxInspChave = calcularProximaInspecaoGeral(dadosPop.chave_ultima_insp);
       const resChave = statusData(proxInspChave);
@@ -495,11 +498,14 @@ export default function App() {
             html += `<p style="margin-top: 4px;"><span class="negrito">Centrais de Ar Vencidas (${qtdAresVencidos}):</span>${aresVencidosHtml}</p>`;
           }
 
-          const proxInspContato = calcularProximaInspecaoGeral(dados.contato_ultima_insp);
-          const resContato = statusData(proxInspContato);
-          if (resContato && resContato.status === 'vencido') {
-            html += `<p style="margin-top: 4px;"><span class="negrito">Contato (${dados.contato_nome || 'N/A'}):</span> Próx. Insp: <span class="vermelho">${proxInspContato} (VENCIDO há ${resContato.dias}d)</span></p>`;
-          }
+          const listaContatos = dados.listaContatos || [];
+          listaContatos.forEach(contato => {
+            const proxInspContato = calcularProximaInspecaoGeral(contato.ultimaInsp);
+            const resContato = statusData(proxInspContato);
+            if (resContato && resContato.status === 'vencido') {
+              html += `<p style="margin-top: 4px;"><span class="negrito">Contato (${contato.nome || 'N/A'}):</span> Próx. Insp: <span class="vermelho">${proxInspContato} (VENCIDO há ${resContato.dias}d)</span></p>`;
+            }
+          });
 
           const proxInspChave = calcularProximaInspecaoGeral(dados.chave_ultima_insp);
           const resChave = statusData(proxInspChave);
@@ -617,15 +623,16 @@ export default function App() {
 
           dadosGeraisTemp[popNome.toLowerCase()] = data;
 
-          if (data.contato_nome || data.contato_tel || data.contato_ultima_insp) {
+          const listaContatos = data.listaContatos || [];
+          listaContatos.forEach(contato => {
             listaContatosTemp.push({
               popNome,
-              nomeResponsavel: data.contato_nome || 'N/A',
-              telefone: data.contato_tel || 'N/A',
-              ultimaInspecao: data.contato_ultima_insp || '',
-              proximaInspecao: calcularProximaInspecaoGeral(data.contato_ultima_insp)
+              nomeResponsavel: contato.nome || 'N/A',
+              telefone: contato.telefone || 'N/A',
+              ultimaInspecao: contato.ultimaInsp || '',
+              proximaInspecao: calcularProximaInspecaoGeral(contato.ultimaInsp)
             });
-          }
+          });
 
           if (data.chave_ultima_insp) {
             listaChavesTemp.push({
@@ -1213,10 +1220,8 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
   const [precisaLimpeza, setPrecisaLimpeza] = useState(false);
   const [anotacoes, setAnotacoes] = useState('');
 
-  const [contatoNome, setContatoNome] = useState('');
-  const [contatoTel, setContatoTel] = useState('');
-  const [contatoUltimaInsp, setContatoUltimaInsp] = useState('');
-  const [contatoSalvo, setContatoSalvo] = useState(false);
+  const [listaContatos, setListaContatos] = useState([{ nome: '', telefone: '', ultimaInsp: '' }]);
+  const [contatosSalvo, setContatosSalvo] = useState(false);
 
   const [chaveUltimaInsp, setChaveUltimaInsp] = useState('');
   const [chaveSalvo, setChaveSalvo] = useState(false);
@@ -1307,10 +1312,12 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         if (data.qtdAr) setQtdAr(data.qtdAr);
         if (data.fotosPop) setFotosPop(data.fotosPop);
 
-        if (data.contato_nome !== undefined) setContatoNome(data.contato_nome);
-        if (data.contato_tel !== undefined) setContatoTel(data.contato_tel);
-        if (data.contato_ultima_insp !== undefined) setContatoUltimaInsp(data.contato_ultima_insp);
-        if (data.contato_salvo !== undefined) setContatoSalvo(data.contato_salvo);
+        if (data.listaContatos && Array.isArray(data.listaContatos) && data.listaContatos.length > 0) {
+          setListaContatos(data.listaContatos);
+        } else if (data.contato_nome !== undefined) {
+          setListaContatos([{ nome: data.contato_nome || '', telefone: data.contato_tel || '', ultimaInsp: data.contato_ultima_insp || '' }]);
+        }
+        if (data.contatos_salvo !== undefined) setContatosSalvo(data.contatos_salvo);
 
         if (data.chave_ultima_insp !== undefined) setChaveUltimaInsp(data.chave_ultima_insp);
         if (data.chave_salvo !== undefined) setChaveSalvo(data.chave_salvo);
@@ -1487,12 +1494,22 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
           <p><span class="negrito">Data da Inspeção:</span> ${dataInspecaoFinal}</p>
           <p><span class="negrito">Próxima Inspeção Recomendada:</span> ${dataProxStr}</p>
 
-          <h2>Contato e Chaves do POP</h2>
+          <h2>Contatos e Chaves do POP</h2>
           <div class="bloco">
-            <p><span class="negrito">Responsável:</span> ${contatoNome || 'Não informado'}</p>
-            <p><span class="negrito">Telefone:</span> ${contatoTel || 'Não informado'}</p>
-            <p><span class="negrito">Última Insp. Contato:</span> ${contatoUltimaInsp || 'N/A'} | Próxima: ${calcularProximaInspecaoGeral(contatoUltimaInsp) || 'N/A'}</p>
-            <p><span class="negrito">Última Insp. Chave:</span> ${chaveUltimaInsp || 'N/A'} | Próxima: ${calcularProximaInspecaoGeral(chaveUltimaInsp) || 'N/A'}</p>
+      `;
+
+      if (listaContatos.length === 0) {
+        htmlRelatorio += `<p>Nenhum contato cadastrado.</p>`;
+      } else {
+        listaContatos.forEach((c, i) => {
+          htmlRelatorio += `
+            <p><span class="negrito">Contato ${i + 1}:</span> ${c.nome || 'Não informado'} | Tel: ${c.telefone || 'N/A'} | Última Insp: ${c.ultimaInsp || 'N/A'} (Próxima: ${calcularProximaInspecaoGeral(c.ultimaInsp) || 'N/A'})</p>
+          `;
+        });
+      }
+
+      htmlRelatorio += `
+            <p style="margin-top: 10px;"><span class="negrito">Última Insp. Chave:</span> ${chaveUltimaInsp || 'N/A'} | Próxima: ${calcularProximaInspecaoGeral(chaveUltimaInsp) || 'N/A'}</p>
           </div>
 
           <h2>Status dos Ativos no POP</h2>
@@ -1700,12 +1717,22 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
             <p><span class="negrito">Data da Inspeção:</span> ${dataInspecaoFinal}</p>
             <p><span class="negrito">Próxima Inspeção Recomendada:</span> ${dataProxStr}</p>
 
-            <h2>Contato e Chaves do POP</h2>
+            <h2>Contatos e Chaves do POP</h2>
             <div class="bloco">
-              <p><span class="negrito">Responsável:</span> ${contatoNome || 'Não informado'}</p>
-              <p><span class="negrito">Telefone:</span> ${contatoTel || 'Não informado'}</p>
-              <p><span class="negrito">Última Insp. Contato:</span> ${contatoUltimaInsp || 'N/A'} | Próxima: ${calcularProximaInspecaoGeral(contatoUltimaInsp) || 'N/A'}</p>
-              <p><span class="negrito">Última Insp. Chave:</span> ${chaveUltimaInsp || 'N/A'} | Próxima: ${calcularProximaInspecaoGeral(chaveUltimaInsp) || 'N/A'}</p>
+        `;
+
+        if (listaContatos.length === 0) {
+          htmlRelatorio += `<p>Nenhum contato cadastrado.</p>`;
+        } else {
+          listaContatos.forEach((c, i) => {
+            htmlRelatorio += `
+              <p><span class="negrito">Contato ${i + 1}:</span> ${c.nome || 'Não informado'} | Tel: ${c.telefone || 'N/A'} | Última Insp: ${c.ultimaInsp || 'N/A'} (Próxima: ${calcularProximaInspecaoGeral(c.ultimaInsp) || 'N/A'})</p>
+            `;
+          });
+        }
+
+        htmlRelatorio += `
+              <p style="margin-top: 10px;"><span class="negrito">Última Insp. Chave:</span> ${chaveUltimaInsp || 'N/A'} | Próxima: ${calcularProximaInspecaoGeral(chaveUltimaInsp) || 'N/A'}</p>
             </div>
 
             <h2>Status dos Ativos no POP</h2>
@@ -1950,49 +1977,75 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
             )}
           </div>
 
-          {/* SEÇÃO DE CONTATO E CHAVES */}
+          {/* SEÇÃO DE CONTATOS E CHAVES (MÚLTIPLOS CONTATOS) */}
           <div style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '15px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <h3 style={{ fontSize: '15px', margin: 0, color: '#4dabf7' }}>📞 Contato e 🔑 Chaves do POP</h3>
-              <button type="button" onClick={() => {
-                const novoSalvo = !contatoSalvo;
-                setContatoSalvo(novoSalvo);
-                setChaveSalvo(novoSalvo);
-                salvarNoFirebase({
-                  contato_nome: contatoNome,
-                  contato_tel: contatoTel,
-                  contato_ultima_insp: contatoUltimaInsp,
-                  contato_salvo: novoSalvo,
-                  chave_ultima_insp: chaveUltimaInsp,
-                  chave_salvo: novoSalvo
-                });
-                alert("Contato e Chave salvos com sucesso!");
-              }} style={{ background: contatoSalvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
-                {contatoSalvo ? 'Editar' : 'Salvar Contato/Chave'}
-              </button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <h3 style={{ fontSize: '15px', margin: 0, color: '#4dabf7' }}>📞 Contatos e 🔑 Chaves do POP</h3>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {!contatosSalvo && (
+                  <button type="button" onClick={() => setListaContatos([...listaContatos, { nome: '', telefone: '', ultimaInsp: '' }])} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
+                    + Adicionar Contato
+                  </button>
+                )}
+                <button type="button" onClick={() => {
+                  const novoSalvo = !contatosSalvo;
+                  setContatosSalvo(novoSalvo);
+                  setChaveSalvo(novoSalvo);
+                  salvarNoFirebase({
+                    listaContatos,
+                    contatos_salvo: novoSalvo,
+                    chave_ultima_insp: chaveUltimaInsp,
+                    chave_salvo: novoSalvo
+                  });
+                  alert("Contatos e Chave salvos com sucesso!");
+                }} style={{ background: contatosSalvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
+                  {contatosSalvo ? 'Editar' : 'Salvar Contatos/Chave'}
+                </button>
+              </div>
             </div>
 
-            <div style={{ marginBottom: '8px' }}>
-              <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Nome do Responsável (Contato)</label>
-              <input type="text" disabled={contatoSalvo} placeholder="Nome do responsável" value={contatoNome} onChange={(e) => setContatoNome(e.target.value)} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
-            </div>
+            {listaContatos.map((contato, idx) => (
+              <div key={idx} style={{ background: theme.cardBg, padding: '10px', borderRadius: '4px', marginBottom: '8px', border: `1px solid ${theme.border}`, position: 'relative' }}>
+                {!contatosSalvo && listaContatos.length > 1 && (
+                  <button type="button" onClick={() => {
+                    const novaLista = listaContatos.filter((_, i) => i !== idx);
+                    setListaContatos(novaLista);
+                  }} style={{ position: 'absolute', top: '8px', right: '8px', background: 'transparent', border: 'none', color: '#ff4d4d', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer' }}>✕</button>
+                )}
+                <p style={{ margin: '0 0 6px 0', fontSize: '12px', fontWeight: 'bold', color: '#4dabf7' }}>Contato {idx + 1}</p>
+                <div style={{ marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Nome do Responsável</label>
+                  <input type="text" disabled={contatosSalvo} placeholder="Nome do responsável" value={contato.nome} onChange={(e) => {
+                    const novaLista = [...listaContatos];
+                    novaLista[idx].nome = e.target.value;
+                    setListaContatos(novaLista);
+                  }} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
+                </div>
+                <div style={{ marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Telefone</label>
+                  <input type="text" disabled={contatosSalvo} placeholder="(00) 00000-0000" value={contato.telefone} onChange={(e) => {
+                    const novaLista = [...listaContatos];
+                    novaLista[idx].telefone = e.target.value;
+                    setListaContatos(novaLista);
+                  }} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data da Inspeção do Contato (dd/MM/aaaa)</label>
+                  <input type="text" disabled={contatosSalvo} placeholder="dd/MM/aaaa" value={contato.ultimaInsp} onChange={(e) => {
+                    const novaLista = [...listaContatos];
+                    novaLista[idx].ultimaInsp = e.target.value;
+                    setListaContatos(novaLista);
+                  }} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
+                  {contato.ultimaInsp && (
+                    <p style={{ fontSize: '11px', color: '#4dabf7', margin: '3px 0 0 0', fontWeight: 'bold' }}>
+                      Próxima Insp. Contato (3 meses): {calcularProximaInspecaoGeral(contato.ultimaInsp)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
 
-            <div style={{ marginBottom: '8px' }}>
-              <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Telefone do Responsável</label>
-              <input type="text" disabled={contatoSalvo} placeholder="(00) 00000-0000" value={contatoTel} onChange={(e) => setContatoTel(e.target.value)} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
-            </div>
-
-            <div style={{ marginBottom: '8px' }}>
-              <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data da Inspeção do Contato (dd/MM/aaaa)</label>
-              <input type="text" disabled={contatoSalvo} placeholder="dd/MM/aaaa" value={contatoUltimaInsp} onChange={(e) => setContatoUltimaInsp(e.target.value)} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
-              {contatoUltimaInsp && (
-                <p style={{ fontSize: '11px', color: '#4dabf7', margin: '3px 0 0 0', fontWeight: 'bold' }}>
-                  Próxima Insp. Contato (3 meses): {calcularProximaInspecaoGeral(contatoUltimaInsp)}
-                </p>
-              )}
-            </div>
-
-            <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '8px', marginTop: '8px' }}>
+            <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '8px', marginTop: '10px' }}>
               <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data da Inspeção da Chave (dd/MM/aaaa)</label>
               <input type="text" disabled={chaveSalvo} placeholder="dd/MM/aaaa" value={chaveUltimaInsp} onChange={(e) => setChaveUltimaInsp(e.target.value)} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
               {chaveUltimaInsp && (
