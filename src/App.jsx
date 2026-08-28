@@ -2103,11 +2103,11 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                     novaLista[idx].ultimaInsp = e.target.value;
                     setListaContatos(novaLista);
                   }} style={{ width: '100%', padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '12px' }} />
-                  {contato.ultimaInsp && (
+                  {contato.ultimaInsp ? (
                     <p style={{ fontSize: '11px', color: '#4dabf7', margin: '3px 0 0 0', fontWeight: 'bold' }}>
                       Próxima Insp. Contato (3 meses): {calcularProximaInspecaoGeral(contato.ultimaInsp)}
                     </p>
-                  )}
+                  ) : null}
                 </div>
               </div>
             ))}
@@ -2115,11 +2115,11 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
             <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '8px', marginTop: '10px' }}>
               <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data da Inspeção da Chave (dd/MM/aaaa)</label>
               <input type="text" placeholder="dd/MM/aaaa" value={chaveUltimaInsp} onChange={(e) => setChaveUltimaInsp(e.target.value)} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
-              {chaveUltimaInsp && (
+              {chaveUltimaInsp ? (
                 <p style={{ fontSize: '11px', color: '#4dabf7', margin: '3px 0 0 0', fontWeight: 'bold' }}>
                   Próxima Insp. Chave (3 meses): {calcularProximaInspecaoGeral(chaveUltimaInsp)}
                 </p>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -2292,8 +2292,8 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                     </>
                   )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div style={{ marginTop: '18px', width: '100%', boxSizing: 'border-box' }}>
