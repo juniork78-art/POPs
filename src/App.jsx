@@ -930,7 +930,6 @@ export default function App() {
                   cronogramaContatos.map((item, idx) => {
                     let nomeDoPop = item.popNome;
                     if (nomeDoPop.toLowerCase() === 'odin' || nomeDoPop.toLowerCase() === 'odim') nomeDoPop = 'balder';
-                    if (!popPertenceAoUsuario(nomeDoPop)) return null;
                     const sigla = obterSiglaPop(nomeDoPop);
                     const nomeExibicao = sigla ? `${realizarNomeExibicao(nomeDoPop)} - ${sigla}` : realizarNomeExibicao(nomeDoPop);
                     const res = statusData(item.proximaInspecao);
@@ -960,7 +959,6 @@ export default function App() {
                   cronogramaChaves.map((item, idx) => {
                     let nomeDoPop = item.popNome;
                     if (nomeDoPop.toLowerCase() === 'odin' || nomeDoPop.toLowerCase() === 'odim') nomeDoPop = 'balder';
-                    if (!popPertenceAoUsuario(nomeDoPop)) return null;
                     const sigla = obterSiglaPop(nomeDoPop);
                     const nomeExibicao = sigla ? `${realizarNomeExibicao(nomeDoPop)} - ${sigla}` : realizarNomeExibicao(nomeDoPop);
                     const res = statusData(item.proximaInspecao);
