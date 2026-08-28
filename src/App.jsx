@@ -218,6 +218,9 @@ export default function App() {
   const [showAvisoGlobal, setShowAvisoGlobal] = useState(false);
   const [dadosCarregados, setDadosCarregados] = useState(false);
 
+  const [modalFiltroRelatorioAberto, setModalFiltroRelatorioAberto] = useState(false);
+  const [cidadesSelecionadasParaRelatorio, setCidadesSelecionadasParaRelatorio] = useState({});
+
   const [darkMode, setDarkMode] = useState(() => {
     try {
       const salvo = localStorage.getItem('darkMode_pops');
@@ -277,6 +280,26 @@ export default function App() {
     return false;
   };
 
+  const obterListaTodasCidades = () => {
+    const cidadesSet = new Set();
+    listaPops.forEach(pop => {
+      if (!popPertenceAoUsuario(pop.nome)) return;
+      const sigla = obterSiglaPop(pop.nome) || 'GERAL';
+      cidadesSet.add(sigla);
+    });
+    return Array.from(cidadesSet).sort();
+  };
+
+  const abrirModalFiltroRelatorio = () => {
+    const cidades = obterListaTodasCidades();
+    const mapInicial = {};
+    cidades.forEach(c => {
+      mapInicial[c] = true; // Por padrão, todas selecionadas
+    });
+    setCidadesSelecionadasParaRelatorio(mapInicial);
+    setModalFiltroRelatorioAberto(true);
+  };
+
   const verificarAlertasGlobaisDetalhados = () => {
     let vencidos = [];
     let amanha = [];
@@ -324,6 +347,7 @@ export default function App() {
   };
 
   const gerarRelatorioGeralIncidentesPDF = () => {
+    setModalFiltroRelatorioAberto(false);
     const janelaPdf = window.open('', '_blank');
     if (!janelaPdf) return;
 
@@ -331,7 +355,11 @@ export default function App() {
 
     listaPops.forEach(pop => {
       if (!popPertenceAoUsuario(pop.nome)) return;
+      const sigla = obterSiglaPop(pop.nome) || 'GERAL';
       
+      // Verifica se o usuário selecionou esta cidade no modal de filtro
+      if (!cidadesSelecionadasParaRelatorio[sigla]) return;
+
       const dadosPop = dadosGeraisPops[pop.nome] || {};
       const checkInPop = ultimosCheckIns.find(c => {
         let n = (c.popNome || c.pop || '').toLowerCase();
@@ -391,7 +419,6 @@ export default function App() {
 
       if (!temAlgoVencido) return;
 
-      const sigla = obterSiglaPop(pop.nome) || 'GERAL';
       if (!dadosPorCidade[sigla]) {
         dadosPorCidade[sigla] = [];
       }
@@ -434,7 +461,7 @@ export default function App() {
 
     const regioes = Object.keys(dadosPorCidade).sort();
     if (regioes.length === 0) {
-      html += `<p style="text-align: center; font-size: 14px; color: #28a745; margin-top: 40px; font-weight: bold;">Nenhum POP com itens vencidos no momento! Todos estão em dia. 👍</p>`;
+      html += `<p style="text-align: center; font-size: 14px; color: #28a745; margin-top: 40px; font-weight: bold;">Nenhum POP com itens vencidos nas cidades selecionadas no momento! 👍</p>`;
     } else {
       regioes.forEach(sigla => {
         html += `<h2>Região / Cidade: ${sigla}</h2>`;
@@ -778,13 +805,55 @@ export default function App() {
         onOpenDrawer={() => setDrawerAberto(true)}
         onOpenGerenciarPops={() => setTelaGerenciarPopsAberta(true)}
         onOpenAvisos={() => setShowAvisoGlobal(true)}
-        onGerarRelatorioGeral={gerarRelatorioGeralIncidentesPDF}
+        onGerarRelatorioGeral={abrirModalFiltroRelatorio}
         totalAlertas={totalAlertas}
         onLogout={() => { sessionStorage.removeItem('avisoMostrado'); signOut(auth); setUsuarioLogado(null); }} 
         darkMode={darkMode}
         setDarkMode={alternarTema}
         theme={theme}
       />
+
+      {modalFiltroRelatorioAberto && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 1150, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px', boxSizing: 'border-box' }}>
+          <div style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '10px', width: '100%', maxWidth: '400px', maxHeight: '90vh', border: `1px solid ${theme.border}`, boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+            <h3 style={{ marginTop: 0, fontSize: '17px', color: '#4dabf7', textAlign: 'center' }}>Filtro de Cidades/Regiões</h3>
+            <p style={{ fontSize: '13px', color: theme.textMuted, marginBottom: '15px', textAlign: 'center' }}>Selecione as regiões que deseja incluir no relatório de vencidos:</p>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <button type="button" onClick={() => {
+                const map = {};
+                obterListaTodasCidades().forEach(c => map[c] = true);
+                setCidadesSelecionadasParaRelatorio(map);
+              }} style={{ background: 'transparent', border: 'none', color: '#4dabf7', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Marcar Todas</button>
+              <button type="button" onClick={() => {
+                const map = {};
+                obterListaTodasCidades().forEach(c => map[c] = false);
+                setCidadesSelecionadasParaRelatorio(map);
+              }} style={{ background: 'transparent', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Desmarcar Todas</button>
+            </div>
+
+            <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '15px', background: theme.cardInner, padding: '10px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
+              {obterListaTodasCidades().map(sigla => (
+                <label key={sigla} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={!!cidadesSelecionadasParaRelatorio[sigla]} 
+                    onChange={(e) => {
+                      setCidadesSelecionadasParaRelatorio({ ...cidadesSelecionadasParaRelatorio, [sigla]: e.target.checked });
+                    }} 
+                  />
+                  Região / Cidade: {sigla}
+                </label>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button type="button" onClick={() => setModalFiltroRelatorioAberto(false)} style={{ flex: 1, padding: '10px', background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>Cancelar</button>
+              <button type="button" onClick={gerarRelatorioGeralIncidentesPDF} style={{ flex: 1, padding: '10px', background: '#007bff', border: 'none', color: '#fff', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>Gerar PDF</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showAvisoGlobal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px', boxSizing: 'border-box' }}>
@@ -1800,7 +1869,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
         htmlRelatorio += `
           <h2>Observações e Incidentes Gerais</h2>
-          <div class="bloco">
+          .bloco {
             <p><span class="negrito">Incidentes Gerais:</span> ${incidentesGerais || 'Nenhum incidente relatado.'}</p>
             <p><span class="negrito">Limpeza Necessária:</span> <span class="${precisaLimpeza ? 'vermelho' : ''}">${precisaLimpeza ? 'SIM' : 'NÃO'}</span></p>
             <p><span class="negrito">Anotações Extras:</span> ${anotacoes || 'Nenhuma anotação.'}</p>
