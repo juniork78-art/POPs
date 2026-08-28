@@ -139,7 +139,7 @@ const calcularProximaSubstituicaoBateria = (dataFabricacaoStr, popNome = '', tip
   } catch (e) { return ''; }
 };
 
-const calcularProximaInspecaoBateria = (dataUltimaInspecaoStr) => {
+const calcularProximaInspecaoGeral = (dataUltimaInspecaoStr) => {
   try {
     const parts = (dataUltimaInspecaoStr || '').split('/');
     if (parts.length === 3) {
@@ -208,6 +208,8 @@ export default function App() {
   const [ultimosCheckIns, setUltimosCheckIns] = useState([]);
   const [cronogramaLimpezas, setCronogramaLimpezas] = useState([]);
   const [cronogramaBaterias, setCronogramaBaterias] = useState([]);
+  const [cronogramaContatos, setCronogramaContatos] = useState([]);
+  const [cronogramaChaves, setCronogramaChaves] = useState([]);
   const [dadosGeraisPops, setDadosGeraisPops] = useState({});
   const [loadingAuth, setLoadingAuth] = useState(true);
 
@@ -305,6 +307,12 @@ export default function App() {
     if (cronogramaBaterias) {
       cronogramaBaterias.forEach(b => processarItem(b.popNome, `POP: ${b.popNome.toUpperCase()} - Banco de Bateria (${b.banco}) expirado`, b.proximaSubstituicao));
     }
+    if (cronogramaContatos) {
+      cronogramaContatos.forEach(c => processarItem(c.popNome, `POP: ${c.popNome.toUpperCase()} - Inspeção de contato expirada`, c.proximaInspecao));
+    }
+    if (cronogramaChaves) {
+      cronogramaChaves.forEach(ch => processarItem(ch.popNome, `POP: ${ch.popNome.toUpperCase()} - Inspeção de chave expirada`, ch.proximaInspecao));
+    }
     return { vencidos, amanha };
   };
 
@@ -364,6 +372,18 @@ export default function App() {
         if (resLimp && resLimp.status === 'vencido') {
           temAlgoVencido = true;
         }
+      }
+
+      const proxInspContato = calcularProximaInspecaoGeral(dadosPop.contato_ultima_insp);
+      const resContato = statusData(proxInspContato);
+      if (resContato && resContato.status === 'vencido') {
+        temAlgoVencido = true;
+      }
+
+      const proxInspChave = calcularProximaInspecaoGeral(dadosPop.chave_ultima_insp);
+      const resChave = statusData(proxInspChave);
+      if (resChave && resChave.status === 'vencido') {
+        temAlgoVencido = true;
       }
 
       if (!temAlgoVencido) return;
@@ -475,6 +495,18 @@ export default function App() {
             html += `<p style="margin-top: 4px;"><span class="negrito">Centrais de Ar Vencidas (${qtdAresVencidos}):</span>${aresVencidosHtml}</p>`;
           }
 
+          const proxInspContato = calcularProximaInspecaoGeral(dados.contato_ultima_insp);
+          const resContato = statusData(proxInspContato);
+          if (resContato && resContato.status === 'vencido') {
+            html += `<p style="margin-top: 4px;"><span class="negrito">Contato (${dados.contato_nome || 'N/A'}):</span> Próx. Insp: <span class="vermelho">${proxInspContato} (VENCIDO há ${resContato.dias}d)</span></p>`;
+          }
+
+          const proxInspChave = calcularProximaInspecaoGeral(dados.chave_ultima_insp);
+          const resChave = statusData(proxInspChave);
+          if (resChave && resChave.status === 'vencido') {
+            html += `<p style="margin-top: 4px;"><span class="negrito">Chave do POP:</span> Próx. Insp: <span class="vermelho">${proxInspChave} (VENCIDO há ${resChave.dias}d)</span></p>`;
+          }
+
           if (dados.anotacoes) {
             html += `<p style="margin-top: 4px;"><span class="negrito">Anotações:</span> ${dados.anotacoes}</p>`;
           }
@@ -515,7 +547,7 @@ export default function App() {
         sessionStorage.setItem('avisoMostrado', 'true');
       }
     }
-  }, [usuarioLogado, dadosCarregados, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias]);
+  }, [usuarioLogado, dadosCarregados, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias, cronogramaContatos, cronogramaChaves]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -567,9 +599,10 @@ export default function App() {
       const unsubPopsDados = onSnapshot(collection(db, "pops_dados"), async (snapshot) => {
         const listaLimpezasTemp = [];
         const listaBateriasTemp = [];
+        const listaContatosTemp = [];
+        const listaChavesTemp = [];
         const dadosGeraisTemp = {};
 
-        // CORREÇÃO AUTOMÁTICA DE EMERGÊNCIA: Se o balder ainda tiver bat_1_fab como '21/23', limpa automaticamente no Firestore!
         snapshot.forEach(async (d) => {
           let popNome = d.id;
           if (popNome.toLowerCase() === 'odin' || popNome.toLowerCase() === 'odim') popNome = 'balder';
@@ -578,11 +611,29 @@ export default function App() {
           if (popNome.toLowerCase() === 'balder' && data.bat_1_fab === '21/23') {
             try {
               await setDoc(doc(db, "pops_dados", "balder"), { bat_1_fab: "" }, { merge: true });
-              data.bat_1_fab = ""; // limpa localmente para sumir já
+              data.bat_1_fab = "";
             } catch (err) {}
           }
 
           dadosGeraisTemp[popNome.toLowerCase()] = data;
+
+          if (data.contato_nome || data.contato_tel || data.contato_ultima_insp) {
+            listaContatosTemp.push({
+              popNome,
+              nomeResponsavel: data.contato_nome || 'N/A',
+              telefone: data.contato_tel || 'N/A',
+              ultimaInspecao: data.contato_ultima_insp || '',
+              proximaInspecao: calcularProximaInspecaoGeral(data.contato_ultima_insp)
+            });
+          }
+
+          if (data.chave_ultima_insp) {
+            listaChavesTemp.push({
+              popNome,
+              ultimaInspecao: data.chave_ultima_insp,
+              proximaInspecao: calcularProximaInspecaoGeral(data.chave_ultima_insp)
+            });
+          }
 
           const qtdAr = data.qtdAr || 4;
           const nomeLower = popNome.toLowerCase();
@@ -605,13 +656,15 @@ export default function App() {
                 fabricacao: fab, 
                 proximaSubstituicao: calcularProximaSubstituicaoBateria(fab, popNome, tipoBat),
                 ultimaInspecao: ultimaInsp,
-                proximaInspecao: calcularProximaInspecaoBateria(ultimaInsp)
+                proximaInspecao: calcularProximaInspecaoGeral(ultimaInsp)
               });
             }
           }
         });
         setCronogramaLimpezas(listaLimpezasTemp);
         setCronogramaBaterias(listaBateriasTemp);
+        setCronogramaContatos(listaContatosTemp);
+        setCronogramaChaves(listaChavesTemp);
         setDadosGeraisPops(dadosGeraisTemp);
         setDadosCarregados(true);
       });
@@ -711,6 +764,8 @@ export default function App() {
         ultimosCheckIns={ultimosCheckIns}
         cronogramaLimpezas={cronogramaLimpezas}
         cronogramaBaterias={cronogramaBaterias}
+        cronogramaContatos={cronogramaContatos}
+        cronogramaChaves={cronogramaChaves}
         onPopClick={(pop) => setPopSelecionado(pop)} 
         onOpenDrawer={() => setDrawerAberto(true)}
         onOpenGerenciarPops={() => setTelaGerenciarPopsAberta(true)}
@@ -752,15 +807,17 @@ export default function App() {
 
       {drawerAberto && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex' }}>
-          <div style={{ width: '320px', background: theme.cardBg, color: theme.textMain, height: '100%', padding: '20px', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column', borderRight: `1px solid ${theme.border}` }}>
+          <div style={{ width: '340px', background: theme.cardBg, color: theme.textMain, height: '100%', padding: '20px', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column', borderRight: `1px solid ${theme.border}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
               <h3 style={{ margin: '0', fontSize: '16px' }}>Menu do Sistema</h3>
               <button onClick={() => setDrawerAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, fontSize: '18px', cursor: 'pointer' }}>✕</button>
             </div>
-            <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
-              <button onClick={() => setAbaDrawer('checkins')} style={{ flex: 1, padding: '8px 6px', background: abaDrawer === 'checkins' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Check-ins</button>
-              <button onClick={() => setAbaDrawer('limpezas')} style={{ flex: 1, padding: '8px 6px', background: abaDrawer === 'limpezas' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Limpezas Ar</button>
-              <button onClick={() => setAbaDrawer('baterias')} style={{ flex: 1, padding: '8px 6px', background: abaDrawer === 'baterias' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Baterias</button>
+            <div style={{ display: 'flex', gap: '4px', marginBottom: '15px', flexWrap: 'wrap' }}>
+              <button onClick={() => setAbaDrawer('checkins')} style={{ flex: '1 1 30%', padding: '6px 4px', background: abaDrawer === 'checkins' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Check-ins</button>
+              <button onClick={() => setAbaDrawer('limpezas')} style={{ flex: '1 1 30%', padding: '6px 4px', background: abaDrawer === 'limpezas' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Limpezas Ar</button>
+              <button onClick={() => setAbaDrawer('baterias')} style={{ flex: '1 1 30%', padding: '6px 4px', background: abaDrawer === 'baterias' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Baterias</button>
+              <button onClick={() => setAbaDrawer('contatos')} style={{ flex: '1 1 45%', padding: '6px 4px', background: abaDrawer === 'contatos' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Contatos</button>
+              <button onClick={() => setAbaDrawer('chaves')} style={{ flex: '1 1 45%', padding: '6px 4px', background: abaDrawer === 'chaves' ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>Chaves</button>
             </div>
 
             {abaDrawer === 'checkins' ? (
@@ -822,7 +879,7 @@ export default function App() {
                   );
                 })}
               </div>
-            ) : (
+            ) : abaDrawer === 'baterias' ? (
               <div>
                 <h4 style={{ color: theme.textMuted, fontSize: '15px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px', marginTop: 0 }}>Cronograma de Baterias</h4>
                 {cronogramaBaterias.map((item, idx) => {
@@ -855,6 +912,64 @@ export default function App() {
                     </div>
                   );
                 })}
+              </div>
+            ) : abaDrawer === 'contatos' ? (
+              <div>
+                <h4 style={{ color: theme.textMuted, fontSize: '15px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px', marginTop: 0 }}>Contatos dos POPs</h4>
+                {cronogramaContatos.length === 0 ? (
+                  <p style={{ color: theme.textMuted, fontSize: '13px' }}>Nenhum contato cadastrado.</p>
+                ) : (
+                  cronogramaContatos.map((item, idx) => {
+                    let nomeDoPop = item.popNome;
+                    if (nomeDoPop.toLowerCase() === 'odin' || nomeDoPop.toLowerCase() === 'odim') nomeDoPop = 'balder';
+                    if (!popPertenceAoUsuario(nomeDoPop)) return null;
+                    const sigla = obterSiglaPop(nomeDoPop);
+                    const nomeExibicao = sigla ? `${realizarNomeExibicao(nomeDoPop)} - ${sigla}` : realizarNomeExibicao(nomeDoPop);
+                    const res = statusData(item.proximaInspecao);
+                    const vencido = res && res.status === 'vencido';
+                    const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
+
+                    return (
+                      <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '13px', border: `1px solid ${theme.border}` }}>
+                        <p style={{ margin: '0 0 4px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '13px' }}>POP: {nomeExibicao}</p>
+                        <p style={{ margin: '0 0 3px 0', color: theme.textMain }}><b>Responsável:</b> {item.nomeResponsavel}</p>
+                        <p style={{ margin: '0 0 3px 0', color: theme.textMain }}><b>Telefone:</b> {item.telefone}</p>
+                        <p style={{ margin: '0 0 3px 0', color: theme.textMuted }}>Última Insp: {item.ultimaInspecao || 'N/A'}</p>
+                        <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
+                          Próx. Insp: {item.proximaInspecao || 'N/A'} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
+                        </p>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            ) : (
+              <div>
+                <h4 style={{ color: theme.textMuted, fontSize: '15px', borderBottom: `1.5px solid ${theme.border}`, paddingBottom: '6px', marginTop: 0 }}>Controle de Chaves</h4>
+                {cronogramaChaves.length === 0 ? (
+                  <p style={{ color: theme.textMuted, fontSize: '13px' }}>Nenhuma chave registrada.</p>
+                ) : (
+                  cronogramaChaves.map((item, idx) => {
+                    let nomeDoPop = item.popNome;
+                    if (nomeDoPop.toLowerCase() === 'odin' || nomeDoPop.toLowerCase() === 'odim') nomeDoPop = 'balder';
+                    if (!popPertenceAoUsuario(nomeDoPop)) return null;
+                    const sigla = obterSiglaPop(nomeDoPop);
+                    const nomeExibicao = sigla ? `${realizarNomeExibicao(nomeDoPop)} - ${sigla}` : realizarNomeExibicao(nomeDoPop);
+                    const res = statusData(item.proximaInspecao);
+                    const vencido = res && res.status === 'vencido';
+                    const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
+
+                    return (
+                      <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '13px', border: `1px solid ${theme.border}` }}>
+                        <p style={{ margin: '0 0 4px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '13px' }}>POP: {nomeExibicao}</p>
+                        <p style={{ margin: '0 0 3px 0', color: theme.textMuted }}>Última Insp: {item.ultimaInspecao || 'N/A'}</p>
+                        <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
+                          Próx. Insp: {item.proximaInspecao || 'N/A'} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
+                        </p>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             )}
           </div>
@@ -972,7 +1087,7 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
   );
 }
 
-function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias, onPopClick, onOpenDrawer, onOpenGerenciarPops, onOpenAvisos, onGerarRelatorioGeral, totalAlertas, onLogout, darkMode, setDarkMode, theme }) {
+function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias, cronogramaContatos, cronogramaChaves, onPopClick, onOpenDrawer, onOpenGerenciarPops, onOpenAvisos, onGerarRelatorioGeral, totalAlertas, onLogout, darkMode, setDarkMode, theme }) {
   const [busca, setBusca] = useState('');
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
@@ -1098,6 +1213,14 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
   const [precisaLimpeza, setPrecisaLimpeza] = useState(false);
   const [anotacoes, setAnotacoes] = useState('');
 
+  const [contatoNome, setContatoNome] = useState('');
+  const [contatoTel, setContatoTel] = useState('');
+  const [contatoUltimaInsp, setContatoUltimaInsp] = useState('');
+  const [contatoSalvo, setContatoSalvo] = useState(false);
+
+  const [chaveUltimaInsp, setChaveUltimaInsp] = useState('');
+  const [chaveSalvo, setChaveSalvo] = useState(false);
+
   const [menuPopsLateralAberto, setMenuPopsLateralAberto] = useState(false);
   const [buscaPopLateral, setBuscaPopLateral] = useState('');
 
@@ -1183,6 +1306,14 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         if (data.qtdBancos) setQtdBancos(data.qtdBancos);
         if (data.qtdAr) setQtdAr(data.qtdAr);
         if (data.fotosPop) setFotosPop(data.fotosPop);
+
+        if (data.contato_nome !== undefined) setContatoNome(data.contato_nome);
+        if (data.contato_tel !== undefined) setContatoTel(data.contato_tel);
+        if (data.contato_ultima_insp !== undefined) setContatoUltimaInsp(data.contato_ultima_insp);
+        if (data.contato_salvo !== undefined) setContatoSalvo(data.contato_salvo);
+
+        if (data.chave_ultima_insp !== undefined) setChaveUltimaInsp(data.chave_ultima_insp);
+        if (data.chave_salvo !== undefined) setChaveSalvo(data.chave_salvo);
 
         if (data.statusAtivos) {
           const filtrados = { ...data.statusAtivos };
@@ -1356,6 +1487,14 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
           <p><span class="negrito">Data da Inspeção:</span> ${dataInspecaoFinal}</p>
           <p><span class="negrito">Próxima Inspeção Recomendada:</span> ${dataProxStr}</p>
 
+          <h2>Contato e Chaves do POP</h2>
+          <div class="bloco">
+            <p><span class="negrito">Responsável:</span> ${contatoNome || 'Não informado'}</p>
+            <p><span class="negrito">Telefone:</span> ${contatoTel || 'Não informado'}</p>
+            <p><span class="negrito">Última Insp. Contato:</span> ${contatoUltimaInsp || 'N/A'} | Próxima: ${calcularProximaInspecaoGeral(contatoUltimaInsp) || 'N/A'}</p>
+            <p><span class="negrito">Última Insp. Chave:</span> ${chaveUltimaInsp || 'N/A'} | Próxima: ${calcularProximaInspecaoGeral(chaveUltimaInsp) || 'N/A'}</p>
+          </div>
+
           <h2>Status dos Ativos no POP</h2>
       `;
 
@@ -1382,7 +1521,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
           const resSub = statusData(proxSub);
           const vencidoSub = resSub && resSub.status === 'vencido';
 
-          const proxInsp = calcularProximaInspecaoBateria(bModel.dataUltimaInspecao);
+          const proxInsp = calcularProximaInspecaoGeral(bModel.dataUltimaInspecao);
           const resInsp = statusData(proxInsp);
           const vencidoInsp = resInsp && resInsp.status === 'vencido';
 
@@ -1561,6 +1700,14 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
             <p><span class="negrito">Data da Inspeção:</span> ${dataInspecaoFinal}</p>
             <p><span class="negrito">Próxima Inspeção Recomendada:</span> ${dataProxStr}</p>
 
+            <h2>Contato e Chaves do POP</h2>
+            <div class="bloco">
+              <p><span class="negrito">Responsável:</span> ${contatoNome || 'Não informado'}</p>
+              <p><span class="negrito">Telefone:</span> ${contatoTel || 'Não informado'}</p>
+              <p><span class="negrito">Última Insp. Contato:</span> ${contatoUltimaInsp || 'N/A'} | Próxima: ${calcularProximaInspecaoGeral(contatoUltimaInsp) || 'N/A'}</p>
+              <p><span class="negrito">Última Insp. Chave:</span> ${chaveUltimaInsp || 'N/A'} | Próxima: ${calcularProximaInspecaoGeral(chaveUltimaInsp) || 'N/A'}</p>
+            </div>
+
             <h2>Status dos Ativos no POP</h2>
         `;
 
@@ -1587,7 +1734,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
             const resSub = statusData(proxSub);
             const vencidoSub = resSub && resSub.status === 'vencido';
 
-            const proxInsp = calcularProximaInspecaoBateria(bModel.dataUltimaInspecao);
+            const proxInsp = calcularProximaInspecaoGeral(bModel.dataUltimaInspecao);
             const resInsp = statusData(proxInsp);
             const vencidoInsp = resInsp && resInsp.status === 'vencido';
 
@@ -1803,6 +1950,59 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
             )}
           </div>
 
+          {/* SEÇÃO DE CONTATO E CHAVES */}
+          <div style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '15px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <h3 style={{ fontSize: '15px', margin: 0, color: '#4dabf7' }}>📞 Contato e 🔑 Chaves do POP</h3>
+              <button type="button" onClick={() => {
+                const novoSalvo = !contatoSalvo;
+                setContatoSalvo(novoSalvo);
+                setChaveSalvo(novoSalvo);
+                salvarNoFirebase({
+                  contato_nome: contatoNome,
+                  contato_tel: contatoTel,
+                  contato_ultima_insp: contatoUltimaInsp,
+                  contato_salvo: novoSalvo,
+                  chave_ultima_insp: chaveUltimaInsp,
+                  chave_salvo: novoSalvo
+                });
+                alert("Contato e Chave salvos com sucesso!");
+              }} style={{ background: contatoSalvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
+                {contatoSalvo ? 'Editar' : 'Salvar Contato/Chave'}
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '8px' }}>
+              <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Nome do Responsável (Contato)</label>
+              <input type="text" disabled={contatoSalvo} placeholder="Nome do responsável" value={contatoNome} onChange={(e) => setContatoNome(e.target.value)} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
+            </div>
+
+            <div style={{ marginBottom: '8px' }}>
+              <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Telefone do Responsável</label>
+              <input type="text" disabled={contatoSalvo} placeholder="(00) 00000-0000" value={contatoTel} onChange={(e) => setContatoTel(e.target.value)} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
+            </div>
+
+            <div style={{ marginBottom: '8px' }}>
+              <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data da Inspeção do Contato (dd/MM/aaaa)</label>
+              <input type="text" disabled={contatoSalvo} placeholder="dd/MM/aaaa" value={contatoUltimaInsp} onChange={(e) => setContatoUltimaInsp(e.target.value)} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
+              {contatoUltimaInsp && (
+                <p style={{ fontSize: '11px', color: '#4dabf7', margin: '3px 0 0 0', fontWeight: 'bold' }}>
+                  Próxima Insp. Contato (3 meses): {calcularProximaInspecaoGeral(contatoUltimaInsp)}
+                </p>
+              )}
+            </div>
+
+            <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '8px', marginTop: '8px' }}>
+              <label style={{ display: 'block', fontSize: '11px', color: theme.textMuted, marginBottom: '2px' }}>Data da Inspeção da Chave (dd/MM/aaaa)</label>
+              <input type="text" disabled={chaveSalvo} placeholder="dd/MM/aaaa" value={chaveUltimaInsp} onChange={(e) => setChaveUltimaInsp(e.target.value)} style={{ width: '100%', padding: '7px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '13px' }} />
+              {chaveUltimaInsp && (
+                <p style={{ fontSize: '11px', color: '#4dabf7', margin: '3px 0 0 0', fontWeight: 'bold' }}>
+                  Próxima Insp. Chave (3 meses): {calcularProximaInspecaoGeral(chaveUltimaInsp)}
+                </p>
+              )}
+            </div>
+          </div>
+
           <h3 style={{ fontSize: '16px', marginBottom: '10px' }}>Status dos Ativos no POP</h3>
           {Object.keys(statusAtivos).map((ativo) => {
             const presente = ativosPresentes[ativo];
@@ -1877,7 +2077,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
               const resSub = statusData(proxSub);
               const vencidoSub = resSub && resSub.status === 'vencido';
 
-              const proxInsp = calcularProximaInspecaoBateria(bModel.dataUltimaInspecao);
+              const proxInsp = calcularProximaInspecaoGeral(bModel.dataUltimaInspecao);
               const resInsp = statusData(proxInsp);
               const vencidoInsp = resInsp && resInsp.status === 'vencido';
 
