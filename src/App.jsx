@@ -1623,18 +1623,6 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
     }
   };
 
-  const salvarStatusAtivosFirebase = async () => {
-    await salvarNoFirebase({
-      statusAtivos,
-      ativosPresentes,
-      detalhesIncidentes,
-      incidentesGerais,
-      precisaLimpeza,
-      anotacoes
-    });
-    alert("Status dos ativos e observações salvos com sucesso!");
-  };
-
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -1789,7 +1777,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
               Data de Fabricação: ${fabExibicao}<br>
               <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+${anosTrocaCalculado} anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
               Data da Última Inspeção: ${bModel.dataUltimaInspecao || 'N/A'}<br>
-              <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (3 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span>
+              <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (6 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span>
               ${voltagensHtml}
             </div>
           `;
@@ -2013,7 +2001,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 Data de Fabricação: ${fabExibicao}<br>
                 <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+${anosTrocaCalculado} anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
                 Data da Última Inspeção: ${bModel.dataUltimaInspecao || 'N/A'}<br>
-                <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (3 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span>
+                <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (6 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span>
                 ${voltagensHtml}
               </div>
             `;
@@ -2280,7 +2268,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                   }} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
                   {contato.ultimaInsp ? (
                     <p style={{ fontSize: '13px', color: '#4dabf7', margin: '4px 0 0 0', fontWeight: 'bold' }}>
-                      Próxima Insp. Contato (3 meses): {calcularProximaInspecaoGeral(contato.ultimaInsp)}
+                      Próxima Insp. Contato (6 meses): {calcularProximaInspecaoGeral(contato.ultimaInsp)}
                     </p>
                   ) : null}
                 </div>
@@ -2292,7 +2280,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
               <input type="text" placeholder="dd/MM/aaaa" value={chaveUltimaInsp || ''} onChange={(e) => setChaveUltimaInsp(e.target.value)} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
               {chaveUltimaInsp ? (
                 <p style={{ fontSize: '13px', color: '#4dabf7', margin: '4px 0 0 0', fontWeight: 'bold' }}>
-                  Próxima Insp. Chave (3 meses): {calcularProximaInspecaoGeral(chaveUltimaInsp)}
+                  Próxima Insp. Chave (6 meses): {calcularProximaInspecaoGeral(chaveUltimaInsp)}
                 </p>
               ) : null}
             </div>
@@ -2478,7 +2466,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                     />
                     {proxInsp && (
                       <p className={vencidoInsp ? 'alerta-vencido' : ''} style={{ fontSize: '12px', margin: '4px 0 0 0', color: vencidoInsp ? undefined : '#4dabf7', fontWeight: 'bold' }}>
-                        Próxima Inspeção de Bateria (3 meses): {proxInsp} {vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}
+                        Próxima Inspeção de Bateria (6 meses): {proxInsp} {vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}
                       </p>
                     )}
                   </div>
