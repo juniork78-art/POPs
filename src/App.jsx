@@ -212,7 +212,7 @@ const popsIniciaisPadrao = [
   { id: 25, nome: "neftis", endereco: "Avenida Inglaterra 333, Novo Horizonte - Parauapebas - PA, 68515-000 - Galeria - pbs" },
   { id: 26, nome: "bastet", endereco: "Apartamento - Rio Verde - pbs" },
   { id: 27, nome: "hathor", endereco: "vs10 - pbs" },
-  { id: 28, nome: "sobek", endereco: "Rio Verde - pbs" }
+  { id: 28, nome: "sobek", endereco: "R. Dois Irmão, 32 - Da Paz, Parauapebas - PA, 68515-000 - Rio Verde - pbs" }
 ];
 
 function App() {
