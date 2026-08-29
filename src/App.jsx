@@ -137,12 +137,12 @@ const calcularProximaSubstituicaoBateria = (dataFabricacaoStr, popNome = '', tip
   } catch (e) { return ''; }
 };
 
-const calcularProximaInspecaoGeral = (dataUltimaInspecaoStr) => {
+const calcularProximaInspecaoGeral = (dataUltimaInspecaoStr, meses = 3) => {
   try {
     const parts = (dataUltimaInspecaoStr || '').split('/');
     if (parts.length === 3) {
       const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1 + 3;
+      const month = parseInt(parts[1], 10) - 1 + meses;
       const year = parseInt(parts[2], 10) + Math.floor(month / 12);
       const adjustedMonth = month % 12;
       const date = new Date(year, adjustedMonth, day);
@@ -449,7 +449,7 @@ function App() {
           const resContato = statusData(proxInspContato);
           if (resContato && resContato.status === 'vencido') {
             temAlgoVencido = true;
-          }
+        }
         });
       }
 
@@ -749,7 +749,7 @@ function App() {
                 fabricacao: fab, 
                 proximaSubstituicao: calcularProximaSubstituicaoBateria(fab, popNome, tipoBat),
                 ultimaInspecao: ultimaInsp,
-                proximaInspecao: calcularProximaInspecaoGeral(ultimaInsp)
+                proximaInspecao: calcularProximaInspecaoGeral(ultimaInsp, 6)
               });
             }
           }
@@ -1771,7 +1771,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
           const resSub = statusData(proxSub);
           const vencidoSub = resSub && resSub.status === 'vencido';
 
-          const proxInsp = calcularProximaInspecaoGeral(bModel.dataUltimaInspecao);
+          const proxInsp = calcularProximaInspecaoGeral(bModel.dataUltimaInspecao, 6);
           const resInsp = statusData(proxInsp);
           const vencidoInsp = resInsp && resInsp.status === 'vencido';
 
@@ -1785,7 +1785,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
               Data de Fabricação: ${fabExibicao}<br>
               <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+${anosTrocaCalculado} anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
               Data da Última Inspeção: ${bModel.dataUltimaInspecao || 'N/A'}<br>
-              <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (3 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span>
+              <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (6 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span>
               ${voltagensHtml}
             </div>
           `;
@@ -1994,7 +1994,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
             const resSub = statusData(proxSub);
             const vencidoSub = resSub && resSub.status === 'vencido';
 
-            const proxInsp = calcularProximaInspecaoGeral(bModel.dataUltimaInspecao);
+            const proxInsp = calcularProximaInspecaoGeral(bModel.dataUltimaInspecao, 6);
             const resInsp = statusData(proxInsp);
             const vencidoInsp = resInsp && resInsp.status === 'vencido';
 
@@ -2008,7 +2008,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 Data de Fabricação: ${fabExibicao}<br>
                 <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+${anosTrocaCalculado} anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
                 Data da Última Inspeção: ${bModel.dataUltimaInspecao || 'N/A'}<br>
-                <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (3 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span>
+                <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (6 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span>
                 ${voltagensHtml}
               </div>
             `;
@@ -2154,18 +2154,12 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                     <p style={{ fontSize: '13px', color: theme.textMuted, textAlign: 'center' }}>Nenhuma foto salva para este POP.</p>
                   ) : (
                     fotosPop.map((foto) => (
-                      <div key={foto.id} style={{ background: theme.cardInner, padding: '8px', borderRadius: '4px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
-                        <img 
-                          src={foto.url} 
-                          alt="POP" 
-                          style={{ width: '70px', height: '45px', objectFit: 'cover', borderRadius: '4px', cursor: 'pointer' }} 
-                          onClick={() => setFotoTelaCheiaUrl(foto.url)}
-                          title="Clique para abrir em tela cheia"
-                        />
-                        <div style={{ flex: 1, fontSize: '13px', color: theme.textMuted }}>
-                          Salva em: {foto.data}
+                      <div key={foto.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: theme.cardInner, padding: '10px', borderRadius: '4px', border: `1px solid ${theme.border}` }}>
+                        <img src={foto.url} alt={`Foto ${foto.id}`} style={{ width: '100%', maxHeight: '150px', objectFit: 'cover', borderRadius: '4px', cursor: 'pointer' }} onClick={() => setFotoTelaCheiaUrl(foto.url)} title="Clique para ampliar" />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '12px', color: theme.textMuted }}>{foto.data}</span>
+                          <button type="button" onClick={() => deletarFotoPop(foto.id)} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Excluir</button>
                         </div>
-                        <button type="button" onClick={() => deletarFotoPop(foto.id)} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '5px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Deletar</button>
                       </div>
                     ))
                   )}
@@ -2175,365 +2169,84 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
           )}
 
           {fotoTelaCheiaUrl && (
-            <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.95)', zIndex: 1300, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px', boxSizing: 'border-box' }}>
-              <button 
-                onClick={() => setFotoTelaCheiaUrl(null)} 
-                style={{ position: 'absolute', top: '15px', right: '15px', background: '#dc3545', border: 'none', color: '#fff', fontSize: '17px', fontWeight: 'bold', padding: '8px 14px', borderRadius: '4px', cursor: 'pointer' }}
-              >
-                ✕ Fechar
-              </button>
-              <img src={fotoTelaCheiaUrl} alt="Tela Cheia" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '4px' }} />
+            <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', zIndex: 1300, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px', boxSizing: 'border-box' }} onClick={() => setFotoTelaCheiaUrl(null)}>
+              <img src={fotoTelaCheiaUrl} alt="Tela Cheia" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+              <button type="button" onClick={() => setFotoTelaCheiaUrl(null)} style={{ position: 'absolute', top: '15px', right: '20px', background: 'transparent', border: 'none', color: '#fff', fontSize: '24px', cursor: 'pointer', fontWeight: 'bold' }}>✕</button>
             </div>
           )}
-          
-          <div className="no-print" style={{ marginBottom: '18px', background: theme.cardInner, padding: '10px 12px', borderRadius: '6px', border: `1px solid ${theme.border}`, width: '100%', boxSizing: 'border-box' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '6px', width: '100%', boxSizing: 'border-box' }}>
-              <label style={{ fontSize: '14px', color: theme.textMuted, fontWeight: 'bold' }}>Tipo de Data da Inspeção</label>
-              <button type="button" onClick={gerarPdfUltimaInspecao} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
-                📄 Gerar PDF da Última Inspeção
-              </button>
-            </div>
-            <div style={{ display: 'flex', gap: '15px', marginBottom: '10px', flexWrap: 'wrap' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '14px' }}>
-                <input type="radio" name="tipoData" checked={tipoData === 'atual'} onChange={() => setTipoData('atual')} /> Data Atual + GPS
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '14px' }}>
-                <input type="radio" name="tipoData" checked={tipoData === 'manual'} onChange={() => setTipoData('manual')} /> Data Manual Salva
-              </label>
-            </div>
 
-            {tipoData === 'manual' && (
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Informe a data que foi feita a inspeção</label>
-                <input type="text" value={dataManualInspecao} onChange={(e) => setDataManualInspecao(e.target.value)} placeholder="ex: 20/08/2026" style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '15px' }} />
-              </div>
-            )}
-          </div>
-
-          <div style={{ background: theme.cardInner, padding: '12px', borderRadius: '6px', marginBottom: '15px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <h3 style={{ fontSize: '18px', margin: 0, color: '#4dabf7' }}>📞 Contatos e 🔑 Chaves do POP</h3>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <button type="button" onClick={() => setListaContatos([...listaContatos, { nome: '', funcao: '', telefone: '', ultimaInsp: '' }])} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
-                  + Adicionar Contato
-                </button>
-                <button type="button" onClick={() => {
-                  salvarNoFirebase({
-                    listaContatos,
-                    chave_ultima_insp: chaveUltimaInsp
-                  });
-                  alert("Contatos e Chave salvos com sucesso!");
-                }} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
-                  Salvar Contatos/Chave
-                </button>
-              </div>
-            </div>
-
+          {/* Seção de Contatos e Chaves */}
+          <div style={{ marginBottom: '20px', background: theme.cardInner, padding: '15px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
+            <h3 style={{ marginTop: 0, color: '#4dabf7', fontSize: '16px' }}>Contatos e Acesso</h3>
             {listaContatos.map((contato, idx) => (
-              <div key={idx} style={{ background: theme.cardBg, padding: '12px', borderRadius: '4px', marginBottom: '10px', border: `1px solid ${theme.border}`, position: 'relative' }}>
-                {listaContatos.length > 1 && (
-                  <button type="button" onClick={() => {
-                    const novaLista = listaContatos.filter((_, i) => i !== idx);
-                    setListaContatos(novaLista);
-                  }} style={{ position: 'absolute', top: '10px', right: '10px', background: 'transparent', border: 'none', color: '#ff4d4d', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer' }}>✕</button>
-                )}
-                <p style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold', color: '#4dabf7' }}>Contato {idx + 1}</p>
-                <div style={{ marginBottom: '8px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Nome do Responsável</label>
-                  <input type="text" placeholder="Nome do responsável" value={contato.nome} onChange={(e) => {
-                    const novaLista = [...listaContatos];
-                    novaLista[idx].nome = e.target.value;
-                    setListaContatos(novaLista);
-                  }} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-                </div>
-                <div style={{ marginBottom: '8px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Função (Ex: Síndica, Gerente, Resp. POP)</label>
-                  <input type="text" placeholder="Ex: Síndica" value={contato.funcao} onChange={(e) => {
-                    const novaLista = [...listaContatos];
-                    novaLista[idx].funcao = e.target.value;
-                    setListaContatos(novaLista);
-                  }} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-                </div>
-                <div style={{ marginBottom: '8px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Telefone</label>
-                  <input type="text" placeholder="(00) 00000-0000" value={contato.telefone} onChange={(e) => {
-                    const novaLista = [...listaContatos];
-                    novaLista[idx].telefone = e.target.value;
-                    setListaContatos(novaLista);
-                  }} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data da Inspeção do Contato (dd/MM/aaaa)</label>
-                  <input type="text" placeholder="dd/MM/aaaa" value={contato.ultimaInsp} onChange={(e) => {
-                    const novaLista = [...listaContatos];
-                    novaLista[idx].ultimaInsp = e.target.value;
-                    setListaContatos(novaLista);
-                  }} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-                  {contato.ultimaInsp ? (
-                    <p style={{ fontSize: '13px', color: '#4dabf7', margin: '4px 0 0 0', fontWeight: 'bold' }}>
-                      Próxima Insp. Contato (3 meses): {calcularProximaInspecaoGeral(contato.ultimaInsp)}
-                    </p>
-                  ) : null}
-                </div>
+              <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '10px', borderBottom: idx < listaContatos.length - 1 ? `1px solid ${theme.border}` : 'none', paddingBottom: '10px' }}>
+                <input type="text" placeholder="Nome do Responsável" value={contato.nome} onChange={(e) => {
+                  const novaLista = [...listaContatos];
+                  novaLista[idx].nome = e.target.value;
+                  setListaContatos(novaLista);
+                }} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', boxSizing: 'border-box' }} />
+                <input type="text" placeholder="Função" value={contato.funcao} onChange={(e) => {
+                  const novaLista = [...listaContatos];
+                  novaLista[idx].funcao = e.target.value;
+                  setListaContatos(novaLista);
+                }} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', boxSizing: 'border-box' }} />
+                <input type="text" placeholder="Telefone" value={contato.telefone} onChange={(e) => {
+                  const novaLista = [...listaContatos];
+                  novaLista[idx].telefone = e.target.value;
+                  setListaContatos(novaLista);
+                }} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', boxSizing: 'border-box' }} />
+                <input type="text" placeholder="Última Inspeção (DD/MM/AAAA)" value={contato.ultimaInsp} onChange={(e) => {
+                  const novaLista = [...listaContatos];
+                  novaLista[idx].ultimaInsp = e.target.value;
+                  setListaContatos(novaLista);
+                }} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', boxSizing: 'border-box' }} />
               </div>
             ))}
+            <button type="button" onClick={() => setListaContatos([...listaContatos, { nome: '', funcao: '', telefone: '', ultimaInsp: '' }])} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>+ Adicionar Contato</button>
 
-            <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '10px', marginTop: '12px' }}>
-              <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data da Inspeção da Chave (dd/MM/aaaa)</label>
-              <input type="text" placeholder="dd/MM/aaaa" value={chaveUltimaInsp} onChange={(e) => setChaveUltimaInsp(e.target.value)} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-              {chaveUltimaInsp ? (
-                <p style={{ fontSize: '13px', color: '#4dabf7', margin: '4px 0 0 0', fontWeight: 'bold' }}>
-                  Próxima Insp. Chave (3 meses): {calcularProximaInspecaoGeral(chaveUltimaInsp)}
-                </p>
-              ) : null}
+            <div style={{ marginTop: '15px' }}>
+              <label style={{ display: 'block', fontSize: '14px', marginBottom: '6px', fontWeight: 'bold' }}>Última Inspeção da Chave (DD/MM/AAAA):</label>
+              <input type="text" value={chaveUltimaInsp} onChange={(e) => setChaveUltimaInsp(e.target.value)} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', boxSizing: 'border-box' }} />
             </div>
           </div>
 
-          <h3 style={{ fontSize: '18px', marginBottom: '12px' }}>Status dos Ativos no POP</h3>
-          {Object.keys(statusAtivos).map((ativo) => {
-            const presente = ativosPresentes[ativo];
-            return (
-              <div key={ativo} style={{ background: theme.cardInner, padding: '12px 14px', borderRadius: '6px', marginBottom: '12px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}>
-                    <input type="checkbox" checked={presente} onChange={(e) => setAtivosPresentes({ ...ativosPresentes, [ativo]: e.target.checked })} />
-                    {ativo}
-                  </label>
-                  {presente && (
-                    <div className="no-print" style={{ display: 'flex', gap: '8px' }}>
-                      <button 
-                        type="button" 
-                        onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'OK' })} 
-                        style={{ 
-                          background: statusAtivos[ativo] === 'OK' ? '#28a745' : theme.cardBg, 
-                          border: `1px solid ${theme.border}`, 
-                          color: statusAtivos[ativo] === 'OK' ? '#fff' : theme.textMain, 
-                          padding: '6px 12px', 
-                          borderRadius: '4px', 
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          fontWeight: 'bold'
-                        }}
-                      >
-                        OK
-                      </button>
-                      <button 
-                        type="button" 
-                        onClick={() => setStatusAtivos({ ...statusAtivos, [ativo]: 'Incidente' })} 
-                        style={{ 
-                          background: statusAtivos[ativo] === 'Incidente' ? '#dc3545' : theme.cardBg, 
-                          border: `1px solid ${theme.border}`, 
-                          color: statusAtivos[ativo] === 'Incidente' ? '#fff' : theme.textMain, 
-                          padding: '6px 12px', 
-                          borderRadius: '4px', 
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          fontWeight: 'bold'
-                        }}
-                      >
-                        Incidente
-                      </button>
-                    </div>
-                  )}
-                </div>
-                {presente && statusAtivos[ativo] === 'Incidente' && (
-                  <input type="text" placeholder={`Relatar incidente em ${ativo}`} value={detalhesIncidentes[ativo] || ''} onChange={(e) => setDetalhesIncidentes({ ...detalhesIncidentes, [ativo]: e.target.value })} style={{ width: '100%', marginTop: '10px', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '15px' }} />
-                )}
-              </div>
-            );
-          })}
-
-          <button type="button" onClick={salvarStatusAtivosFirebase} className="no-print" style={{ width: '100%', padding: '12px', background: '#17a2b8', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', marginTop: '8px', marginBottom: '20px', fontSize: '15px', boxSizing: 'border-box' }}>
-            Salvar Status dos Ativos
-          </button>
-
-          <div style={{ marginTop: '15px', width: '100%', boxSizing: 'border-box' }}>
-            <h3 style={{ fontSize: '18px', marginBottom: '12px' }}>Bancos de Baterias</h3>
-            <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
-              {[1, 2, 3, 4].map((num) => (
-                <button key={num} type="button" onClick={() => { setQtdBancos(num); salvarNoFirebase({ qtdBancos: num }); }} style={{ padding: '8px 14px', background: qtdBancos === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>{num}</button>
-              ))}
-            </div>
-            {Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
-              const bModel = bancosBateria[banco] || { tipo: 'Chumbo', dataFabricacao: '', dataUltimaInspecao: '', voltagens: ['', '', '', ''], salvo: false };
-              
-              const anosTrocaCalculado = (bModel.tipo && bModel.tipo.toLowerCase() === 'lítio') ? 8 : 2;
-              const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
-              const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao, pop.nome, bModel.tipo);
-              const resSub = statusData(proxSub);
-              const vencidoSub = resSub && resSub.status === 'vencido';
-
-              const proxInsp = calcularProximaInspecaoGeral(bModel.dataUltimaInspecao);
-              const resInsp = statusData(proxInsp);
-              const vencidoInsp = resInsp && resInsp.status === 'vencido';
-
-              return (
-                <div key={banco} style={{ background: theme.cardInner, padding: '12px 14px', borderRadius: '6px', marginBottom: '12px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px', width: '100%', boxSizing: 'border-box' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                      <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>Banco {getLetra(banco)}</h4>
-                      <select 
-                        disabled={bModel.salvo}
-                        value={bModel.tipo}
-                        onChange={(e) => {
-                          const novoTipo = e.target.value;
-                          setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, tipo: novoTipo } });
-                        }}
-                        style={{ padding: '5px 8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px' }}
-                      >
-                        <option value="Chumbo">Chumbo</option>
-                        <option value="Lítio">Lítio</option>
-                      </select>
-                    </div>
-                    <button type="button" onClick={() => {
-                      const novoSalvo = !bModel.salvo;
-                      const novoEstado = { ...bancosBateria, [banco]: { ...bModel, salvo: novoSalvo } };
-                      setBancosBateria(novoEstado);
-                      salvarNoFirebase({ 
-                        qtdBancos,
-                        [`bat_${banco}_tipo`]: bModel.tipo,
-                        [`bat_${banco}_fab`]: bModel.dataFabricacao, 
-                        [`bat_${banco}_insp`]: bModel.dataUltimaInspecao,
-                        [`bat_${banco}_v1`]: bModel.voltagens[0],
-                        [`bat_${banco}_v2`]: bModel.voltagens[1],
-                        [`bat_${banco}_v3`]: bModel.voltagens[2],
-                        [`bat_${banco}_v4`]: bModel.voltagens[3],
-                        [`bat_${banco}_salvo`]: novoSalvo 
-                      });
-                    }} className="no-print" style={{ background: bModel.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '5px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
-                      {bModel.salvo ? 'Editar' : 'Salvar'}
-                    </button>
-                  </div>
-
-                  <div style={{ marginBottom: '8px', width: '100%', boxSizing: 'border-box' }}>
-                    <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data de Fabricação (Ex: 34/24 ou dd/MM/aaaa)</label>
-                    <input type="text" disabled={bModel.salvo} placeholder="ex: 34/24 ou 05/08/2024" value={bModel.dataFabricacao} onChange={(e) => {
-                      const novoVal = e.target.value;
-                      setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, dataFabricacao: novoVal } });
-                    }} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-                  </div>
-
-                  {textoExato && (
-                    <p style={{ fontSize: '13px', color: '#28a745', margin: '0 0 5px 0', fontWeight: 'bold' }}>
-                      Por extenso: ({textoExato})
-                    </p>
-                  )}
-                    
-                  <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '13px', color: vencidoSub ? undefined : '#4dabf7', margin: '0 0 8px 0', fontWeight: 'bold' }}>
-                    Próxima Substituição (+{anosTrocaCalculado} anos): {proxSub || 'Preencha a data'} {vencidoSub && `(Exp. há ${resSub.dias}d)`}
-                  </p>
-
-                  <div style={{ marginBottom: '8px', width: '100%', boxSizing: 'border-box' }}>
-                    <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data da Última Inspeção da Bateria (dd/MM/aaaa)</label>
-                    <input type="text" disabled={bModel.salvo} placeholder="dd/MM/aaaa" value={bModel.dataUltimaInspecao} onChange={(e) => {
-                      const novoVal = e.target.value;
-                      setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, dataUltimaInspecao: novoVal } });
-                    }} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-                  </div>
-
-                  <p className={vencidoInsp ? 'alerta-vencido' : ''} style={{ fontSize: '13px', color: vencidoInsp ? undefined : '#4dabf7', margin: '0 0 10px 0', fontWeight: 'bold' }}>
-                    Próxima Inspeção (3 meses): {proxInsp || 'Preencha a última inspeção'} {vencidoInsp && `(Exp. há ${resInsp.dias}d)`}
-                  </p>
-
-                  {bModel.tipo !== 'Lítio' && (
-                    <>
-                      <div style={{ fontSize: '13px', color: theme.textMuted, marginBottom: '6px', fontWeight: 'bold' }}>Voltagem das 4 Baterias do Banco:</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', boxSizing: 'border-box', width: '100%' }}>
-                        {[0, 1, 2, 3].map((vIdx) => (
-                          <input 
-                            key={vIdx} 
-                            type="text" 
-                            disabled={bModel.salvo}
-                            placeholder={`Bat ${vIdx + 1}`} 
-                            value={bModel.voltagens[vIdx] || ''} 
-                            onChange={(e) => {
-                              const novasVols = [...bModel.voltagens];
-                              novasVols[vIdx] = e.target.value;
-                              setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, voltagens: novasVols } });
-                            }} 
-                            style={{ width: '100%', padding: '8px 5px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', textAlign: 'center', fontSize: '13px' }} 
-                          />
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              );
-            })}
+          {/* Seção de Incidentes Gerais */}
+          <div style={{ marginBottom: '20px', background: theme.cardInner, padding: '15px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
+            <h3 style={{ marginTop: 0, color: '#4dabf7', fontSize: '16px' }}>Observações e Incidentes</h3>
+            <label style={{ display: 'block', fontSize: '14px', marginBottom: '6px', fontWeight: 'bold' }}>Incidentes Gerais no POP:</label>
+            <textarea value={incidentesGerais} onChange={(e) => setIncidentesGerais(e.target.value)} rows="3" style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', boxSizing: 'border-box', marginBottom: '10px' }}></textarea>
+            
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer', marginBottom: '10px' }}>
+              <input type="checkbox" checked={precisaLimpeza} onChange={(e) => setPrecisaLimpeza(e.target.checked)} />
+              Necessita de Limpeza Externa/Geral?
+            </label>
+            
+            <label style={{ display: 'block', fontSize: '14px', marginBottom: '6px', fontWeight: 'bold' }}>Anotações Extras:</label>
+            <textarea value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} rows="2" style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', boxSizing: 'border-box' }}></textarea>
           </div>
 
-          <div style={{ marginTop: '20px', width: '100%', boxSizing: 'border-box' }}>
-            <h3 style={{ fontSize: '18px', marginBottom: '12px' }}>Centrais de Ar</h3>
-            <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
-              {[1, 2, 3, 4].map((num) => (
-                <button key={num} type="button" onClick={() => { setQtdAr(num); salvarNoFirebase({ qtdAr: num }); }} style={{ padding: '8px 14px', background: qtdAr === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>{num}</button>
-              ))}
+          {/* Configuração do Check-in */}
+          <div style={{ marginBottom: '20px', background: theme.cardInner, padding: '15px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
+            <h3 style={{ marginTop: 0, color: '#4dabf7', fontSize: '16px' }}>Finalizar Inspeção</h3>
+            <div style={{ display: 'flex', gap: '15px', marginBottom: '10px' }}>
+              <label style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <input type="radio" name="tipoData" value="atual" checked={tipoData === 'atual'} onChange={() => setTipoData('atual')} /> Data/Hora Atual (GPS)
+              </label>
+              <label style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <input type="radio" name="tipoData" value="manual" checked={tipoData === 'manual'} onChange={() => setTipoData('manual')} /> Data Manual
+              </label>
             </div>
-            {Array.from({ length: qtdAr }, (_, i) => i + 1).map((idx) => {
-              const ar = centraisAr[idx] || { modelo: '', btu: '', dataInstalacao: '', dataUltimaLimpeza: '', salvo: false };
-              const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
-              const resLimp = statusData(proxLimp);
-              const vencidoLimp = resLimp && resLimp.status === 'vencido';
+            {tipoData === 'manual' && (
+              <input type="text" placeholder="DD/MM/AAAA" value={dataManualInspecao} onChange={(e) => setDataManualInspecao(e.target.value)} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', boxSizing: 'border-box', marginBottom: '10px' }} />
+            )}
 
-              return (
-                <div key={idx} style={{ background: theme.cardInner, padding: '12px 14px', borderRadius: '6px', marginBottom: '12px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', width: '100%', boxSizing: 'border-box' }}>
-                    <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>Central {getLetra(idx)}</h4>
-                    <button type="button" onClick={() => {
-                      const novoSalvo = !ar.salvo;
-                      setCentraisAr({ ...centraisAr, [idx]: { ...ar, salvo: novoSalvo } });
-                      salvarNoFirebase({ 
-                        qtdAr,
-                        [`ar_${idx}_mod`]: ar.modelo, 
-                        [`ar_${idx}_btu`]: ar.btu, 
-                        [`ar_${idx}_inst`]: ar.dataInstalacao, 
-                        [`ar_${idx}_limp`]: ar.dataUltimaLimpeza, 
-                        [`ar_${idx}_salvo`]: novoSalvo 
-                      });
-                    }} className="no-print" style={{ background: ar.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '5px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
-                      {ar.salvo ? 'Editar' : 'Salvar'}
-                    </button>
-                  </div>
-                  <div style={{ display: 'flex', gap: '10px', marginBottom: '10px', marginTop: '10px', boxSizing: 'border-box', flexWrap: 'wrap', width: '100%' }}>
-                    <div style={{ flex: 1, minWidth: '120px' }}>
-                      <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Modelo</label>
-                      <input type="text" disabled={ar.salvo} placeholder="Modelo" value={ar.modelo} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, modelo: e.target.value } })} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: '120px' }}>
-                      <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>BTU</label>
-                      <input type="text" disabled={ar.salvo} placeholder="BTU" value={ar.btu} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, btu: e.target.value } })} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-                    </div>
-                  </div>
-                  <div style={{ marginBottom: '10px', width: '100%', boxSizing: 'border-box' }}>
-                    <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data de Instalação (dd/MM/aaaa)</label>
-                    <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataInstalacao} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataInstalacao: e.target.value } })} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-                  </div>
-                  <div style={{ marginBottom: '6px', width: '100%', boxSizing: 'border-box' }}>
-                    <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data da Última Limpeza (dd/MM/aaaa)</label>
-                    <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataUltimaLimpeza: e.target.value } })} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-                  </div>
-                  <p className={vencidoLimp ? 'alerta-vencido' : ''} style={{ fontSize: '13px', color: vencidoLimp ? undefined : '#4dabf7', margin: '8px 0 8px 0', fontWeight: 'bold' }}>
-                    Próxima Limpeza ({intervaloAr} meses): {proxLimp || 'Preencha a última limpeza'} {vencidoLimp && `(Exp. há ${resLimp.dias}d)`}
-                  </p>
-                </div>
-              );
-            })}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' }}>
+              <button onClick={salvarStatusAtivosFirebase} style={{ background: '#17a2b8', border: 'none', color: '#fff', padding: '10px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>Salvar Dados (Sem Check-in)</button>
+              <button onClick={finalizarInspecao} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '12px', borderRadius: '4px', cursor: 'pointer', fontSize: '15px', fontWeight: 'bold' }}>✅ Confirmar Check-in</button>
+              <button onClick={gerarPdfUltimaInspecao} style={{ background: '#d9534f', border: 'none', color: '#fff', padding: '10px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>📄 Gerar PDF (Último Check-in)</button>
+            </div>
           </div>
 
-          <div style={{ marginTop: '20px', width: '100%', boxSizing: 'border-box' }}>
-            <input type="text" placeholder="Relatar Incidentes Gerais" value={incidentesGerais} onChange={(e) => setIncidentesGerais(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '14px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-              
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px', fontSize: '15px', fontWeight: 'bold' }}>
-              <input type="checkbox" checked={precisaLimpeza} onChange={(e) => setPrecisaLimpeza(e.target.checked)} id="limpCheck" />
-              <label htmlFor="limpCheck" style={{ cursor: 'pointer' }}>Limpeza Necessária</label>
-            </div>
-
-            <textarea placeholder="Anotações Extras" rows="3" value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-
-            <button type="button" onClick={finalizarInspecao} className="no-print" style={{ width: '100%', padding: '16px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '17px', borderRadius: '4px', cursor: 'pointer', boxSizing: 'border-box' }}>
-              Finalizar, Salvar e Gerar Relatório
-            </button>
-          </div>
         </div>
       </div>
     </div>
