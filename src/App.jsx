@@ -137,7 +137,6 @@ const calcularProximaSubstituicaoBateria = (dataFabricacaoStr, popNome = '', tip
   } catch (e) { return ''; }
 };
 
-// Mantido em 3 meses para Inspeção Geral, Check-ins, Contatos e Chaves
 const calcularProximaInspecaoGeral = (dataUltimaInspecaoStr) => {
   try {
     const parts = (dataUltimaInspecaoStr || '').split('/');
@@ -153,7 +152,6 @@ const calcularProximaInspecaoGeral = (dataUltimaInspecaoStr) => {
   } catch (e) { return ''; }
 };
 
-// Exclusivo para Baterias (6 meses)
 const calcularProximaInspecaoBateria = (dataUltimaInspecaoStr) => {
   try {
     const parts = (dataUltimaInspecaoStr || '').split('/');
@@ -212,7 +210,7 @@ const popsIniciaisPadrao = [
   { id: 25, nome: "neftis", endereco: "Avenida Inglaterra 333, Novo Horizonte - Parauapebas - PA, 68515-000 - Galeria - pbs" },
   { id: 26, nome: "bastet", endereco: "Apartamento - Rio Verde - pbs" },
   { id: 27, nome: "hathor", endereco: "vs10 - pbs" },
-  { id: 28, nome: "sobek", endereco: "R. Dois Irmão, 32 - Da Paz, Parauapebas - PA, 68515-000 - Rio Verde - pbs" }
+  { id: 28, nome: "sobek", endereco: "Rio Verde - pbs" }
 ];
 
 function App() {
@@ -261,6 +259,10 @@ function App() {
     return sessionStorage.getItem('estado_telaGerenciarPops') === 'true';
   });
 
+  const [telaRacksAberta, setTelaRacksAberta] = useState(() => {
+    return sessionStorage.getItem('estado_telaRacks') === 'true';
+  });
+
   useEffect(() => {
     if (popSelecionado) sessionStorage.setItem('estado_popSelecionado', JSON.stringify(popSelecionado));
     else sessionStorage.removeItem('estado_popSelecionado');
@@ -270,6 +272,11 @@ function App() {
     if (telaGerenciarPopsAberta) sessionStorage.setItem('estado_telaGerenciarPops', 'true');
     else sessionStorage.removeItem('estado_telaGerenciarPops');
   }, [telaGerenciarPopsAberta]);
+
+  useEffect(() => {
+    if (telaRacksAberta) sessionStorage.setItem('estado_telaRacks', 'true');
+    else sessionStorage.removeItem('estado_telaRacks');
+  }, [telaRacksAberta]);
 
   const alternarTema = () => {
     setDarkMode(prev => {
@@ -583,7 +590,7 @@ function App() {
                 const { textoExato } = parseDataFabricacaoBateria(fab);
                 const fabExibicao = textoExato ? `${fab} (${textoExato})` : (fab || 'N/A');
                 let infoVencimento = [];
-                if (resSub && resSub.status === 'vencido') infoVencimento.id = `Troca: ${proxSub} (VENCIDO há ${resSub.dias}d)`;
+                if (resSub && resSub.status === 'vencido') infoVencimento.push(`Troca: ${proxSub} (VENCIDO há ${resSub.dias}d)`);
                 if (resInspB && resInspB.status === 'vencido') infoVencimento.push(`Insp. (6m): ${proxInspB} (VENCIDO há ${resInspB.dias}d)`);
 
                 bateriasVencidasHtml += `<br>  • Banco ${getLetra(b)} (${tipoB}) - Fab: ${fabExibicao} | ${infoVencimento.join(' | ')}`;
@@ -679,14 +686,15 @@ function App() {
     const handlePopState = () => {
       if (popSelecionado) setPopSelecionado(null);
       else if (telaGerenciarPopsAberta) setTelaGerenciarPopsAberta(false);
+      else if (telaRacksAberta) setTelaRacksAberta(false);
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [popSelecionado, telaGerenciarPopsAberta]);
+  }, [popSelecionado, telaGerenciarPopsAberta, telaRacksAberta]);
 
   useEffect(() => {
-    if (popSelecionado || telaGerenciarPopsAberta) window.history.pushState(null, '', window.location.pathname);
-  }, [popSelecionado, telaGerenciarPopsAberta]);
+    if (popSelecionado || telaGerenciarPopsAberta || telaRacksAberta) window.history.pushState(null, '', window.location.pathname);
+  }, [popSelecionado, telaGerenciarPopsAberta, telaRacksAberta]);
 
   useEffect(() => {
     if (usuarioLogado) {
@@ -841,6 +849,7 @@ function App() {
   if (loadingAuth) return <div style={{ color: theme.textMain, backgroundColor: theme.bg, textAlign: 'center', marginTop: '20vh', fontFamily: 'sans-serif', minHeight: '100vh', fontSize: '15px' }}>Carregando InfraManager...</div>;
   if (!usuarioLogado) return <TelaLogin onLoginSucesso={(email) => setUsuarioLogado(email)} darkMode={darkMode} setDarkMode={alternarTema} theme={theme} />;
   if (telaGerenciarPopsAberta) return <TelaGerenciarPops listaPops={listaPops} onBack={() => { setTelaGerenciarPopsAberta(false); window.history.back(); }} theme={theme} />;
+  if (telaRacksAberta) return <TelaRacks listaPops={listaPops} onBack={() => { setTelaRacksAberta(false); window.history.back(); }} theme={theme} />;
   if (popSelecionado) {
     return (
       <TelaInspecao 
@@ -897,6 +906,7 @@ function App() {
         onPopClick={(pop) => setPopSelecionado(pop)} 
         onOpenDrawer={() => setDrawerAberto(true)}
         onOpenGerenciarPops={() => setTelaGerenciarPopsAberta(true)}
+        onOpenRacks={() => setTelaRacksAberta(true)}
         onOpenAvisos={() => setShowAvisoGlobal(true)}
         onGerarRelatorioGeral={abrirModalFiltroRelatorio}
         totalAlertas={totalAlertas}
@@ -904,6 +914,7 @@ function App() {
           sessionStorage.removeItem('avisoMostrado'); 
           sessionStorage.removeItem('estado_popSelecionado');
           sessionStorage.removeItem('estado_telaGerenciarPops');
+          sessionStorage.removeItem('estado_telaRacks');
           signOut(auth); 
           setUsuarioLogado(null); 
         }} 
@@ -1294,7 +1305,7 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
   );
 }
 
-function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias, cronogramaContatos, cronogramaChaves, onPopClick, onOpenDrawer, onOpenGerenciarPops, onOpenAvisos, onGerarRelatorioGeral, totalAlertas, onLogout, darkMode, setDarkMode, theme }) {
+function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias, cronogramaContatos, cronogramaChaves, onPopClick, onOpenDrawer, onOpenGerenciarPops, onOpenRacks, onOpenAvisos, onGerarRelatorioGeral, totalAlertas, onLogout, darkMode, setDarkMode, theme }) {
   const [busca, setBusca] = useState('');
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
@@ -1371,6 +1382,7 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
           <h1 style={{ margin: 0, fontSize: '16px', color: theme.textMain }}>| Olá, {tecnico.split('@')[0].toUpperCase()}</h1>
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <button onClick={onOpenRacks} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>🗄️ RACKS</button>
           <button onClick={onGerarRelatorioGeral} style={{ background: '#d9534f', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>📊 Relatório de Vencidos</button>
           <button onClick={onOpenAvisos} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '15px' }}>
             🔔
@@ -1422,6 +1434,258 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function TelaRacks({ listaPops, onBack, theme }) {
+  const [popSelecionado, setPopSelecionado] = useState(listaPops[0]?.nome || '');
+  const [racks, setRacks] = useState([]);
+  const [dispositivos, setDispositivos] = useState([]);
+
+  // Modals / forms
+  const [modalRackAberto, setModalRackAberto] = useState(false);
+  const [nomeRack, setNomeRack] = useState('');
+  const [alturaRack, setAlturaRack] = useState(42);
+
+  const [modalDispositivoAberto, setModalDispositivoAberto] = useState(false);
+  const [nomeDisp, setNomeDisp] = useState('');
+  const [fabricanteDisp, setFabricanteDisp] = useState('');
+  const [rackIdDisp, setRackIdDisp] = useState('');
+  const [posU, setPosU] = useState(1);
+  const [alturaU, setAlturaU] = useState(1);
+  const [faceDisp, setFaceDisp] = useState('frontal');
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, "netbox_infra", "dados_racks"), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.racks) setRacks(data.racks);
+        if (data.dispositivos) setDispositivos(data.dispositivos);
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  const salvarDadosFirebase = async (novosRacks, novosDispositivos) => {
+    try {
+      await setDoc(doc(db, "netbox_infra", "dados_racks"), {
+        racks: novosRacks,
+        dispositivos: novosDispositivos
+      });
+    } catch (e) {
+      console.error("Erro ao salvar racks:", e);
+    }
+  };
+
+  const criarRack = async (e) => {
+    e.preventDefault();
+    if (!nomeRack.trim()) return;
+    const novo = {
+      id: Date.now().toString(),
+      pop: popSelecionado,
+      nome: nomeRack.trim().toUpperCase(),
+      altura: parseInt(alturaRack, 10) || 42
+    };
+    const novosRacks = [...racks, novo];
+    setRacks(novosRacks);
+    await salvarDadosFirebase(novosRacks, dispositivos);
+    setNomeRack('');
+    setModalRackAberto(false);
+  };
+
+  const criarDispositivo = async (e) => {
+    e.preventDefault();
+    if (!nomeDisp.trim() || !rackIdDisp) return;
+    const novo = {
+      id: Date.now().toString(),
+      pop: popSelecionado,
+      rackId: rackIdDisp,
+      nome: nomeDisp.trim(),
+      fabricante: fabricanteDisp.trim() || 'Genérico',
+      posicaoU: parseInt(posU, 10) || 1,
+      alturaU: parseInt(alturaU, 10) || 1,
+      face: faceDisp
+    };
+    const novosDispositivos = [...dispositivos, novo];
+    setDispositivos(novosDispositivos);
+    await salvarDadosFirebase(racks, novosDispositivos);
+    setNomeDisp('');
+    setFabricanteDisp('');
+    setModalDispositivoAberto(false);
+  };
+
+  const excluirRack = async (id) => {
+    if (!window.confirm("Deseja realmente excluir este rack e seus dispositivos?")) return;
+    const novosRacks = racks.filter(r => r.id !== id);
+    const novosDispositivos = dispositivos.filter(d => d.rackId !== id);
+    setRacks(novosRacks);
+    setDispositivos(novosDispositivos);
+    await salvarDadosFirebase(novosRacks, novosDispositivos);
+  };
+
+  const excluirDispositivo = async (id) => {
+    if (!window.confirm("Remover este dispositivo?")) return;
+    const novosDispositivos = dispositivos.filter(d => d.id !== id);
+    setDispositivos(novosDispositivos);
+    await salvarDadosFirebase(racks, novosDispositivos);
+  };
+
+  const racksDoPop = racks.filter(r => r.pop.toLowerCase() === popSelecionado.toLowerCase());
+
+  return (
+    <div className="container-movel" style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', width: '100%', padding: '15px', boxSizing: 'border-box' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}>← Voltar</button>
+          <h2 style={{ margin: 0, fontSize: '18px', color: '#4dabf7' }}>🗄️ NetBox - Gestão de Racks e Dispositivos</h2>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button onClick={() => setModalRackAberto(true)} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '8px 14px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>+ Novo Rack</button>
+          <button onClick={() => {
+            if (racksDoPop.length === 0) {
+              alert("Crie um rack primeiro neste POP para adicionar dispositivos.");
+              return;
+            }
+            setRackIdDisp(racksDoPop[0].id);
+            setModalDispositivoAberto(true);
+          }} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '8px 14px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>+ Novo Dispositivo</button>
+        </div>
+      </div>
+
+      <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px', background: theme.cardBg, padding: '12px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
+        <label style={{ fontWeight: 'bold', fontSize: '14px' }}>Selecionar POP:</label>
+        <select 
+          value={popSelecionado} 
+          onChange={(e) => setPopSelecionado(e.target.value)}
+          style={{ padding: '8px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '15px', textTransform: 'uppercase', fontWeight: 'bold' }}
+        >
+          {listaPops.map(p => (
+            <option key={p.id} value={p.nome}>{p.nome.toUpperCase()}</option>
+          ))}
+        </select>
+      </div>
+
+      {racksDoPop.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px', background: theme.cardBg, borderRadius: '8px', border: `1px solid ${theme.border}` }}>
+          <p style={{ color: theme.textMuted, fontSize: '15px' }}>Nenhum rack cadastrado para o POP <b>{popSelecionado.toUpperCase()}</b>.</p>
+          <button onClick={() => setModalRackAberto(true)} style={{ marginTop: '10px', background: '#28a745', border: 'none', color: '#fff', padding: '10px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Criar Primeiro Rack</button>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+          {racksDoPop.map(rack => {
+            const dispDoRack = dispositivos.filter(d => d.rackId === rack.id);
+            
+            return (
+              <div key={rack.id} style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '15px', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${theme.border}`, paddingBottom: '8px', marginBottom: '12px' }}>
+                  <div>
+                    <h3 style={{ margin: 0, color: '#4dabf7', fontSize: '16px', textTransform: 'uppercase' }}>Rack: {rack.nome}</h3>
+                    <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: theme.textMuted }}>Altura: {rack.altura} Us | POP: {rack.pop.toUpperCase()}</p>
+                  </div>
+                  <button onClick={() => excluirRack(rack.id)} style={{ background: 'transparent', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }} title="Excluir Rack">🗑️</button>
+                </div>
+
+                {/* Visualizador NetBox Style (U por U) */}
+                <div style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, borderRadius: '4px', padding: '6px', maxHeight: '350px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  {Array.from({ length: rack.altura }, (_, i) => rack.altura - i).map(u => {
+                    // Verificar se há dispositivo ocupando este U
+                    const dispOcupante = dispDoRack.find(d => {
+                      const startU = d.posicaoU;
+                      const endU = d.posicaoU + d.alturaU - 1;
+                      return u >= startU && u <= endU;
+                    });
+
+                    return (
+                      <div key={u} style={{ display: 'flex', alignItems: 'center', height: '26px', borderBottom: `1px solid ${theme.border}`, fontSize: '11px', background: dispOcupante ? '#007bff22' : 'transparent' }}>
+                        <div style={{ width: '35px', textAlign: 'right', paddingRight: '8px', color: theme.textMuted, fontWeight: 'bold', borderRight: `1px solid ${theme.border}` }}>
+                          {u}
+                        </div>
+                        <div style={{ flex: 1, paddingLeft: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {dispOcupante && u === dispOcupante.posicaoU + dispOcupante.alturaU - 1 ? (
+                            <span style={{ color: '#4dabf7', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '6px' }}>
+                              <span>{dispOcupante.nome} <span style={{ fontSize: '10px', color: theme.textMuted }}>({dispOcupante.fabricante})</span></span>
+                              <button onClick={() => excluirDispositivo(dispOcupante.id)} style={{ background: 'transparent', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '11px' }} title="Remover dispositivo">✕</button>
+                            </span>
+                          ) : dispOcupante ? (
+                            <span style={{ color: theme.textMuted, fontSize: '10px', fontStyle: 'italic' }}>↳ ocupado por {dispOcupante.nome}</span>
+                          ) : (
+                            <span style={{ color: theme.textMuted, opacity: 0.4 }}>- livre -</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Modal Criar Rack */}
+      {modalRackAberto && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px', boxSizing: 'border-box' }}>
+          <form onSubmit={criarRack} style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '355px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+            <h3 style={{ marginTop: 0, fontSize: '17px', color: '#4dabf7' }}>Criar Novo Rack ({popSelecionado.toUpperCase()})</h3>
+            
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px', marginTop: '10px' }}>Nome do Rack (Ex: RACK 01, RACK PRINCIPAL)</label>
+            <input type="text" placeholder="Nome do Rack" value={nomeRack} onChange={(e) => setNomeRack(e.target.value)} required style={{ width: '100%', padding: '9px', marginBottom: '12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Altura em Us (Ex: 42, 24)</label>
+            <input type="number" min="1" max="60" value={alturaRack} onChange={(e) => setAlturaRack(e.target.value)} required style={{ width: '100%', padding: '9px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button type="button" onClick={() => setModalRackAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '14px' }}>Cancelar</button>
+              <button type="submit" style={{ background: '#28a745', border: 'none', color: '#fff', padding: '8px 14px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>Criar Rack</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Modal Criar Dispositivo */}
+      {modalDispositivoAberto && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px', boxSizing: 'border-box' }}>
+          <form onSubmit={criarDispositivo} style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '380px', border: `1px solid ${theme.border}`, boxSizing: 'border-box', maxHeight: '95vh', overflowY: 'auto' }}>
+            <h3 style={{ marginTop: 0, fontSize: '17px', color: '#4dabf7' }}>Adicionar Dispositivo / Ativo</h3>
+            
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Rack de Destino</label>
+            <select value={rackIdDisp} onChange={(e) => setRackIdDisp(e.target.value)} required style={{ width: '100%', padding: '9px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }}>
+              {racksDoPop.map(r => (
+                <option key={r.id} value={r.id}>{r.nome} (Máx: {r.altura}U)</option>
+              ))}
+            </select>
+
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Nome do Dispositivo (Ex: OLT Huawei, Switch Core)</label>
+            <input type="text" placeholder="Nome do dispositivo" value={nomeDisp} onChange={(e) => setNomeDisp(e.target.value)} required style={{ width: '100%', padding: '9px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Fabricante (Ex: Huawei, Cisco, Mikrotik)</label>
+            <input type="text" placeholder="Fabricante" value={fabricanteDisp} onChange={(e) => setFabricanteDisp(e.target.value)} style={{ width: '100%', padding: '9px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Posição Inicial U</label>
+                <input type="number" min="1" value={posU} onChange={(e) => setPosU(e.target.value)} required style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Altura em Us</label>
+                <input type="number" min="1" max="10" value={alturaU} onChange={(e) => setAlturaU(e.target.value)} required style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+              </div>
+            </div>
+
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Face do Rack</label>
+            <select value={faceDisp} onChange={(e) => setFaceDisp(e.target.value)} style={{ width: '100%', padding: '9px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }}>
+              <option value="frontal">Frontal</option>
+              <option value="traseira">Traseira</option>
+            </select>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button type="button" onClick={() => setModalDispositivoAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '14px' }}>Cancelar</button>
+              <button type="submit" style={{ background: '#007bff', border: 'none', color: '#fff', padding: '8px 14px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>Adicionar Dispositivo</button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
@@ -1714,7 +1978,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
     }
     const agora = new Date();
     const dataProx = new Date(agora);
-    dataProx.setMonth(dataProx.getMonth() + 3); // 3 meses para check-in geral
+    dataProx.setMonth(dataProx.getMonth() + 3);
     const dataProxStr = `${String(dataProx.getDate()).padStart(2, '0')}/${String(dataProx.getMonth() + 1).padStart(2, '0')}/${dataProx.getFullYear()}`;
     return {
       tecnico: nomeTecnicoLogado,
@@ -1879,7 +2143,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         const parts = dataFormatada.split('/');
         if (parts.length === 3) {
           const day = parseInt(parts[0], 10);
-          const month = parseInt(parts[1], 10) - 1 + 3; // 3 meses para check-in geral
+          const month = parseInt(parts[1], 10) - 1 + 3;
           const year = parseInt(parts[2], 10) + Math.floor(month / 12);
           const adjustedMonth = month % 12;
           const dataProx = new Date(year, adjustedMonth, day);
@@ -2462,7 +2726,6 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                     }} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
                   </div>
 
-                  {/* Baterias ajustadas para 6 meses */}
                   <p className={vencidoInsp ? 'alerta-vencido' : ''} style={{ fontSize: '13px', color: vencidoInsp ? undefined : '#4dabf7', margin: '0 0 10px 0', fontWeight: 'bold' }}>
                     Próxima Inspeção (6 meses): {proxInsp || 'Preencha a última inspeção'} {vencidoInsp && `(Exp. há ${resInsp.dias}d)`}
                   </p>
