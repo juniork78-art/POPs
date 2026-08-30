@@ -1445,8 +1445,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
   const [fabricantes, setFabricantes] = useState(['Huawei', 'Cisco', 'Mikrotik', 'Dell', 'HP', 'Furukawa']);
   const [tiposDispositivos, setTiposDispositivos] = useState(['Switch', 'OLT', 'Router', 'Patch Panel', 'Servidor', 'No-Break']);
 
-  // Menu Ativo na Sidebar estilo NetBox
-  const [menuAtivo, setMenuAtivo] = useState('racks_racks'); // Ex: organization_sites, racks_racks, devices_devices, etc.
+  const [menuAtivo, setMenuAtivo] = useState('racks_racks'); 
   const [seccoesAbertas, setSeccoesAbertas] = useState({
     organization: true,
     racks: true,
@@ -1464,7 +1463,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
     admin: false
   });
 
-  // Modals / forms
   const [modalRackAberto, setModalRackAberto] = useState(false);
   const [nomeRack, setNomeRack] = useState('');
   const [alturaRack, setAlturaRack] = useState(42);
@@ -1776,14 +1774,14 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
       {/* ÁREA DE CONTEÚDO PRINCIPAL */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', boxSizing: 'border-box' }}>
         
-        {/* BARRA SUPERIOR */}
-        <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxSizing: 'border-box' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+        {/* BARRA SUPERIOR AJUSTADA COM ALTURA E PADDING SEGUROS PARA BOTÕES */}
+        <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '14px 20px', minHeight: '64px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
             <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>← Voltar para POPs</button>
-            <h2 style={{ margin: 0, fontSize: '16px', color: '#4dabf7', textTransform: 'uppercase' }}>Módulo NetBox: {menuAtivo.replace('_', ' / ')}</h2>
+            <h2 style={{ margin: 0, fontSize: '15px', color: '#4dabf7', textTransform: 'uppercase' }}>Módulo NetBox: {menuAtivo.replace('_', ' / ')}</h2>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
+            <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center' }}>
               {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
             </button>
           </div>
@@ -1811,7 +1809,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
           {/* CONTEÚDO: RACKS E ELEVAÇÕES */}
           {(menuAtivo === 'racks_racks' || menuAtivo === 'racks_elevations') && (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
                 <h3 style={{ margin: 0, fontSize: '18px' }}>Racks no POP: {popSelecionado.toUpperCase()}</h3>
                 <button onClick={() => setModalRackAberto(true)} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '9px 15px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>+ Novo Rack</button>
               </div>
@@ -1834,7 +1832,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                             <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: theme.textMuted }}>Altura: {rack.altura} Us</p>
                           </div>
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            <button onClick={() => { setRackIdDisp(rack.id); setModalDispositivoAberto(true); }} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>+ Ativo</button>
+                            <button onClick={() => { setRackIdDisp(rack.id); setModalDispositivoAberto(true); }} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>+ Ativo</button>
                             <button onClick={() => excluirRack(rack.id)} style={{ background: 'transparent', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }} title="Excluir Rack">🗑️</button>
                           </div>
                         </div>
@@ -1880,7 +1878,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
           {/* CONTEÚDO: DEVICES E FABRICANTES */}
           {(menuAtivo === 'devices_devices' || menuAtivo === 'devices_manufacturers' || menuAtivo === 'devices_types') && (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
                 <h3 style={{ margin: 0, fontSize: '18px' }}>Gerenciamento de Dispositivos e Fabricantes</h3>
                 <button onClick={() => {
                   if (racksDoPop.length === 0) { alert("Crie um rack primeiro."); return; }
@@ -1889,8 +1887,8 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                 }} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '9px 15px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>+ Adicionar Dispositivo</button>
               </div>
 
-              <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '8px', overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', textAlign: 'left' }}>
+              <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '8px', overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', textAlign: 'left', minWidth: '600px' }}>
                   <thead>
                     <tr style={{ background: theme.cardInner, borderBottom: `1px solid ${theme.border}` }}>
                       <th style={{ padding: '12px' }}>Nome do Dispositivo</th>
