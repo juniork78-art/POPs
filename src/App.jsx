@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+
 import { auth, db } from './firebase';
 import { 
   signInWithEmailAndPassword, 
@@ -1428,6 +1428,7 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
     </div>
   );
 }
+// GRUPOS DE SITES: módulo integrado ao menu Organização
 function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
   const [popSelecionado, setPopSelecionado] = useState(listaPops[0]?.nome || '');
   const [racks, setRacks] = useState([]);
@@ -1463,6 +1464,19 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
   const [menuExportarAberto, setMenuExportarAberto] = useState(false);
   const [telaModeloExportacaoAberta, setTelaModeloExportacaoAberta] = useState(false);
   const [modelosExportacao, setModelosExportacao] = useState([]);
+  const [gruposSites, setGruposSites] = useState([
+    { id: '1', nome: 'Customer Sites', sites: 20, descricao: '', paiId: null },
+    { id: '2', nome: 'Branch Offices', sites: 19, descricao: '', paiId: '1' },
+    { id: '3', nome: 'Headquarters', sites: 1, descricao: '', paiId: '1' }
+  ]);
+  const [buscaGrupoSite, setBuscaGrupoSite] = useState('');
+  const [modalGrupoSiteAberto, setModalGrupoSiteAberto] = useState(false);
+  const [grupoSiteNome, setGrupoSiteNome] = useState('');
+  const [grupoSiteDescricao, setGrupoSiteDescricao] = useState('');
+  const [grupoSitePaiId, setGrupoSitePaiId] = useState('');
+  const [menuExportarGrupoSiteAberto, setMenuExportarGrupoSiteAberto] = useState(false);
+  const [importarGrupoSiteAberto, setImportarGrupoSiteAberto] = useState(false);
+  const [importarGrupoSiteTexto, setImportarGrupoSiteTexto] = useState('');
   const [modeloExportacaoNome, setModeloExportacaoNome] = useState('');
   const [modeloExportacaoTipos, setModeloExportacaoTipos] = useState(['DCIM > Região']);
   const [modeloExportacaoDescricao, setModeloExportacaoDescricao] = useState('');
@@ -1519,6 +1533,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
         if (data.tiposDispositivos) setTiposDispositivos(data.tiposDispositivos);
         if (data.regioesLista) setRegioesLista(data.regioesLista);
         if (data.modelosExportacao) setModelosExportacao(data.modelosExportacao);
+        if (data.gruposSites) setGruposSites(data.gruposSites);
       }
     });
     return () => unsub();
@@ -1531,8 +1546,9 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
         dispositivos: novosDispositivos || dispositivos,
         fabricantes: novosFabricantes || fabricantes,
         tiposDispositivos: novosTipos || tiposDispositivos,
-        regioesLista: novasRegioes || regioesLista
-      });
+        regioesLista: novasRegioes || regioesLista,
+        gruposSites: gruposSites
+      }, { merge: true });
     } catch (e) {
       console.error("Erro ao salvar dados netbox:", e);
     }
@@ -1633,6 +1649,86 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     setMenuExportarAberto(false);
+  };
+
+  const salvarGruposSitesFirebase = async (novosGrupos) => {
+    try {
+      await setDoc(doc(db, 'netbox_infra', 'dados_racks'), { gruposSites: novosGrupos }, { merge: true });
+      setGruposSites(novosGrupos);
+    } catch (e) {
+      console.error('Erro ao salvar grupos de sites:', e);
+      alert('Erro ao salvar grupo de sites: ' + e.message);
+    }
+  };
+
+  const criarGrupoSite = async (e) => {
+    if (e) e.preventDefault();
+    if (!grupoSiteNome.trim()) return;
+    const novo = {
+      id: Date.now().toString(),
+      nome: grupoSiteNome.trim(),
+      sites: 0,
+      descricao: grupoSiteDescricao.trim(),
+      paiId: grupoSitePaiId || null
+    };
+    await salvarGruposSitesFirebase([...gruposSites, novo]);
+    setGrupoSiteNome('');
+    setGrupoSiteDescricao('');
+    setGrupoSitePaiId('');
+    setModalGrupoSiteAberto(false);
+  };
+
+  const excluirGrupoSite = async (id) => {
+    const possuiFilhos = gruposSites.some(g => g.paiId === id);
+    if (possuiFilhos) {
+      alert('Não é possível excluir este grupo enquanto ele possuir subgrupos.');
+      return;
+    }
+    if (!window.confirm('Deseja realmente excluir este grupo de sites?')) return;
+    await salvarGruposSitesFirebase(gruposSites.filter(g => g.id !== id));
+  };
+
+  const exportarGruposSitesCSV = (apenasVisualizacao = false) => {
+    const termo = buscaGrupoSite.trim().toLowerCase();
+    const dados = apenasVisualizacao
+      ? gruposSites.filter(g => g.nome.toLowerCase().includes(termo))
+      : gruposSites;
+    const escapar = (valor) => `"${String(valor ?? '').replace(/"/g, '""')}"`;
+    const linhas = [
+      ['Nome', 'Sites', 'Descrição', 'Grupo Pai'],
+      ...dados.map(g => [g.nome, g.sites, g.descricao || '', gruposSites.find(p => p.id === g.paiId)?.nome || ''])
+    ];
+    const csv = linhas.map(l => l.map(escapar).join(';')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = apenasVisualizacao ? 'grupos_de_sites_visualizacao_atual.csv' : 'grupos_de_sites.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    setMenuExportarGrupoSiteAberto(false);
+  };
+
+  const importarGruposSites = async () => {
+    if (!importarGrupoSiteTexto.trim()) return;
+    const linhas = importarGrupoSiteTexto.split('\n').filter(l => l.trim());
+    const novos = [...gruposSites];
+    linhas.forEach((linha, index) => {
+      const partes = linha.split(/[,;\t]/).map(v => v.trim());
+      if (!partes[0]) return;
+      novos.push({
+        id: `${Date.now()}_${index}`,
+        nome: partes[0],
+        sites: parseInt(partes[1], 10) || 0,
+        descricao: partes[2] || '',
+        paiId: null
+      });
+    });
+    await salvarGruposSitesFirebase(novos);
+    setImportarGrupoSiteTexto('');
+    setImportarGrupoSiteAberto(false);
   };
 
   const criarRegiaoSubmit = async (e, continuarAdicionando = false) => {
@@ -1784,7 +1880,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
               <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px', paddingBottom: '8px' }}>
                 <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#20c997', marginTop: '8px', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sites</div>
                 <div onClick={() => { setMenuAtivo('org_regioes'); setTelaImportarRegiaoAberta(false); setTelaAdicionarRegiaoAberta(false); }} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_regioes' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_regioes' ? 'bold' : 'normal' }}>Regiões</div>
-                <div onClick={() => setMenuAtivo('org_racks_groups')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_racks_groups' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_racks_groups' ? 'bold' : 'normal' }}>Grupos de Sites</div>
+                <div onClick={() => { setMenuAtivo('org_racks_groups'); setTelaModeloExportacaoAberta(false); setMenuExportarAberto(false); setImportarGrupoSiteAberto(false); setModalGrupoSiteAberto(false); }} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_racks_groups' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_racks_groups' ? 'bold' : 'normal' }}>Grupos de Sites</div>
                 <div onClick={() => setMenuAtivo('org_sites')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_sites' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_sites' ? 'bold' : 'normal' }}>Sites</div>
                 <div onClick={() => setMenuAtivo('org_locations')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_locations' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_locations' ? 'bold' : 'normal' }}>Locais</div>
 
@@ -2743,7 +2839,72 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             </div>
           )}
 
-          {(menuAtivo === 'org_sites' || menuAtivo === 'org_locations' || menuAtivo === 'org_racks_groups' || menuAtivo === 'org_inquilinos' || menuAtivo === 'org_grupos_inquilinos' || menuAtivo === 'org_contatos' || menuAtivo === 'org_grupos_contatos' || menuAtivo === 'org_funcoes_contatos' || menuAtivo === 'org_atribuicoes_contatos') && (
+          {menuAtivo === 'org_racks_groups' && (
+            <div style={{ width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px' }}>Grupos De Sites</h3>
+                <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
+                  <button onClick={() => { setGrupoSiteNome(''); setGrupoSiteDescricao(''); setGrupoSitePaiId(''); setModalGrupoSiteAberto(true); }} style={{ background: '#008f83', border: 'none', color: '#fff', padding: '9px 15px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>+ Adicionar</button>
+                  <button onClick={() => setImportarGrupoSiteAberto(true)} style={{ background: '#12a6c7', border: 'none', color: '#fff', padding: '9px 15px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>↥ Importar</button>
+                  <div style={{ position: 'relative' }}>
+                    <button onClick={() => setMenuExportarGrupoSiteAberto(v => !v)} style={{ background: '#a83fd1', border: 'none', color: '#fff', padding: '9px 15px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>↧ Exportar <span style={{ fontSize: '11px' }}>{menuExportarGrupoSiteAberto ? '▲' : '▼'}</span></button>
+                    {menuExportarGrupoSiteAberto && (
+                      <div style={{ position: 'absolute', right: 0, top: '43px', width: '230px', background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '5px', boxShadow: '0 4px 12px rgba(0,0,0,0.25)', zIndex: 1000, overflow: 'hidden' }}>
+                        <div onClick={() => exportarGruposSitesCSV(true)} style={{ padding: '12px 14px', cursor: 'pointer', color: theme.textMain, fontSize: '14px', borderBottom: `1px solid ${theme.border}` }}>Visualização Atual</div>
+                        <div onClick={() => exportarGruposSitesCSV(false)} style={{ padding: '12px 14px', cursor: 'pointer', color: theme.textMain, fontSize: '14px' }}>Todos os Dados (CSV)</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', borderBottom: `1px solid ${theme.border}`, gap: '20px', fontSize: '14px', fontWeight: 'bold', paddingTop: '5px', marginBottom: '18px' }}>
+                <span style={{ padding: '10px 12px', border: `1px solid ${theme.border}`, borderBottom: 'none', borderRadius: '6px 6px 0 0', color: theme.textMain }}>Resultados <span style={{ background: '#6c757d', color: '#fff', padding: '2px 6px', borderRadius: '5px', fontSize: '12px' }}>{gruposSites.length}</span></span>
+                <span style={{ padding: '10px 12px', color: theme.textMuted, cursor: 'pointer' }}>Filtros</span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '14px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '10px', flex: 1, minWidth: '280px' }}>
+                  <input type="text" placeholder="Busca rápida" value={buscaGrupoSite} onChange={e => setBuscaGrupoSite(e.target.value)} style={{ width: '240px', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '6px', fontSize: '14px' }} />
+                  <button style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '6px', cursor: 'pointer' }}>⚱</button>
+                  <select style={{ width: '170px', padding: '8px 10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '6px' }} defaultValue=""><option value=""> </option><option value="nome">Nome</option><option value="sites">Sites</option></select>
+                </div>
+                <button style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>⚙ Configurar Tabela &nbsp;⌄</button>
+              </div>
+
+              <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '7px', overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                  <thead><tr style={{ background: theme.cardInner, borderBottom: `1px solid ${theme.border}` }}>
+                    <th style={{ width: '40px', padding: '10px', textAlign: 'center' }}><input type="checkbox" /></th>
+                    <th style={{ padding: '10px', textAlign: 'left' }}>NOME</th>
+                    <th style={{ padding: '10px', textAlign: 'left' }}>SITES</th>
+                    <th style={{ padding: '10px', textAlign: 'left' }}>DESCRIÇÃO</th>
+                    <th style={{ width: '70px', padding: '10px' }}></th>
+                  </tr></thead>
+                  <tbody>
+                    {gruposSites.filter(g => g.nome.toLowerCase().includes(buscaGrupoSite.toLowerCase())).map(g => {
+                      const ehFilho = !!g.paiId;
+                      return (
+                        <tr key={g.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                          <td style={{ padding: '10px', textAlign: 'center' }}><input type="checkbox" /></td>
+                          <td style={{ padding: '10px', color: '#008aa0', fontWeight: '500' }}><span style={{ display: 'inline-block', width: ehFilho ? '22px' : '0' }}>{ehFilho ? '·' : ''}</span>{g.nome}</td>
+                          <td style={{ padding: '10px', color: '#008aa0' }}>{g.sites}</td>
+                          <td style={{ padding: '10px', color: theme.textMuted }}>{g.descricao || '—'}</td>
+                          <td style={{ padding: '7px', textAlign: 'right' }}>
+                            <button onClick={() => excluirGrupoSite(g.id)} title="Excluir" style={{ background: '#f5a000', border: 'none', color: '#fff', padding: '6px 10px', borderRadius: '5px', cursor: 'pointer' }}>✎⌄</button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {gruposSites.filter(g => g.nome.toLowerCase().includes(buscaGrupoSite.toLowerCase())).length === 0 && <tr><td colSpan="5" style={{ padding: '25px', textAlign: 'center', color: theme.textMuted }}>Nenhum grupo encontrado.</td></tr>}
+                  </tbody>
+                </table>
+                <div style={{ padding: '8px', fontSize: '12px', color: theme.textMuted }}>Exibindo {gruposSites.filter(g => g.nome.toLowerCase().includes(buscaGrupoSite.toLowerCase())).length} de {gruposSites.length}</div>
+              </div>
+            </div>
+          )}
+
+          {(menuAtivo === 'org_sites' || menuAtivo === 'org_locations' || menuAtivo === 'org_inquilinos' || menuAtivo === 'org_grupos_inquilinos' || menuAtivo === 'org_contatos' || menuAtivo === 'org_grupos_contatos' || menuAtivo === 'org_funcoes_contatos' || menuAtivo === 'org_atribuicoes_contatos') && (
             <div>
               <h3 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>Seção: {menuAtivo.replace('org_', '').toUpperCase()}</h3>
               {menuAtivo === 'org_sites' ? (
@@ -2760,6 +2921,32 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                   <p style={{ color: theme.textMuted, fontSize: '15px', margin: 0 }}>Módulo {menuAtivo.replace('org_', '')} configurado e vinculado à Organização.</p>
                 </div>
               )}
+            </div>
+          )}
+
+          {modalGrupoSiteAberto && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1200, padding: '20px' }}>
+              <form onSubmit={criarGrupoSite} style={{ width: '440px', background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '24px', color: theme.textMain }}>
+                <h3 style={{ marginTop: 0 }}>Adicionar Grupo de Sites</h3>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>Nome *</label>
+                <input required value={grupoSiteNome} onChange={e => setGrupoSiteNome(e.target.value)} placeholder="Nome do grupo" style={{ width: '100%', padding: '10px', marginBottom: '14px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px' }} />
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>Grupo pai</label>
+                <select value={grupoSitePaiId} onChange={e => setGrupoSitePaiId(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '14px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px' }}><option value="">Nenhum</option>{gruposSites.map(g => <option key={g.id} value={g.id}>{g.nome}</option>)}</select>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>Descrição</label>
+                <textarea value={grupoSiteDescricao} onChange={e => setGrupoSiteDescricao(e.target.value)} rows="3" style={{ width: '100%', padding: '10px', marginBottom: '18px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', resize: 'vertical' }} />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}><button type="button" onClick={() => setModalGrupoSiteAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, padding: '9px 12px', cursor: 'pointer' }}>Cancelar</button><button type="submit" style={{ background: '#008f83', border: 'none', color: '#fff', padding: '9px 16px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>Criar</button></div>
+              </form>
+            </div>
+          )}
+
+          {importarGrupoSiteAberto && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1200, padding: '20px' }}>
+              <div style={{ width: '600px', maxWidth: '100%', background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '24px', color: theme.textMain }}>
+                <h3 style={{ marginTop: 0 }}>Importar Grupos de Sites</h3>
+                <p style={{ color: theme.textMuted, fontSize: '13px' }}>Uma linha por grupo: <b>Nome;Sites;Descrição</b></p>
+                <textarea value={importarGrupoSiteTexto} onChange={e => setImportarGrupoSiteTexto(e.target.value)} rows="8" placeholder="Customer Sites;20;\nBranch Offices;19;" style={{ width: '100%', padding: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', resize: 'vertical' }} />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '15px' }}><button onClick={() => setImportarGrupoSiteAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, padding: '9px 12px', cursor: 'pointer' }}>Cancelar</button><button onClick={importarGruposSites} style={{ background: '#12a6c7', border: 'none', color: '#fff', padding: '9px 16px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>Importar</button></div>
+              </div>
             </div>
           )}
 
