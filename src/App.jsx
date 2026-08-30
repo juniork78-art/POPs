@@ -1441,9 +1441,19 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
     { id: '1', nome: 'Africa', sites: 0, descricao: '' },
     { id: '2', nome: 'Asia', sites: 0, descricao: '' }
   ]);
-  const [modalRegiaoAberto, setModalRegiaoAberto] = useState(false);
-  const [nomeRegiao, setNomeRegiao] = useState('');
-  const [descricaoRegiao, setDescricaoRegiao] = useState('');
+  
+  // TELA DE ADICIONAR / CRIAR REGIAO (NETBOX STYLE)
+  const [telaAdicionarRegiaoAberta, setTelaAdicionarRegiaoAberta] = useState(false);
+  const [regiaoPai, setRegiaoPai] = useState('');
+  const [regiaoNome, setRegiaoNome] = useState('');
+  const [regiaoSlug, setRegiaoSlug] = useState('');
+  const [regiaoDescricao, setRegiaoDescricao] = useState('');
+  const [regiaoTags, setRegiaoTags] = useState('');
+  const [regiaoOwnerGroup, setRegiaoOwnerGroup] = useState('');
+  const [regiaoOwner, setRegiaoOwner] = useState('');
+  const [regiaoComentarios, setRegiaoComentarios] = useState('');
+  const [abaComentario, setAbaComentario] = useState('escrita');
+
   const [buscaRegiao, setBuscaRegiao] = useState('');
 
   const [menuAtivo, setMenuAtivo] = useState('org_regioes'); 
@@ -1505,21 +1515,35 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
     }
   };
 
-  const criarRegiao = async (e) => {
-    e.preventDefault();
-    if (!nomeRegiao.trim()) return;
+  const gerarSlugAutomatico = (texto) => {
+    return texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  };
+
+  const criarRegiaoSubmit = async (e, continuarAdicionando = false) => {
+    if (e) e.preventDefault();
+    if (!regiaoNome.trim()) return;
     const nova = {
       id: Date.now().toString(),
-      nome: nomeRegiao.trim(),
+      nome: regiaoNome.trim(),
       sites: 0,
-      descricao: descricaoRegiao.trim()
+      descricao: regiaoDescricao.trim() || regiaoComentarios.trim()
     };
     const novasRegioes = [...regioesLista, nova];
     setRegioesLista(novasRegioes);
     await salvarDadosFirebase(racks, dispositivos, fabricantes, tiposDispositivos, novasRegioes);
-    setNomeRegiao('');
-    setDescricaoRegiao('');
-    setModalRegiaoAberto(false);
+    
+    setRegiaoNome('');
+    setRegiaoSlug('');
+    setRegiaoDescricao('');
+    setRegiaoComentarios('');
+    setRegiaoPai('');
+    setRegiaoTags('');
+    setRegiaoOwnerGroup('');
+    setRegiaoOwner('');
+
+    if (!continuarAdicionando) {
+      setTelaAdicionarRegiaoAberta(false);
+    }
   };
 
   const excluirRegiao = async (id) => {
@@ -1815,10 +1839,10 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
         </div>
       </div>
 
-      {/* ÁREA DE CONTEÚDO PRINCIPAL COM FLEX: 1 (OCUPA EXATAMENTE O RESTANTE DA TELA SEM VAZAR) */}
+      {/* ÁREA DE CONTEÚDO PRINCIPAL COM FLEX: 1 */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', minWidth: 0, boxSizing: 'border-box' }}>
         
-        {/* BARRA SUPERIOR COM PADDING SEGURO E FLEXÍVEL */}
+        {/* BARRA SUPERIOR */}
         <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', width: '100%', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>← Voltar para POPs</button>
@@ -1851,90 +1875,290 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             </div>
           )}
 
-          {/* CONTEÚDO: REGIOES EXATAMENTE IGUAL AO NETBOX SOLICITADO */}
+          {/* CONTEÚDO: REGIOES (LISTAGEM OU TELA DE ADICIONAR EXATA) */}
           {menuAtivo === 'org_regioes' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              
-              {/* TOPO: TITULO E BOTOES ADICIONAR, IMPORTAR, EXPORTAR */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: theme.textMain }}>Regiões</h2>
-                
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <button onClick={() => setModalRegiaoAberto(true)} style={{ background: '#20c997', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    + Adicionar
-                  </button>
-                  <button onClick={() => alert("Módulo de importação de Regiões")} style={{ background: '#17a2b8', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    📥 Importar
-                  </button>
-                  <button onClick={() => alert("Módulo de exportação de Regiões")} style={{ background: '#6f42c1', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    📤 Exportar ▼
-                  </button>
+            <div>
+              {telaAdicionarRegiaoAberta ? (
+                /* TELA DE ADICIONAR REGIÃO IDÊNTICA À IMAGEM FORNECIDA */
+                <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', padding: '24px', maxWidth: '850px', margin: '0 auto', boxSizing: 'border-box' }}>
+                  <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', color: theme.textMain, fontWeight: 'normal' }}>Adicionar região</h2>
+                  
+                  {/* ABAS DO TOPO DO FORMULÁRIO ("Criar") */}
+                  <div style={{ display: 'flex', borderBottom: `1px solid ${theme.border}`, marginBottom: '25px' }}>
+                    <span style={{ padding: '8px 16px', borderBottom: '2px solid #20c997', color: '#20c997', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer' }}>Criar</span>
+                  </div>
+
+                  <form onSubmit={(e) => criarRegiaoSubmit(e, false)}>
+                    
+                    {/* CAMPO PAI */}
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Pai</label>
+                      <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
+                        <select 
+                          value={regiaoPai} 
+                          onChange={(e) => setRegiaoPai(e.target.value)} 
+                          style={{ width: '100%', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', appearance: 'none' }}
+                        >
+                          <option value="">---------</option>
+                          {regioesLista.map(r => (
+                            <option key={r.id} value={r.nome}>{r.nome}</option>
+                          ))}
+                        </select>
+                        <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: theme.textMuted, fontSize: '12px' }}>▼</span>
+                      </div>
+                    </div>
+
+                    {/* CAMPO NOME */}
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Nome<span style={{ color: '#dc3545' }}>*</span></label>
+                      <div style={{ flex: 1, minWidth: '250px' }}>
+                        <input 
+                          type="text" 
+                          value={regiaoNome} 
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setRegiaoNome(val);
+                            setRegiaoSlug(gerarSlugAutomatico(val));
+                          }} 
+                          required 
+                          style={{ width: '100%', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', boxSizing: 'border-box' }} 
+                        />
+                      </div>
+                    </div>
+
+                    {/* CAMPO SLUG */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right', paddingTop: '8px' }}>Slug<span style={{ color: '#dc3545' }}>*</span></label>
+                      <div style={{ flex: 1, minWidth: '250px' }}>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <input 
+                            type="text" 
+                            value={regiaoSlug} 
+                            onChange={(e) => setRegiaoSlug(e.target.value)} 
+                            required 
+                            style={{ width: '100%', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', boxSizing: 'border-box' }} 
+                          />
+                          <button 
+                            type="button" 
+                            onClick={() => setRegiaoSlug(gerarSlugAutomatico(regiaoNome))} 
+                            style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '9px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+                            title="Gerar Slug"
+                          >
+                            🔄
+                          </button>
+                        </div>
+                        <span style={{ fontSize: '12px', color: theme.textMuted, marginTop: '4px', display: 'block' }}>Abreviatura exclusiva da URL amigável</span>
+                      </div>
+                    </div>
+
+                    {/* CAMPO DESCRIÇÃO */}
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Descrição</label>
+                      <div style={{ flex: 1, minWidth: '250px' }}>
+                        <input 
+                          type="text" 
+                          value={regiaoDescricao} 
+                          onChange={(e) => setRegiaoDescricao(e.target.value)} 
+                          style={{ width: '100%', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', boxSizing: 'border-box' }} 
+                        />
+                      </div>
+                    </div>
+
+                    {/* CAMPO TAGS */}
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '22px', gap: '15px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Tags</label>
+                      <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
+                        <select 
+                          value={regiaoTags} 
+                          onChange={(e) => setRegiaoTags(e.target.value)} 
+                          style={{ width: '100%', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', appearance: 'none' }}
+                        >
+                          <option value="">---------</option>
+                        </select>
+                        <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: theme.textMuted, fontSize: '12px' }}>▼</span>
+                      </div>
+                    </div>
+
+                    {/* SEÇÃO PROPRIETÁRIO */}
+                    <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '20px', marginBottom: '20px' }}>
+                      <h3 style={{ fontSize: '15px', fontWeight: 'bold', color: theme.textMain, textAlign: 'center', marginBottom: '18px' }}>Proprietário</h3>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
+                        <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Owner group</label>
+                        <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
+                          <select 
+                            value={regiaoOwnerGroup} 
+                            onChange={(e) => setRegiaoOwnerGroup(e.target.value)} 
+                            style={{ width: '100%', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', appearance: 'none' }}
+                          >
+                            <option value="">---------</option>
+                          </select>
+                          <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: theme.textMuted, fontSize: '12px' }}>▼</span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
+                        <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Owner</label>
+                        <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
+                          <select 
+                            value={regiaoOwner} 
+                            onChange={(e) => setRegiaoOwner(e.target.value)} 
+                            style={{ width: '100%', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', appearance: 'none' }}
+                          >
+                            <option value="">---------</option>
+                          </select>
+                          <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: theme.textMuted, fontSize: '12px' }}>▼</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SEÇÃO COMENTÁRIOS */}
+                    <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '20px', marginBottom: '25px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', gap: '15px', flexWrap: 'wrap' }}>
+                        <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Comentários</label>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <button 
+                            type="button" 
+                            onClick={() => setAbaComentario('escrita')} 
+                            style={{ padding: '6px 12px', background: abaComentario === 'escrita' ? theme.cardInner : 'transparent', border: `1px solid ${abaComentario === 'escrita' ? theme.border : 'transparent'}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
+                          >
+                            Escrita
+                          </button>
+                          <button 
+                            type="button" 
+                            onClick={() => setAbaComentario('prev')} 
+                            style={{ padding: '6px 12px', background: abaComentario === 'prev' ? theme.cardInner : 'transparent', border: `1px solid ${abaComentario === 'prev' ? theme.border : 'transparent'}`, color: theme.textMuted, borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
+                          >
+                            Pré-visualização
+                          </button>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                        <div style={{ width: '140px' }}></div>
+                        <div style={{ flex: 1, minWidth: '250px' }}>
+                          <textarea 
+                            rows="5" 
+                            value={regiaoComentarios} 
+                            onChange={(e) => setRegiaoComentarios(e.target.value)} 
+                            style={{ width: '100%', padding: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', boxSizing: 'border-box' }} 
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* BOTÕES DE RODAPÉ (CANCELAR, CRIAR, CRIAR E ADICIONAR OUTRO) */}
+                    <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px', alignItems: 'center' }}>
+                      <button 
+                        type="button" 
+                        onClick={() => setTelaAdicionarRegiaoAberta(false)} 
+                        style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
+                      >
+                        Cancelar
+                      </button>
+                      <button 
+                        type="submit" 
+                        style={{ background: '#20c997', border: 'none', color: '#fff', padding: '8px 18px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
+                      >
+                        Criar
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={(e) => criarRegiaoSubmit(e, true)} 
+                        style={{ background: 'transparent', border: '1px solid #20c997', color: '#20c997', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
+                      >
+                        Criar e Adicionar Outro
+                      </button>
+                    </div>
+
+                  </form>
                 </div>
-              </div>
+              ) : (
+                /* LISTAGEM NORMAL DE REGIÕES COM O BOTÃO ADICIONAR */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  
+                  {/* TOPO: TITULO E BOTOES ADICIONAR, IMPORTAR, EXPORTAR */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                    <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: theme.textMain }}>Regiões</h2>
+                    
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <button onClick={() => setTelaAdicionarRegiaoAberta(true)} style={{ background: '#20c997', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        + Adicionar
+                      </button>
+                      <button onClick={() => alert("Módulo de importação de Regiões")} style={{ background: '#17a2b8', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        📥 Importar
+                      </button>
+                      <button onClick={() => alert("Módulo de exportação de Regiões")} style={{ background: '#6f42c1', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        📤 Exportar ▼
+                      </button>
+                    </div>
+                  </div>
 
-              {/* ABAS RESULTADOS / FILTROS */}
-              <div style={{ display: 'flex', borderBottom: `1px solid ${theme.border}`, gap: '20px', fontSize: '14px', fontWeight: 'bold', paddingTop: '5px' }}>
-                <span style={{ paddingBottom: '8px', borderBottom: '2px solid #20c997', color: '#20c997', cursor: 'pointer' }}>Resultados <span style={{ background: '#20c99722', padding: '2px 6px', borderRadius: '10px', fontSize: '12px' }}>{regioesLista.length}</span></span>
-                <span style={{ paddingBottom: '8px', color: theme.textMuted, cursor: 'pointer' }} onClick={() => alert("Filtros avançados de regiões")}>Filtros</span>
-              </div>
+                  {/* ABAS RESULTADOS / FILTROS */}
+                  <div style={{ display: 'flex', borderBottom: `1px solid ${theme.border}`, gap: '20px', fontSize: '14px', fontWeight: 'bold', paddingTop: '5px' }}>
+                    <span style={{ paddingBottom: '8px', borderBottom: '2px solid #20c997', color: '#20c997', cursor: 'pointer' }}>Resultados <span style={{ background: '#20c99722', padding: '2px 6px', borderRadius: '10px', fontSize: '12px' }}>{regioesLista.length}</span></span>
+                    <span style={{ paddingBottom: '8px', color: theme.textMuted, cursor: 'pointer' }} onClick={() => alert("Filtros avançados de regiões")}>Filtros</span>
+                  </div>
 
-              {/* BARRA DE BUSCA E CONFIGURAR TABELA */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', gap: '8px', flex: 1, minWidth: '260px', alignItems: 'center' }}>
-                  <input 
-                    type="text" 
-                    placeholder="Busca rápida" 
-                    value={buscaRegiao} 
-                    onChange={(e) => setBuscaRegiao(e.target.value)} 
-                    style={{ padding: '8px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', flex: 1, boxSizing: 'border-box' }} 
-                  />
-                  <button style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', color: theme.textMain }}>🔍</button>
-                </div>
+                  {/* BARRA DE BUSCA E CONFIGURAR TABELA */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '8px', flex: 1, minWidth: '260px', alignItems: 'center' }}>
+                      <input 
+                        type="text" 
+                        placeholder="Busca rápida" 
+                        value={buscaRegiao} 
+                        onChange={(e) => setBuscaRegiao(e.target.value)} 
+                        style={{ padding: '8px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', flex: 1, boxSizing: 'border-box' }} 
+                      />
+                      <button style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', color: theme.textMain }}>🔍</button>
+                    </div>
 
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={() => alert("Configuração de colunas da tabela")} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    ⚙️ Configurar Tabela ▼
-                  </button>
-                </div>
-              </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button onClick={() => alert("Configuração de colunas da tabela")} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        ⚙️ Configurar Tabela ▼
+                      </button>
+                    </div>
+                  </div>
 
-              {/* TABELA DE REGIOES */}
-              <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', textAlign: 'left', minWidth: '600px' }}>
-                  <thead>
-                    <tr style={{ background: theme.cardInner, borderBottom: `1px solid ${theme.border}`, color: theme.textMuted, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      <th style={{ padding: '12px 15px', width: '40px' }}><input type="checkbox" /></th>
-                      <th style={{ padding: '12px 15px' }}>Nome</th>
-                      <th style={{ padding: '12px 15px' }}>Sites</th>
-                      <th style={{ padding: '12px 15px' }}>Descrição</th>
-                      <th style={{ padding: '12px 15px', textAlign: 'right', width: '100px' }}>Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {regioesLista.filter(r => r.nome.toLowerCase().includes(buscaRegiao.toLowerCase())).length === 0 ? (
-                      <tr>
-                        <td colSpan="5" style={{ padding: '30px', textAlign: 'center', color: theme.textMuted }}>Nenhuma região encontrada.</td>
-                      </tr>
-                    ) : (
-                      regioesLista.filter(r => r.nome.toLowerCase().includes(buscaRegiao.toLowerCase())).map(reg => (
-                        <tr key={reg.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                          <td style={{ padding: '12px 15px' }}><input type="checkbox" /></td>
-                          <td style={{ padding: '12px 15px', fontWeight: 'bold', color: '#20c997', cursor: 'pointer' }} onClick={() => alert(`Detalhes da região: ${reg.nome}`)}>{reg.nome}</td>
-                          <td style={{ padding: '12px 15px' }}>{reg.sites}</td>
-                          <td style={{ padding: '12px 15px', color: theme.textMuted }}>{reg.descricao || '—'}</td>
-                          <td style={{ padding: '12px 15px', textAlign: 'right' }}>
-                            <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
-                              <button onClick={() => alert(`Editar região ${reg.nome}`)} style={{ background: '#ffc107', border: 'none', color: '#000', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>✏️</button>
-                              <button onClick={() => excluirRegiao(reg.id)} style={{ background: '#ffc107', border: 'none', color: '#000', padding: '6px 8px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>▼</button>
-                            </div>
-                          </td>
+                  {/* TABELA DE REGIOES */}
+                  <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', textAlign: 'left', minWidth: '600px' }}>
+                      <thead>
+                        <tr style={{ background: theme.cardInner, borderBottom: `1px solid ${theme.border}`, color: theme.textMuted, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          <th style={{ padding: '12px 15px', width: '40px' }}><input type="checkbox" /></th>
+                          <th style={{ padding: '12px 15px' }}>Nome</th>
+                          <th style={{ padding: '12px 15px' }}>Sites</th>
+                          <th style={{ padding: '12px 15px' }}>Descrição</th>
+                          <th style={{ padding: '12px 15px', textAlign: 'right', width: '100px' }}>Ações</th>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                      </thead>
+                      <tbody>
+                        {regioesLista.filter(r => r.nome.toLowerCase().includes(buscaRegiao.toLowerCase())).length === 0 ? (
+                          <tr>
+                            <td colSpan="5" style={{ padding: '30px', textAlign: 'center', color: theme.textMuted }}>Nenhuma região encontrada.</td>
+                          </tr>
+                        ) : (
+                          regioesLista.filter(r => r.nome.toLowerCase().includes(buscaRegiao.toLowerCase())).map(reg => (
+                            <tr key={reg.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                              <td style={{ padding: '12px 15px' }}><input type="checkbox" /></td>
+                              <td style={{ padding: '12px 15px', fontWeight: 'bold', color: '#20c997', cursor: 'pointer' }} onClick={() => alert(`Detalhes da região: ${reg.nome}`)}>{reg.nome}</td>
+                              <td style={{ padding: '12px 15px' }}>{reg.sites}</td>
+                              <td style={{ padding: '12px 15px', color: theme.textMuted }}>{reg.descricao || '—'}</td>
+                              <td style={{ padding: '12px 15px', textAlign: 'right' }}>
+                                <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
+                                  <button onClick={() => alert(`Editar região ${reg.nome}`)} style={{ background: '#ffc107', border: 'none', color: '#000', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>✏️</button>
+                                  <button onClick={() => excluirRegiao(reg.id)} style={{ background: '#ffc107', border: 'none', color: '#000', padding: '6px 8px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>▼</button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
 
+                </div>
+              )}
             </div>
           )}
 
@@ -2090,26 +2314,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
 
         </div>
       </div>
-
-      {/* MODAL CRIAR REGIAO */}
-      {modalRegiaoAberto && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px', boxSizing: 'border-box' }}>
-          <form onSubmit={criarRegiao} style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '380px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
-            <h3 style={{ marginTop: 0, fontSize: '18px', color: '#20c997' }}>Adicionar Nova Região</h3>
-            
-            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px', marginTop: '10px' }}>Nome da Região</label>
-            <input type="text" placeholder="Ex: América do Sul" value={nomeRegiao} onChange={(e) => setNomeRegiao(e.target.value)} required style={{ width: '100%', padding: '9px', marginBottom: '12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-
-            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Descrição (Opcional)</label>
-            <textarea placeholder="Descrição da região" value={descricaoRegiao} onChange={(e) => setDescricaoRegiao(e.target.value)} rows="3" style={{ width: '100%', padding: '9px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button type="button" onClick={() => setModalRegiaoAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '14px' }}>Cancelar</button>
-              <button type="submit" style={{ background: '#20c997', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>Criar Região</button>
-            </div>
-          </form>
-        </div>
-      )}
 
       {/* MODAL CRIAR RACK */}
       {modalRackAberto && (
