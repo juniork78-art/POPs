@@ -1428,7 +1428,6 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
     </div>
   );
 }
-
 function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
   const [popSelecionado, setPopSelecionado] = useState(listaPops[0]?.nome || '');
   const [racks, setRacks] = useState([]);
@@ -1436,13 +1435,11 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
   const [fabricantes, setFabricantes] = useState(['Huawei', 'Cisco', 'Mikrotik', 'Dell', 'HP', 'Furukawa']);
   const [tiposDispositivos, setTiposDispositivos] = useState(['Switch', 'OLT', 'Router', 'Patch Panel', 'Servidor', 'No-Break']);
 
-  // ESTADOS PARA REGIOES
   const [regioesLista, setRegioesLista] = useState([
     { id: '1', nome: 'Africa', sites: 0, descricao: '' },
     { id: '2', nome: 'Asia', sites: 0, descricao: '' }
   ]);
   
-  // TELA DE ADICIONAR / CRIAR REGIAO (NETBOX STYLE)
   const [telaAdicionarRegiaoAberta, setTelaAdicionarRegiaoAberta] = useState(false);
   const [regiaoPai, setRegiaoPai] = useState('');
   const [regiaoNome, setRegiaoNome] = useState('');
@@ -1454,9 +1451,8 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
   const [regiaoComentarios, setRegiaoComentarios] = useState('');
   const [abaComentario, setAbaComentario] = useState('escrita');
 
-  // ESTADOS PARA IMPORTAÇÃO EM MASSA (NETBOX STYLE)
   const [telaImportarRegiaoAberta, setTelaImportarRegiaoAberta] = useState(false);
-  const [abaImportar, setAbaImportar] = useState('direta'); // 'direta', 'arquivo', 'dados'
+  const [abaImportar, setAbaImportar] = useState('direta');
   const [importDataText, setImportDataText] = useState('');
   const [importFormat, setImportFormat] = useState('Detecção automática');
   const [importDelimiter, setImportDelimiter] = useState('Detecção automática');
@@ -1656,10 +1652,8 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100%', maxWidth: '100%', backgroundColor: theme.bg, color: theme.textMain, overflow: 'hidden', boxSizing: 'border-box' }}>
       
-      {/* SIDEBAR ESTILO NETBOX */}
       <div style={{ width: '270px', minWidth: '270px', background: theme.cardBg, borderRight: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', height: '100vh', boxSizing: 'border-box', flexShrink: 0 }}>
         
-        {/* LOGO E CABEÇALHO */}
         <div style={{ padding: '15px', borderBottom: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#20c997" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
@@ -1668,10 +1662,8 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
           <span style={{ fontSize: '11px', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '1px' }}>Community</span>
         </div>
 
-        {/* LISTA DE MENUS */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '10px 0' }}>
           
-          {/* ORGANIZATION COM A ESTRUTURA EXATA SOLICITADA */}
           <div>
             <div onClick={() => toggleSecao('organization')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🏢 Organização</span>
@@ -1679,31 +1671,25 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             </div>
             {seccoesAbertas.organization && (
               <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px', paddingBottom: '8px' }}>
-                
-                {/* SEÇÃO SITES */}
                 <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#20c997', marginTop: '8px', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sites</div>
                 <div onClick={() => { setMenuAtivo('org_regioes'); setTelaImportarRegiaoAberta(false); setTelaAdicionarRegiaoAberta(false); }} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_regioes' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_regioes' ? 'bold' : 'normal' }}>Regiões</div>
                 <div onClick={() => setMenuAtivo('org_racks_groups')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_racks_groups' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_racks_groups' ? 'bold' : 'normal' }}>Grupos de Sites</div>
                 <div onClick={() => setMenuAtivo('org_sites')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_sites' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_sites' ? 'bold' : 'normal' }}>Sites</div>
                 <div onClick={() => setMenuAtivo('org_locations')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_locations' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_locations' ? 'bold' : 'normal' }}>Locais</div>
 
-                {/* SEÇÃO LOCAÇÃO */}
                 <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#20c997', marginTop: '10px', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Locação</div>
                 <div onClick={() => setMenuAtivo('org_inquilinos')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_inquilinos' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_inquilinos' ? 'bold' : 'normal' }}>Inquilinos</div>
                 <div onClick={() => setMenuAtivo('org_grupos_inquilinos')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_grupos_inquilinos' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_grupos_inquilinos' ? 'bold' : 'normal' }}>Grupos de Inquilinos</div>
 
-                {/* SEÇÃO CONTATOS */}
                 <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#20c997', marginTop: '10px', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Contatos</div>
                 <div onClick={() => setMenuAtivo('org_contatos')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_contatos' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_contatos' ? 'bold' : 'normal' }}>Contatos</div>
                 <div onClick={() => setMenuAtivo('org_grupos_contatos')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_grupos_contatos' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_grupos_contatos' ? 'bold' : 'normal' }}>Grupos de Contatos</div>
                 <div onClick={() => setMenuAtivo('org_funcoes_contatos')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_funcoes_contatos' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_funcoes_contatos' ? 'bold' : 'normal' }}>Funções dos Contatos</div>
                 <div onClick={() => setMenuAtivo('org_atribuicoes_contatos')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_atribuicoes_contatos' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_atribuicoes_contatos' ? 'bold' : 'normal' }}>Atribuições dos Contatos</div>
-
               </div>
             )}
           </div>
 
-          {/* RACKS */}
           <div>
             <div onClick={() => toggleSecao('racks')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🗄️ Racks</span>
@@ -1717,7 +1703,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             )}
           </div>
 
-          {/* DEVICES */}
           <div>
             <div onClick={() => toggleSecao('devices')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🖥️ Devices</span>
@@ -1732,7 +1717,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             )}
           </div>
 
-          {/* CONNECTIONS */}
           <div>
             <div onClick={() => toggleSecao('connections')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🔌 Connections</span>
@@ -1746,7 +1730,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             )}
           </div>
 
-          {/* WIRELESS */}
           <div>
             <div onClick={() => toggleSecao('wireless')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>📡 Wireless</span>
@@ -1759,7 +1742,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             )}
           </div>
 
-          {/* IPAM */}
           <div>
             <div onClick={() => toggleSecao('ipam')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🌐 IPAM</span>
@@ -1773,7 +1755,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             )}
           </div>
 
-          {/* VPN */}
           <div>
             <div onClick={() => toggleSecao('vpn')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🔒 VPN</span>
@@ -1786,7 +1767,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             )}
           </div>
 
-          {/* VIRTUALIZATION */}
           <div>
             <div onClick={() => toggleSecao('virtualization')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>💻 Virtualization</span>
@@ -1799,7 +1779,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             )}
           </div>
 
-          {/* CIRCUITS */}
           <div>
             <div onClick={() => toggleSecao('circuits')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>⚡ Circuits</span>
@@ -1812,7 +1791,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             )}
           </div>
 
-          {/* POWER */}
           <div>
             <div onClick={() => toggleSecao('power')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🔋 Power</span>
@@ -1825,7 +1803,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             )}
           </div>
 
-          {/* PROVISIONING */}
           <div>
             <div onClick={() => toggleSecao('provisioning')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>📋 Provisioning</span>
@@ -1838,7 +1815,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             )}
           </div>
 
-          {/* CUSTOMIZATION */}
           <div>
             <div onClick={() => toggleSecao('customization')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🧰 Customization</span>
@@ -1851,7 +1827,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             )}
           </div>
 
-          {/* OPERATIONS */}
           <div>
             <div onClick={() => toggleSecao('operations')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>⚙️ Operations</span>
@@ -1864,7 +1839,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             )}
           </div>
 
-          {/* ADMIN */}
           <div>
             <div onClick={() => toggleSecao('admin')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>👥 Admin</span>
@@ -1880,10 +1854,8 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
         </div>
       </div>
 
-      {/* ÁREA DE CONTEÚDO PRINCIPAL COM FLEX: 1 */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', minWidth: 0, boxSizing: 'border-box' }}>
         
-        {/* BARRA SUPERIOR */}
         <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', width: '100%', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>← Voltar para POPs</button>
@@ -1897,10 +1869,8 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
           </div>
         </div>
 
-        {/* CONTEÚDO DINÂMICO */}
         <div style={{ padding: '20px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
           
-          {/* SELETOR DE POP COMUM PARA RACKS / DEVICES / SITES */}
           {(menuAtivo === 'racks_racks' || menuAtivo === 'racks_elevations' || menuAtivo === 'devices_devices' || menuAtivo === 'org_sites') && (
             <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px', background: theme.cardBg, padding: '12px 15px', borderRadius: '6px', border: `1px solid ${theme.border}`, flexWrap: 'wrap', width: '100%', boxSizing: 'border-box' }}>
               <label style={{ fontWeight: 'bold', fontSize: '14px' }}>Selecionar POP (Site):</label>
@@ -1916,16 +1886,13 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             </div>
           )}
 
-          {/* CONTEÚDO: REGIOES (LISTAGEM OU TELA DE ADICIONAR OU TELA DE IMPORTAR EM MASSA) */}
           {menuAtivo === 'org_regioes' && (
             <div>
               {telaImportarRegiaoAberta ? (
-                /* TELA DE IMPORTAÇÃO EM MASSA IDÊNTICA ÀS IMAGENS FORNECIDAS */
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', padding: '24px', width: '100%', boxSizing: 'border-box' }}>
                     <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', color: theme.textMain, fontWeight: 'normal' }}>Região Importação em Massa</h2>
                     
-                    {/* ABAS DO TOPO ("Importação Direta", "Carregar Arquivo", "Arquivo de Dados") */}
                     <div style={{ display: 'flex', borderBottom: `1px solid ${theme.border}`, marginBottom: '25px', gap: '25px' }}>
                       <span onClick={() => setAbaImportar('direta')} style={{ padding: '8px 4px', borderBottom: abaImportar === 'direta' ? '2px solid #20c997' : 'none', color: abaImportar === 'direta' ? '#20c997' : theme.textMuted, fontWeight: 'bold', fontSize: '14px', cursor: 'pointer' }}>Importação Direta</span>
                       <span onClick={() => setAbaImportar('arquivo')} style={{ padding: '8px 4px', borderBottom: abaImportar === 'arquivo' ? '2px solid #20c997' : 'none', color: abaImportar === 'arquivo' ? '#20c997' : theme.textMuted, fontSize: '14px', cursor: 'pointer' }}>Carregar Arquivo</span>
@@ -1933,10 +1900,8 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                     </div>
 
                     <form onSubmit={executarImportacaoMassa}>
-                      
                       {abaImportar === 'direta' ? (
                         <>
-                          {/* CAMPO DATA (TEXTAREA) */}
                           <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
                             <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right', paddingTop: '8px' }}>Data</label>
                             <div style={{ flex: 1, minWidth: '250px' }}>
@@ -1944,14 +1909,12 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                                 rows="8" 
                                 value={importDataText} 
                                 onChange={(e) => setImportDataText(e.target.value)} 
-                                placeholder=""
                                 style={{ width: '100%', padding: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', boxSizing: 'border-box' }} 
                               />
                               <span style={{ fontSize: '12px', color: theme.textMuted, marginTop: '4px', display: 'block' }}>Enter object data in CSV, JSON or YAML format.</span>
                             </div>
                           </div>
 
-                          {/* CAMPO FORMAT */}
                           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
                             <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Format<span style={{ color: '#dc3545' }}>*</span></label>
                             <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
@@ -1969,7 +1932,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                             </div>
                           </div>
 
-                          {/* CAMPO CSV DELIMITER */}
                           <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
                             <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right', paddingTop: '8px' }}>CSV delimiter</label>
                             <div style={{ flex: 1, minWidth: '250px' }}>
@@ -2001,7 +1963,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                         </div>
                       )}
 
-                      {/* SEÇÃO CHANGELOG MESSAGE E JOB */}
                       <div style={{ background: '#20c99715', border: '1px solid #20c997', padding: '18px', borderRadius: '6px', marginBottom: '25px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
                           <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Changelog message</label>
@@ -2027,7 +1988,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                         <span style={{ fontSize: '12px', color: theme.textMuted, paddingLeft: '155px' }}>Execute esta tarefa por meio de um job em segundo plano</span>
                       </div>
 
-                      {/* BOTÕES DE RODAPÉ (CANCELAR, ENVIAR) */}
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', alignItems: 'center' }}>
                         <button 
                           type="button" 
@@ -2047,7 +2007,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                     </form>
                   </div>
 
-                  {/* TABELA DE OPÇÕES DE CAMPOS (CONFORME SEGUNDA IMAGEM) */}
                   <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', padding: '20px', width: '100%', boxSizing: 'border-box' }}>
                     <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: theme.textMain }}>Opções de Campos</h3>
                     
@@ -2119,26 +2078,18 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                         </tbody>
                       </table>
                     </div>
-
-                    <div style={{ marginTop: '15px', fontSize: '12px', color: theme.textMuted, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <p style={{ margin: 0 }}>✓ Campos obrigatórios <b>devem</b> ser especificados para todos os objetos.</p>
-                      <p style={{ margin: 0 }}>ℹ️ Objetos relacionados podem ser referenciados por qualquer atributo exclusivo. Por exemplo, <code>vrf.rd</code> identificaria um VRF por seu Route Distinguiser.</p>
-                    </div>
                   </div>
                 </div>
               ) : telaAdicionarRegiaoAberta ? (
-                /* TELA DE ADICIONAR REGIÃO IDÊNTICA À IMAGEM ANTERIOR */
                 <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', padding: '24px', maxWidth: '850px', margin: '0 auto', boxSizing: 'border-box' }}>
                   <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', color: theme.textMain, fontWeight: 'normal' }}>Adicionar região</h2>
                   
-                  {/* ABAS DO TOPO DO FORMULÁRIO ("Criar") */}
                   <div style={{ display: 'flex', borderBottom: `1px solid ${theme.border}`, marginBottom: '25px' }}>
                     <span style={{ padding: '8px 16px', borderBottom: '2px solid #20c997', color: '#20c997', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer' }}>Criar</span>
                   </div>
 
                   <form onSubmit={(e) => criarRegiaoSubmit(e, false)}>
                     
-                    {/* CAMPO PAI */}
                     <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
                       <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Pai</label>
                       <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
@@ -2156,7 +2107,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                       </div>
                     </div>
 
-                    {/* CAMPO NOME */}
                     <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
                       <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Nome<span style={{ color: '#dc3545' }}>*</span></label>
                       <div style={{ flex: 1, minWidth: '250px' }}>
@@ -2174,7 +2124,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                       </div>
                     </div>
 
-                    {/* CAMPO SLUG */}
                     <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
                       <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right', paddingTop: '8px' }}>Slug<span style={{ color: '#dc3545' }}>*</span></label>
                       <div style={{ flex: 1, minWidth: '250px' }}>
@@ -2190,7 +2139,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                             type="button" 
                             onClick={() => setRegiaoSlug(gerarSlugAutomatico(regiaoNome))} 
                             style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '9px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
-                            title="Gerar Slug"
                           >
                             🔄
                           </button>
@@ -2199,7 +2147,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                       </div>
                     </div>
 
-                    {/* CAMPO DESCRIÇÃO */}
                     <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
                       <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Descrição</label>
                       <div style={{ flex: 1, minWidth: '250px' }}>
@@ -2212,7 +2159,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                       </div>
                     </div>
 
-                    {/* CAMPO TAGS */}
                     <div style={{ display: 'flex', alignItems: 'center', marginBottom: '22px', gap: '15px', flexWrap: 'wrap' }}>
                       <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Tags</label>
                       <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
@@ -2227,7 +2173,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                       </div>
                     </div>
 
-                    {/* SEÇÃO PROPRIETÁRIO */}
                     <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '20px', marginBottom: '20px' }}>
                       <h3 style={{ fontSize: '15px', fontWeight: 'bold', color: theme.textMain, textAlign: 'center', marginBottom: '18px' }}>Proprietário</h3>
                       
@@ -2260,7 +2205,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                       </div>
                     </div>
 
-                    {/* SEÇÃO COMENTÁRIOS */}
                     <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '20px', marginBottom: '25px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', gap: '15px', flexWrap: 'wrap' }}>
                         <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Comentários</label>
@@ -2295,7 +2239,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                       </div>
                     </div>
 
-                    {/* BOTÕES DE RODAPÉ (CANCELAR, CRIAR, CRIAR E ADICIONAR OUTRO) */}
                     <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px', alignItems: 'center' }}>
                       <button 
                         type="button" 
@@ -2322,10 +2265,8 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                   </form>
                 </div>
               ) : (
-                /* LISTAGEM NORMAL DE REGIÕES COM O BOTÃO ADICIONAR E IMPORTAR */
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                   
-                  {/* TOPO: TITULO E BOTOES ADICIONAR, IMPORTAR, EXPORTAR */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                     <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: theme.textMain }}>Regiões</h2>
                     
@@ -2342,13 +2283,11 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                     </div>
                   </div>
 
-                  {/* ABAS RESULTADOS / FILTROS */}
                   <div style={{ display: 'flex', borderBottom: `1px solid ${theme.border}`, gap: '20px', fontSize: '14px', fontWeight: 'bold', paddingTop: '5px' }}>
                     <span style={{ paddingBottom: '8px', borderBottom: '2px solid #20c997', color: '#20c997', cursor: 'pointer' }}>Resultados <span style={{ background: '#20c99722', padding: '2px 6px', borderRadius: '10px', fontSize: '12px' }}>{regioesLista.length}</span></span>
                     <span style={{ paddingBottom: '8px', color: theme.textMuted, cursor: 'pointer' }} onClick={() => alert("Filtros avançados de regiões")}>Filtros</span>
                   </div>
 
-                  {/* BARRA DE BUSCA E CONFIGURAR TABELA */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', gap: '8px', flex: 1, minWidth: '260px', alignItems: 'center' }}>
                       <input 
@@ -2368,7 +2307,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                     </div>
                   </div>
 
-                  {/* TABELA DE REGIOES */}
                   <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', textAlign: 'left', minWidth: '600px' }}>
                       <thead>
@@ -2410,7 +2348,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             </div>
           )}
 
-          {/* CONTEÚDO: RACKS E ELEVAÇÕES */}
           {(menuAtivo === 'racks_racks' || menuAtivo === 'racks_elevations') && (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
@@ -2441,7 +2378,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                           </div>
                         </div>
 
-                        {/* RENDERIZAÇÃO NETBOX U POR U */}
                         <div style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, borderRadius: '4px', padding: '6px', maxHeight: '350px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                           {Array.from({ length: rack.altura }, (_, i) => rack.altura - i).map(u => {
                             const dispOcupante = dispDoRack.find(d => {
@@ -2479,7 +2415,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             </div>
           )}
 
-          {/* CONTEÚDO: DEVICES E FABRICANTES */}
           {(menuAtivo === 'devices_devices' || menuAtivo === 'devices_manufacturers' || menuAtivo === 'devices_types') && (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
@@ -2531,7 +2466,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             </div>
           )}
 
-          {/* CONTEÚDO: SITES / ORGANIZATION */}
           {(menuAtivo === 'org_sites' || menuAtivo === 'org_locations' || menuAtivo === 'org_racks_groups' || menuAtivo === 'org_inquilinos' || menuAtivo === 'org_grupos_inquilinos' || menuAtivo === 'org_contatos' || menuAtivo === 'org_grupos_contatos' || menuAtivo === 'org_funcoes_contatos' || menuAtivo === 'org_atribuicoes_contatos') && (
             <div>
               <h3 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>Seção: {menuAtivo.replace('org_', '').toUpperCase()}</h3>
@@ -2552,7 +2486,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             </div>
           )}
 
-          {/* CONTEÚDO GENÉRICO PARA OUTROS MENUS DO NETBOX */}
           {!['org_regioes', 'racks_racks', 'racks_elevations', 'devices_devices', 'devices_manufacturers', 'devices_types', 'org_sites', 'org_locations', 'org_racks_groups', 'org_inquilinos', 'org_grupos_inquilinos', 'org_contatos', 'org_grupos_contatos', 'org_funcoes_contatos', 'org_atribuicoes_contatos'].includes(menuAtivo) && (
             <div style={{ textAlign: 'center', padding: '60px', background: theme.cardBg, borderRadius: '8px', border: `1px solid ${theme.border}` }}>
               <h3 style={{ color: '#4dabf7', marginBottom: '10px' }}>Módulo NetBox: {menuAtivo.replace('_', ' - ').toUpperCase()}</h3>
@@ -2563,7 +2496,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
         </div>
       </div>
 
-      {/* MODAL CRIAR RACK */}
       {modalRackAberto && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px', boxSizing: 'border-box' }}>
           <form onSubmit={criarRack} style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '355px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
@@ -2583,7 +2515,6 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
         </div>
       )}
 
-      {/* MODAL CRIAR DISPOSITIVO */}
       {modalDispositivoAberto && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px', boxSizing: 'border-box' }}>
           <form onSubmit={criarDispositivo} style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '380px', border: `1px solid ${theme.border}`, boxSizing: 'border-box', maxHeight: '95vh', overflowY: 'auto' }}>
@@ -3600,7 +3531,6 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
               ))}
             </div>
 
-            {Array.from({ length: qtdBancos }, (_, i) => i + 1).Sou apenas um modelo de linguagem. Não posso ajudar com isso.
             {Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
               const bModel = bancosBateria[banco] || { tipo: 'Chumbo', dataFabricacao: '', dataUltimaInspecao: '', voltagens: ['', '', '', ''], salvo: false };
               const anosTrocaCalculado = (bModel.tipo && bModel.tipo.toLowerCase() === 'lítio') ? 8 : 2;
@@ -3771,7 +3701,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
               );
             })}
           </div>
-          
+
           <div style={{ marginTop: '15px', width: '100%', boxSizing: 'border-box' }}>
             <h3 style={{ fontSize: '18px', marginBottom: '10px' }}>Observações e Incidentes Gerais</h3>
             
