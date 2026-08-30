@@ -1771,33 +1771,33 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
         </div>
       </div>
 
-      {/* ÁREA DE CONTEÚDO PRINCIPAL */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', boxSizing: 'border-box' }}>
+      {/* ÁREA DE CONTEÚDO PRINCIPAL COM LARGURA RESTRITA E BOX-SIZING CORRETO */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', width: 'calc(100vw - 270px)', boxSizing: 'border-box' }}>
         
-        {/* BARRA SUPERIOR TOTALMENTE FLEXÍVEL PARA EVITAR CORTE DE BOTÕES */}
-        <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', boxSizing: 'border-box' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+        {/* BARRA SUPERIOR CORrigida PARA ENCAIXAR SEM VAZAR */}
+        <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>← Voltar para POPs</button>
-            <h2 style={{ margin: 0, fontSize: '15px', color: '#4dabf7', textTransform: 'uppercase' }}>Módulo NetBox: {menuAtivo.replace('_', ' / ')}</h2>
+            <h2 style={{ margin: 0, fontSize: '14px', color: '#4dabf7', textTransform: 'uppercase' }}>Módulo NetBox: {menuAtivo.replace('_', ' / ')}</h2>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div>
+            <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
             </button>
           </div>
         </div>
 
         {/* CONTEÚDO DINÂMICO CONFORME O MENU SELECIONADO */}
-        <div style={{ padding: '20px', flex: 1, boxSizing: 'border-box' }}>
+        <div style={{ padding: '20px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
           
           {/* SELETOR DE POP COMUM PARA RACKS / DEVICES */}
           {(menuAtivo === 'racks_racks' || menuAtivo === 'racks_elevations' || menuAtivo === 'devices_devices' || menuAtivo === 'org_sites') && (
-            <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px', background: theme.cardBg, padding: '12px 15px', borderRadius: '6px', border: `1px solid ${theme.border}`, flexWrap: 'wrap' }}>
+            <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px', background: theme.cardBg, padding: '12px 15px', borderRadius: '6px', border: `1px solid ${theme.border}`, flexWrap: 'wrap', width: '100%', boxSizing: 'border-box' }}>
               <label style={{ fontWeight: 'bold', fontSize: '14px' }}>Selecionar POP (Site):</label>
               <select 
                 value={popSelecionado} 
                 onChange={(e) => setPopSelecionado(e.target.value)}
-                style={{ padding: '8px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '15px', textTransform: 'uppercase', fontWeight: 'bold', flex: 1, minWidth: '220px' }}
+                style={{ padding: '8px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '15px', textTransform: 'uppercase', fontWeight: 'bold', flex: 1, minWidth: '220px', boxSizing: 'border-box' }}
               >
                 {listaPops.map(p => (
                   <option key={p.id} value={p.nome}>{p.nome.toUpperCase()} ({p.endereco})</option>
