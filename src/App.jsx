@@ -24,6 +24,10 @@ style.innerHTML = `
     width: 100% !important;
     max-width: 100% !important;
     overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+  *, *:before, *:after {
+    box-sizing: inherit !important;
   }
   @keyframes piscar {
     0% { opacity: 1; }
@@ -1549,10 +1553,10 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
   const racksDoPop = racks.filter(r => r.pop.toLowerCase() === popSelecionado.toLowerCase());
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', maxWidth: '100vw', backgroundColor: theme.bg, color: theme.textMain, overflow: 'hidden', boxSizing: 'border-box' }}>
+    <div style={{ display: 'flex', height: '100vh', width: '100%', maxWidth: '100%', backgroundColor: theme.bg, color: theme.textMain, overflow: 'hidden', boxSizing: 'border-box' }}>
       
       {/* SIDEBAR ESTILO NETBOX */}
-      <div style={{ width: '270px', background: theme.cardBg, borderRight: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', height: '100vh', boxSizing: 'border-box', flexShrink: 0 }}>
+      <div style={{ width: '270px', minWidth: '270px', background: theme.cardBg, borderRight: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', height: '100vh', boxSizing: 'border-box', flexShrink: 0 }}>
         
         {/* LOGO E CABEÇALHO */}
         <div style={{ padding: '15px', borderBottom: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
@@ -1758,11 +1762,11 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
         </div>
       </div>
 
-      {/* ÁREA DE CONTEÚDO PRINCIPAL COM LARGURA SEGURA E PADDING PARA BARRAS DE ROLAGEM */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', width: 'calc(100vw - 270px)', maxWidth: 'calc(100vw - 270px)', boxSizing: 'border-box' }}>
+      {/* ÁREA DE CONTEÚDO PRINCIPAL COM FLEX: 1 (OCUPA EXATAMENTE O RESTANTE DA TELA SEM VAZAR) */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', minWidth: 0, boxSizing: 'border-box' }}>
         
-        {/* BARRA SUPERIOR COM ESPAÇAMENTO DE SEGURANÇA À DIREITA */}
-        <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '14px 25px 14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
+        {/* BARRA SUPERIOR COM PADDING SEGURO E FLEXÍVEL */}
+        <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', width: '100%', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>← Voltar para POPs</button>
             <h2 style={{ margin: 0, fontSize: '14px', color: '#4dabf7', textTransform: 'uppercase' }}>Módulo NetBox: {menuAtivo.replace('_', ' / ')}</h2>
@@ -1775,7 +1779,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
         </div>
 
         {/* CONTEÚDO DINÂMICO */}
-        <div style={{ padding: '20px 25px 20px 20px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
+        <div style={{ padding: '20px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
           
           {/* SELETOR DE POP COMUM PARA RACKS / DEVICES */}
           {(menuAtivo === 'racks_racks' || menuAtivo === 'racks_elevations' || menuAtivo === 'devices_devices' || menuAtivo === 'org_sites') && (
