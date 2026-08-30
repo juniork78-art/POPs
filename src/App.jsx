@@ -1461,6 +1461,22 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
 
   const [buscaRegiao, setBuscaRegiao] = useState('');
   const [menuExportarAberto, setMenuExportarAberto] = useState(false);
+  const [telaModeloExportacaoAberta, setTelaModeloExportacaoAberta] = useState(false);
+  const [modelosExportacao, setModelosExportacao] = useState([]);
+  const [modeloExportacaoNome, setModeloExportacaoNome] = useState('');
+  const [modeloExportacaoTipos, setModeloExportacaoTipos] = useState(['DCIM > Região']);
+  const [modeloExportacaoDescricao, setModeloExportacaoDescricao] = useState('');
+  const [modeloExportacaoCodigo, setModeloExportacaoCodigo] = useState('');
+  const [modeloExportacaoOrigem, setModeloExportacaoOrigem] = useState('');
+  const [modeloExportacaoArquivo, setModeloExportacaoArquivo] = useState('');
+  const [modeloExportacaoMime, setModeloExportacaoMime] = useState('');
+  const [modeloExportacaoNomeArquivo, setModeloExportacaoNomeArquivo] = useState('');
+  const [modeloExportacaoExtensao, setModeloExportacaoExtensao] = useState('');
+  const [modeloExportacaoParametros, setModeloExportacaoParametros] = useState('{}');
+  const [modeloExportacaoAnexo, setModeloExportacaoAnexo] = useState(true);
+  const [modeloExportacaoOwnerGroup, setModeloExportacaoOwnerGroup] = useState('');
+  const [modeloExportacaoOwner, setModeloExportacaoOwner] = useState('');
+  const [modeloExportacaoChangelog, setModeloExportacaoChangelog] = useState('');
 
   const [menuAtivo, setMenuAtivo] = useState('org_regioes'); 
   const [seccoesAbertas, setSeccoesAbertas] = useState({
@@ -1502,6 +1518,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
         if (data.fabricantes) setFabricantes(data.fabricantes);
         if (data.tiposDispositivos) setTiposDispositivos(data.tiposDispositivos);
         if (data.regioesLista) setRegioesLista(data.regioesLista);
+        if (data.modelosExportacao) setModelosExportacao(data.modelosExportacao);
       }
     });
     return () => unsub();
@@ -1523,6 +1540,71 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
 
   const gerarSlugAutomatico = (texto) => {
     return texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  };
+
+  const limparFormularioModeloExportacao = () => {
+    setModeloExportacaoNome('');
+    setModeloExportacaoTipos(['DCIM > Região']);
+    setModeloExportacaoDescricao('');
+    setModeloExportacaoCodigo('');
+    setModeloExportacaoOrigem('');
+    setModeloExportacaoArquivo('');
+    setModeloExportacaoMime('');
+    setModeloExportacaoNomeArquivo('');
+    setModeloExportacaoExtensao('');
+    setModeloExportacaoParametros('{}');
+    setModeloExportacaoAnexo(true);
+    setModeloExportacaoOwnerGroup('');
+    setModeloExportacaoOwner('');
+    setModeloExportacaoChangelog('');
+  };
+
+  const salvarModeloExportacao = async (e, continuarAdicionando = false) => {
+    if (e) e.preventDefault();
+    if (!modeloExportacaoNome.trim()) {
+      alert('Informe o nome do modelo de exportação.');
+      return;
+    }
+
+    try {
+      JSON.parse(modeloExportacaoParametros || '{}');
+    } catch (erro) {
+      alert('Os parâmetros do ambiente precisam estar em JSON válido.');
+      return;
+    }
+
+    const novoModelo = {
+      id: Date.now().toString(),
+      nome: modeloExportacaoNome.trim(),
+      tiposObjetos: modeloExportacaoTipos,
+      descricao: modeloExportacaoDescricao.trim(),
+      modeloCodigo: modeloExportacaoCodigo,
+      origemDados: modeloExportacaoOrigem,
+      arquivo: modeloExportacaoArquivo,
+      tipoMime: modeloExportacaoMime.trim(),
+      nomeArquivo: modeloExportacaoNomeArquivo.trim(),
+      extensaoArquivo: modeloExportacaoExtensao.trim(),
+      parametrosAmbiente: modeloExportacaoParametros || '{}',
+      comoAnexo: modeloExportacaoAnexo,
+      ownerGroup: modeloExportacaoOwnerGroup,
+      owner: modeloExportacaoOwner,
+      changelog: modeloExportacaoChangelog.trim(),
+      criadoEm: new Date().toISOString()
+    };
+
+    const novosModelos = [...modelosExportacao, novoModelo];
+    try {
+      await setDoc(doc(db, 'netbox_infra', 'dados_racks'), { modelosExportacao: novosModelos }, { merge: true });
+      setModelosExportacao(novosModelos);
+      alert('Modelo de exportação criado com sucesso!');
+      limparFormularioModeloExportacao();
+      if (!continuarAdicionando) {
+        setTelaModeloExportacaoAberta(false);
+      }
+    } catch (erro) {
+      console.error('Erro ao salvar modelo de exportação:', erro);
+      alert('Erro ao salvar o modelo de exportação: ' + erro.message);
+    }
   };
 
   const exportarRegioesCSV = (apenasVisualizacao = false) => {
@@ -1917,7 +1999,130 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
 
           {menuAtivo === 'org_regioes' && (
             <div>
-              {telaImportarRegiaoAberta ? (
+              {telaModeloExportacaoAberta ? (
+                <div style={{ width: '100%', minHeight: 'calc(100vh - 130px)', background: theme.bg, boxSizing: 'border-box' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', gap: '10px', flexWrap: 'wrap' }}>
+                    <h2 style={{ margin: 0, fontSize: '22px', color: theme.textMain, fontWeight: '600' }}>Adicionar modelo de exportação</h2>
+                    <button type="button" onClick={() => alert('Crie um modelo informando os campos de renderização e o código que deverá ser usado na exportação.')} style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '5px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>❔ Ajuda</button>
+                  </div>
+
+                  <div style={{ borderBottom: `1px solid ${theme.border}`, marginBottom: '32px' }}>
+                    <span style={{ display: 'inline-block', padding: '9px 14px', border: `1px solid ${theme.border}`, borderBottom: `2px solid ${theme.cardBg}`, borderRadius: '5px 5px 0 0', background: theme.cardBg, color: theme.textMain, fontSize: '14px' }}>Criar</span>
+                  </div>
+
+                  <form onSubmit={(e) => salvarModeloExportacao(e, false)} style={{ maxWidth: '760px', margin: '0 auto', paddingBottom: '20px' }}>
+                    <div style={{ color: theme.textMain, fontWeight: 'bold', fontSize: '17px', marginBottom: '12px' }}>Modelo de Exportação</div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', gap: '14px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '145px', fontSize: '14px', color: theme.textMain, textAlign: 'right' }}>Nome<span style={{ color: '#dc3545' }}>*</span></label>
+                      <input type="text" required value={modeloExportacaoNome} onChange={(e) => setModeloExportacaoNome(e.target.value)} style={{ flex: 1, minWidth: '280px', padding: '10px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', fontSize: '14px', boxSizing: 'border-box' }} />
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', gap: '14px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '145px', fontSize: '14px', color: theme.textMain, textAlign: 'right' }}>Tipos de objetos<span style={{ color: '#dc3545' }}>*</span></label>
+                      <div style={{ flex: 1, minWidth: '280px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', padding: '8px 10px', background: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: '5px', minHeight: '42px', boxSizing: 'border-box' }}>
+                        {modeloExportacaoTipos.map(tipo => (
+                          <span key={tipo} style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '5px 9px', background: theme.cardInner, border: `1px solid ${theme.border}`, borderRadius: '4px', color: theme.textMain, fontSize: '13px' }}>
+                            {tipo}
+                            <button type="button" onClick={() => setModeloExportacaoTipos(prev => prev.filter(t => t !== tipo))} style={{ border: 'none', background: 'transparent', color: theme.textMuted, cursor: 'pointer', padding: 0, fontSize: '14px' }}>×</button>
+                          </span>
+                        ))}
+                        <select value="" onChange={(e) => { if (e.target.value && !modeloExportacaoTipos.includes(e.target.value)) setModeloExportacaoTipos(prev => [...prev, e.target.value]); }} style={{ marginLeft: 'auto', border: 'none', background: 'transparent', color: theme.textMuted, outline: 'none', cursor: 'pointer', minWidth: '28px' }}>
+                          <option value="">⌄</option>
+                          <option value="DCIM > Região">DCIM &gt; Região</option>
+                          <option value="DCIM > Site">DCIM &gt; Site</option>
+                          <option value="DCIM > Rack">DCIM &gt; Rack</option>
+                          <option value="DCIM > Dispositivo">DCIM &gt; Dispositivo</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', gap: '14px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '145px', fontSize: '14px', color: theme.textMain, textAlign: 'right' }}>Descrição</label>
+                      <input type="text" value={modeloExportacaoDescricao} onChange={(e) => setModeloExportacaoDescricao(e.target.value)} style={{ flex: 1, minWidth: '280px', padding: '10px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', fontSize: '14px', boxSizing: 'border-box' }} />
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '30px', gap: '14px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '145px', paddingTop: '10px', fontSize: '14px', color: theme.textMain, textAlign: 'right' }}>Modelo de código</label>
+                      <textarea rows="9" value={modeloExportacaoCodigo} onChange={(e) => setModeloExportacaoCodigo(e.target.value)} style={{ flex: 1, minWidth: '280px', padding: '10px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', fontSize: '14px', resize: 'vertical', boxSizing: 'border-box' }} />
+                    </div>
+
+                    <div style={{ color: theme.textMain, fontWeight: 'bold', fontSize: '17px', marginBottom: '12px' }}>Origem de dados</div>
+
+                    {[
+                      ['Origem de dados', modeloExportacaoOrigem, setModeloExportacaoOrigem, ['---------', 'Regiões', 'Dados atuais']],
+                      ['Arquivo', modeloExportacaoArquivo, setModeloExportacaoArquivo, ['---------', 'CSV', 'JSON', 'YAML']]
+                    ].map(([label, value, setter, options]) => (
+                      <div key={label} style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', gap: '14px', flexWrap: 'wrap' }}>
+                        <label style={{ width: '145px', fontSize: '14px', color: theme.textMain, textAlign: 'right' }}>{label}</label>
+                        <select value={value} onChange={(e) => setter(e.target.value)} style={{ flex: 1, minWidth: '280px', padding: '10px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', fontSize: '14px', boxSizing: 'border-box' }}>
+                          {options.map(op => <option key={op} value={op === '---------' ? '' : op}>{op}</option>)}
+                        </select>
+                      </div>
+                    ))}
+
+                    <div style={{ margin: '4px 0 28px 159px', fontSize: '13px', color: theme.textMuted }}>Selecione a origem que será utilizada para construir a exportação.</div>
+
+                    <div style={{ color: theme.textMain, fontWeight: 'bold', fontSize: '17px', marginBottom: '12px' }}>Renderizando</div>
+
+                    {[
+                      ['Tipo MIME', modeloExportacaoMime, setModeloExportacaoMime, ''],
+                      ['File name', modeloExportacaoNomeArquivo, setModeloExportacaoNomeArquivo, 'Nome do arquivo a ser fornecido ao arquivo de exportação renderizado'],
+                      ['Extensão do arquivo', modeloExportacaoExtensao, setModeloExportacaoExtensao, 'Extensão para anexar ao nome do arquivo renderizado']
+                    ].map(([label, value, setter, help]) => (
+                      <div key={label} style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '16px', gap: '14px', flexWrap: 'wrap' }}>
+                        <label style={{ width: '145px', paddingTop: '10px', fontSize: '14px', color: theme.textMain, textAlign: 'right' }}>{label}</label>
+                        <div style={{ flex: 1, minWidth: '280px' }}>
+                          <input type="text" value={value} onChange={(e) => setter(e.target.value)} style={{ width: '100%', padding: '10px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', fontSize: '14px', boxSizing: 'border-box' }} />
+                          {label === 'Tipo MIME' && <div style={{ fontSize: '12px', color: theme.textMuted, marginTop: '4px' }}>Defaults to <code>text/plain; charset=utf-8</code></div>}
+                          {help && <div style={{ fontSize: '12px', color: theme.textMuted, marginTop: '4px' }}>{help}</div>}
+                        </div>
+                      </div>
+                    ))}
+
+                    <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '16px', gap: '14px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '145px', paddingTop: '10px', fontSize: '14px', color: theme.textMain, textAlign: 'right' }}>Parâmetros do ambiente</label>
+                      <div style={{ flex: 1, minWidth: '280px' }}>
+                        <textarea rows="7" value={modeloExportacaoParametros} onChange={(e) => setModeloExportacaoParametros(e.target.value)} style={{ width: '100%', padding: '10px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', fontSize: '14px', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'monospace' }} />
+                        <div style={{ fontSize: '12px', color: theme.textMuted, marginTop: '4px' }}>Quaisquer parâmetros adicionais para construir o ambiente Jinja.</div>
+                      </div>
+                    </div>
+
+                    <div style={{ marginLeft: '159px', marginBottom: '28px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: theme.textMain }}>
+                        <input type="checkbox" checked={modeloExportacaoAnexo} onChange={(e) => setModeloExportacaoAnexo(e.target.checked)} />
+                        Como anexo
+                      </label>
+                      <div style={{ marginLeft: '24px', marginTop: '3px', fontSize: '12px', color: theme.textMuted }}>Baixar arquivo como anexo</div>
+                    </div>
+
+                    <div style={{ color: theme.textMain, fontWeight: 'bold', fontSize: '17px', marginBottom: '12px' }}>Proprietário</div>
+                    {[
+                      ['Owner group', modeloExportacaoOwnerGroup, setModeloExportacaoOwnerGroup],
+                      ['Owner', modeloExportacaoOwner, setModeloExportacaoOwner]
+                    ].map(([label, value, setter]) => (
+                      <div key={label} style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', gap: '14px', flexWrap: 'wrap' }}>
+                        <label style={{ width: '145px', fontSize: '14px', color: theme.textMain, textAlign: 'right' }}>{label}</label>
+                        <select value={value} onChange={(e) => setter(e.target.value)} style={{ flex: 1, minWidth: '280px', padding: '10px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', fontSize: '14px', boxSizing: 'border-box' }}>
+                          <option value="">---------</option>
+                          <option value="Administrador">Administrador</option>
+                        </select>
+                      </div>
+                    ))}
+
+                    <div style={{ background: '#20c99715', border: '1px solid #20c997', padding: '16px', borderRadius: '5px', marginTop: '24px', marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '145px', fontSize: '14px', color: theme.textMain, textAlign: 'right' }}>Changelog message</label>
+                      <input type="text" value={modeloExportacaoChangelog} onChange={(e) => setModeloExportacaoChangelog(e.target.value)} style={{ flex: 1, minWidth: '280px', padding: '10px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', fontSize: '14px', boxSizing: 'border-box' }} />
+                    </div>
+
+                    <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '18px', display: 'flex', justifyContent: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
+                      <button type="button" onClick={() => { limparFormularioModeloExportacao(); setTelaModeloExportacaoAberta(false); }} style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 16px', borderRadius: '5px', cursor: 'pointer', fontSize: '14px' }}>Cancelar</button>
+                      <button type="submit" style={{ background: '#008f83', border: '1px solid #008f83', color: '#fff', padding: '8px 18px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>Criar</button>
+                      <button type="button" onClick={(e) => salvarModeloExportacao(e, true)} style={{ background: theme.cardBg, border: '1px solid #008f83', color: '#008f83', padding: '8px 16px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>Criar e Adicionar Outro</button>
+                    </div>
+                  </form>
+                </div>
+              ) : telaImportarRegiaoAberta ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', padding: '24px', width: '100%', boxSizing: 'border-box' }}>
                     <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', color: theme.textMain, fontWeight: 'normal' }}>Região Importação em Massa</h2>
@@ -2344,7 +2549,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                             </button>
                             <button
                               type="button"
-                              onClick={() => { setMenuExportarAberto(false); alert('Módulo para adicionar modelo de exportação.'); }}
+                              onClick={() => { setMenuExportarAberto(false); setTelaImportarRegiaoAberta(false); setTelaAdicionarRegiaoAberta(false); setTelaModeloExportacaoAberta(true); }}
                               style={{ width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', borderTop: `1px solid ${theme.border}`, color: theme.textMain, textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
                             >
                               Adicionar modelo de exportação...
