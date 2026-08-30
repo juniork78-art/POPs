@@ -1436,7 +1436,17 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
   const [fabricantes, setFabricantes] = useState(['Huawei', 'Cisco', 'Mikrotik', 'Dell', 'HP', 'Furukawa']);
   const [tiposDispositivos, setTiposDispositivos] = useState(['Switch', 'OLT', 'Router', 'Patch Panel', 'Servidor', 'No-Break']);
 
-  const [menuAtivo, setMenuAtivo] = useState('racks_racks'); 
+  // ESTADOS PARA REGIOES
+  const [regioesLista, setRegioesLista] = useState([
+    { id: '1', nome: 'Africa', sites: 0, descricao: '' },
+    { id: '2', nome: 'Asia', sites: 0, descricao: '' }
+  ]);
+  const [modalRegiaoAberto, setModalRegiaoAberto] = useState(false);
+  const [nomeRegiao, setNomeRegiao] = useState('');
+  const [descricaoRegiao, setDescricaoRegiao] = useState('');
+  const [buscaRegiao, setBuscaRegiao] = useState('');
+
+  const [menuAtivo, setMenuAtivo] = useState('org_regioes'); 
   const [seccoesAbertas, setSeccoesAbertas] = useState({
     organization: true,
     racks: true,
@@ -1475,22 +1485,48 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
         if (data.dispositivos) setDispositivos(data.dispositivos);
         if (data.fabricantes) setFabricantes(data.fabricantes);
         if (data.tiposDispositivos) setTiposDispositivos(data.tiposDispositivos);
+        if (data.regioesLista) setRegioesLista(data.regioesLista);
       }
     });
     return () => unsub();
   }, []);
 
-  const salvarDadosFirebase = async (novosRacks, novosDispositivos, novosFabricantes, novosTipos) => {
+  const salvarDadosFirebase = async (novosRacks, novosDispositivos, novosFabricantes, novosTipos, novasRegioes) => {
     try {
       await setDoc(doc(db, "netbox_infra", "dados_racks"), {
         racks: novosRacks || racks,
         dispositivos: novosDispositivos || dispositivos,
         fabricantes: novosFabricantes || fabricantes,
-        tiposDispositivos: novosTipos || tiposDispositivos
+        tiposDispositivos: novosTipos || tiposDispositivos,
+        regioesLista: novasRegioes || regioesLista
       });
     } catch (e) {
       console.error("Erro ao salvar dados netbox:", e);
     }
+  };
+
+  const criarRegiao = async (e) => {
+    e.preventDefault();
+    if (!nomeRegiao.trim()) return;
+    const nova = {
+      id: Date.now().toString(),
+      nome: nomeRegiao.trim(),
+      sites: 0,
+      descricao: descricaoRegiao.trim()
+    };
+    const novasRegioes = [...regioesLista, nova];
+    setRegioesLista(novasRegioes);
+    await salvarDadosFirebase(racks, dispositivos, fabricantes, tiposDispositivos, novasRegioes);
+    setNomeRegiao('');
+    setDescricaoRegiao('');
+    setModalRegiaoAberto(false);
+  };
+
+  const excluirRegiao = async (id) => {
+    if (!window.confirm("Deseja realmente excluir esta região?")) return;
+    const novasRegioes = regioesLista.filter(r => r.id !== id);
+    setRegioesLista(novasRegioes);
+    await salvarDadosFirebase(racks, dispositivos, fabricantes, tiposDispositivos, novasRegioes);
   };
 
   const criarRack = async (e) => {
@@ -1504,7 +1540,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
     };
     const novosRacks = [...racks, novo];
     setRacks(novosRacks);
-    await salvarDadosFirebase(novosRacks, dispositivos, fabricantes, tiposDispositivos);
+    await salvarDadosFirebase(novosRacks, dispositivos, fabricantes, tiposDispositivos, regioesLista);
     setNomeRack('');
     setModalRackAberto(false);
   };
@@ -1525,7 +1561,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
     };
     const novosDispositivos = [...dispositivos, novo];
     setDispositivos(novosDispositivos);
-    await salvarDadosFirebase(racks, novosDispositivos, fabricantes, tiposDispositivos);
+    await salvarDadosFirebase(racks, novosDispositivos, fabricantes, tiposDispositivos, regioesLista);
     setNomeDisp('');
     setModalDispositivoAberto(false);
   };
@@ -1536,14 +1572,14 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
     const novosDispositivos = dispositivos.filter(d => d.rackId !== id);
     setRacks(novosRacks);
     setDispositivos(novosDispositivos);
-    await salvarDadosFirebase(novosRacks, novosDispositivos, fabricantes, tiposDispositivos);
+    await salvarDadosFirebase(novosRacks, novosDispositivos, fabricantes, tiposDispositivos, regioesLista);
   };
 
   const excluirDispositivo = async (id) => {
     if (!window.confirm("Remover este dispositivo?")) return;
     const novosDispositivos = dispositivos.filter(d => d.id !== id);
     setDispositivos(novosDispositivos);
-    await salvarDadosFirebase(racks, novosDispositivos, fabricantes, tiposDispositivos);
+    await salvarDadosFirebase(racks, novosDispositivos, fabricantes, tiposDispositivos, regioesLista);
   };
 
   const toggleSecao = (secao) => {
@@ -1788,7 +1824,8 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>← Voltar para POPs</button>
             <h2 style={{ margin: 0, fontSize: '14px', color: '#4dabf7', textTransform: 'uppercase' }}>Módulo NetBox: {menuAtivo.replace('_', ' / ')}</h2>
           </div>
-          <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <span style={{ fontSize: '14px', color: theme.textMuted }}>💡 admin <br/><b style={{ color: theme.textMain }}>Administrador</b></span>
             <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
             </button>
@@ -1811,6 +1848,93 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                   <option key={p.id} value={p.nome}>{p.nome.toUpperCase()} ({p.endereco})</option>
                 ))}
               </select>
+            </div>
+          )}
+
+          {/* CONTEÚDO: REGIOES EXATAMENTE IGUAL AO NETBOX SOLICITADO */}
+          {menuAtivo === 'org_regioes' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              
+              {/* TOPO: TITULO E BOTOES ADICIONAR, IMPORTAR, EXPORTAR */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: theme.textMain }}>Regiões</h2>
+                
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <button onClick={() => setModalRegiaoAberto(true)} style={{ background: '#20c997', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    + Adicionar
+                  </button>
+                  <button onClick={() => alert("Módulo de importação de Regiões")} style={{ background: '#17a2b8', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    📥 Importar
+                  </button>
+                  <button onClick={() => alert("Módulo de exportação de Regiões")} style={{ background: '#6f42c1', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    📤 Exportar ▼
+                  </button>
+                </div>
+              </div>
+
+              {/* ABAS RESULTADOS / FILTROS */}
+              <div style={{ display: 'flex', borderBottom: `1px solid ${theme.border}`, gap: '20px', fontSize: '14px', fontWeight: 'bold', paddingTop: '5px' }}>
+                <span style={{ paddingBottom: '8px', borderBottom: '2px solid #20c997', color: '#20c997', cursor: 'pointer' }}>Resultados <span style={{ background: '#20c99722', padding: '2px 6px', borderRadius: '10px', fontSize: '12px' }}>{regioesLista.length}</span></span>
+                <span style={{ paddingBottom: '8px', color: theme.textMuted, cursor: 'pointer' }} onClick={() => alert("Filtros avançados de regiões")}>Filtros</span>
+              </div>
+
+              {/* BARRA DE BUSCA E CONFIGURAR TABELA */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '8px', flex: 1, minWidth: '260px', alignItems: 'center' }}>
+                  <input 
+                    type="text" 
+                    placeholder="Busca rápida" 
+                    value={buscaRegiao} 
+                    onChange={(e) => setBuscaRegiao(e.target.value)} 
+                    style={{ padding: '8px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', flex: 1, boxSizing: 'border-box' }} 
+                  />
+                  <button style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', color: theme.textMain }}>🔍</button>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={() => alert("Configuração de colunas da tabela")} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    ⚙️ Configurar Tabela ▼
+                  </button>
+                </div>
+              </div>
+
+              {/* TABELA DE REGIOES */}
+              <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', textAlign: 'left', minWidth: '600px' }}>
+                  <thead>
+                    <tr style={{ background: theme.cardInner, borderBottom: `1px solid ${theme.border}`, color: theme.textMuted, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      <th style={{ padding: '12px 15px', width: '40px' }}><input type="checkbox" /></th>
+                      <th style={{ padding: '12px 15px' }}>Nome</th>
+                      <th style={{ padding: '12px 15px' }}>Sites</th>
+                      <th style={{ padding: '12px 15px' }}>Descrição</th>
+                      <th style={{ padding: '12px 15px', textAlign: 'right', width: '100px' }}>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {regioesLista.filter(r => r.nome.toLowerCase().includes(buscaRegiao.toLowerCase())).length === 0 ? (
+                      <tr>
+                        <td colSpan="5" style={{ padding: '30px', textAlign: 'center', color: theme.textMuted }}>Nenhuma região encontrada.</td>
+                      </tr>
+                    ) : (
+                      regioesLista.filter(r => r.nome.toLowerCase().includes(buscaRegiao.toLowerCase())).map(reg => (
+                        <tr key={reg.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                          <td style={{ padding: '12px 15px' }}><input type="checkbox" /></td>
+                          <td style={{ padding: '12px 15px', fontWeight: 'bold', color: '#20c997', cursor: 'pointer' }} onClick={() => alert(`Detalhes da região: ${reg.nome}`)}>{reg.nome}</td>
+                          <td style={{ padding: '12px 15px' }}>{reg.sites}</td>
+                          <td style={{ padding: '12px 15px', color: theme.textMuted }}>{reg.descricao || '—'}</td>
+                          <td style={{ padding: '12px 15px', textAlign: 'right' }}>
+                            <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
+                              <button onClick={() => alert(`Editar região ${reg.nome}`)} style={{ background: '#ffc107', border: 'none', color: '#000', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>✏️</button>
+                              <button onClick={() => excluirRegiao(reg.id)} style={{ background: '#ffc107', border: 'none', color: '#000', padding: '6px 8px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>▼</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
             </div>
           )}
 
@@ -1936,7 +2060,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
           )}
 
           {/* CONTEÚDO: SITES / ORGANIZATION */}
-          {(menuAtivo === 'org_sites' || menuAtivo === 'org_locations' || menuAtivo === 'org_racks_groups' || menuAtivo === 'org_regioes' || menuAtivo === 'org_inquilinos' || menuAtivo === 'org_grupos_inquilinos' || menuAtivo === 'org_contatos' || menuAtivo === 'org_grupos_contatos' || menuAtivo === 'org_funcoes_contatos' || menuAtivo === 'org_atribuicoes_contatos') && (
+          {(menuAtivo === 'org_sites' || menuAtivo === 'org_locations' || menuAtivo === 'org_racks_groups' || menuAtivo === 'org_inquilinos' || menuAtivo === 'org_grupos_inquilinos' || menuAtivo === 'org_contatos' || menuAtivo === 'org_grupos_contatos' || menuAtivo === 'org_funcoes_contatos' || menuAtivo === 'org_atribuicoes_contatos') && (
             <div>
               <h3 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>Seção: {menuAtivo.replace('org_', '').toUpperCase()}</h3>
               {menuAtivo === 'org_sites' ? (
@@ -1957,7 +2081,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
           )}
 
           {/* CONTEÚDO GENÉRICO PARA OUTROS MENUS DO NETBOX */}
-          {!['racks_racks', 'racks_elevations', 'devices_devices', 'devices_manufacturers', 'devices_types', 'org_sites', 'org_locations', 'org_racks_groups', 'org_regioes', 'org_inquilinos', 'org_grupos_inquilinos', 'org_contatos', 'org_grupos_contatos', 'org_funcoes_contatos', 'org_atribuicoes_contatos'].includes(menuAtivo) && (
+          {!['org_regioes', 'racks_racks', 'racks_elevations', 'devices_devices', 'devices_manufacturers', 'devices_types', 'org_sites', 'org_locations', 'org_racks_groups', 'org_inquilinos', 'org_grupos_inquilinos', 'org_contatos', 'org_grupos_contatos', 'org_funcoes_contatos', 'org_atribuicoes_contatos'].includes(menuAtivo) && (
             <div style={{ textAlign: 'center', padding: '60px', background: theme.cardBg, borderRadius: '8px', border: `1px solid ${theme.border}` }}>
               <h3 style={{ color: '#4dabf7', marginBottom: '10px' }}>Módulo NetBox: {menuAtivo.replace('_', ' - ').toUpperCase()}</h3>
               <p style={{ color: theme.textMuted, fontSize: '14px' }}>Este módulo está ativo e integrado à base de dados do Infra POPs.</p>
@@ -1966,6 +2090,26 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
 
         </div>
       </div>
+
+      {/* MODAL CRIAR REGIAO */}
+      {modalRegiaoAberto && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px', boxSizing: 'border-box' }}>
+          <form onSubmit={criarRegiao} style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '380px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+            <h3 style={{ marginTop: 0, fontSize: '18px', color: '#20c997' }}>Adicionar Nova Região</h3>
+            
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px', marginTop: '10px' }}>Nome da Região</label>
+            <input type="text" placeholder="Ex: América do Sul" value={nomeRegiao} onChange={(e) => setNomeRegiao(e.target.value)} required style={{ width: '100%', padding: '9px', marginBottom: '12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Descrição (Opcional)</label>
+            <textarea placeholder="Descrição da região" value={descricaoRegiao} onChange={(e) => setDescricaoRegiao(e.target.value)} rows="3" style={{ width: '100%', padding: '9px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button type="button" onClick={() => setModalRegiaoAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '14px' }}>Cancelar</button>
+              <button type="submit" style={{ background: '#20c997', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>Criar Região</button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* MODAL CRIAR RACK */}
       {modalRackAberto && (
