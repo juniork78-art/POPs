@@ -1460,6 +1460,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
   const [importBackgroundJob, setImportBackgroundJob] = useState(false);
 
   const [buscaRegiao, setBuscaRegiao] = useState('');
+  const [menuExportarAberto, setMenuExportarAberto] = useState(false);
 
   const [menuAtivo, setMenuAtivo] = useState('org_regioes'); 
   const [seccoesAbertas, setSeccoesAbertas] = useState({
@@ -1522,6 +1523,34 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
 
   const gerarSlugAutomatico = (texto) => {
     return texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  };
+
+  const exportarRegioesCSV = (apenasVisualizacao = false) => {
+    const dados = apenasVisualizacao
+      ? regioesLista.filter(r => r.nome.toLowerCase().includes(buscaRegiao.toLowerCase()))
+      : regioesLista;
+
+    const escaparCSV = (valor) => {
+      const texto = String(valor ?? '');
+      return `\"${texto.replace(/\"/g, '\"\"')}\"`;
+    };
+
+    const linhas = [
+      ['ID', 'Nome', 'Sites', 'Descrição'],
+      ...dados.map(r => [r.id, r.nome, r.sites, r.descricao || ''])
+    ];
+
+    const csv = linhas.map(linha => linha.map(escaparCSV).join(';')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = apenasVisualizacao ? 'regioes_visualizacao_atual.csv' : 'regioes_todos_os_dados.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    setMenuExportarAberto(false);
   };
 
   const criarRegiaoSubmit = async (e, continuarAdicionando = false) => {
@@ -2277,9 +2306,52 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                       <button onClick={() => setTelaImportarRegiaoAberta(true)} style={{ background: '#17a2b8', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         📥 Importar
                       </button>
-                      <button onClick={() => alert("Módulo de exportação de Regiões")} style={{ background: '#6f42c1', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        📤 Exportar ▼
-                      </button>
+                      <div style={{ position: 'relative' }}>
+                        <button
+                          type="button"
+                          onClick={() => setMenuExportarAberto(prev => !prev)}
+                          style={{ background: '#6f42c1', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        >
+                          📤 Exportar <span style={{ fontSize: '11px' }}>{menuExportarAberto ? '▲' : '▼'}</span>
+                        </button>
+
+                        {menuExportarAberto && (
+                          <div style={{
+                            position: 'absolute',
+                            top: 'calc(100% + 6px)',
+                            right: 0,
+                            width: '255px',
+                            background: theme.cardBg,
+                            border: `1px solid ${theme.border}`,
+                            borderRadius: '6px',
+                            boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
+                            zIndex: 1000,
+                            overflow: 'hidden'
+                          }}>
+                            <button
+                              type="button"
+                              onClick={() => exportarRegioesCSV(true)}
+                              style={{ width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', color: theme.textMain, textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
+                            >
+                              Visualização Atual
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => exportarRegioesCSV(false)}
+                              style={{ width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', borderTop: `1px solid ${theme.border}`, color: theme.textMain, textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
+                            >
+                              Todos os Dados (CSV)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setMenuExportarAberto(false); alert('Módulo para adicionar modelo de exportação.'); }}
+                              style={{ width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', borderTop: `1px solid ${theme.border}`, color: theme.textMain, textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
+                            >
+                              Adicionar modelo de exportação...
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
