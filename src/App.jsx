@@ -1570,17 +1570,34 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
         {/* LISTA DE MENUS */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '10px 0' }}>
           
-          {/* ORGANIZATION */}
+          {/* ORGANIZATION COM A ESTRUTURA EXATA SOLICITADA */}
           <div>
             <div onClick={() => toggleSecao('organization')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🏢 Organization</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🏢 Organização</span>
               <span>{seccoesAbertas.organization ? '▼' : '▶'}</span>
             </div>
             {seccoesAbertas.organization && (
-              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
-                <div onClick={() => setMenuAtivo('org_sites')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_sites' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_sites' ? 'bold' : 'normal' }}>• Sites / POPs</div>
-                <div onClick={() => setMenuAtivo('org_locations')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_locations' ? '#4dabf7' : theme.textMuted }}>• Locations</div>
-                <div onClick={() => setMenuAtivo('org_racks_groups')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_racks_groups' ? '#4dabf7' : theme.textMuted }}>• Rack Groups</div>
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px', paddingBottom: '8px' }}>
+                
+                {/* SEÇÃO SITES */}
+                <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#20c997', marginTop: '8px', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sites</div>
+                <div onClick={() => setMenuAtivo('org_regioes')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_regioes' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_regioes' ? 'bold' : 'normal' }}>Regiões</div>
+                <div onClick={() => setMenuAtivo('org_racks_groups')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_racks_groups' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_racks_groups' ? 'bold' : 'normal' }}>Grupos de Sites</div>
+                <div onClick={() => setMenuAtivo('org_sites')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_sites' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_sites' ? 'bold' : 'normal' }}>Sites</div>
+                <div onClick={() => setMenuAtivo('org_locations')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_locations' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_locations' ? 'bold' : 'normal' }}>Locais</div>
+
+                {/* SEÇÃO LOCAÇÃO */}
+                <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#20c997', marginTop: '10px', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Locação</div>
+                <div onClick={() => setMenuAtivo('org_inquilinos')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_inquilinos' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_inquilinos' ? 'bold' : 'normal' }}>Inquilinos</div>
+                <div onClick={() => setMenuAtivo('org_grupos_inquilinos')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_grupos_inquilinos' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_grupos_inquilinos' ? 'bold' : 'normal' }}>Grupos de Inquilinos</div>
+
+                {/* SEÇÃO CONTATOS */}
+                <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#20c997', marginTop: '10px', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Contatos</div>
+                <div onClick={() => setMenuAtivo('org_contatos')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_contatos' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_contatos' ? 'bold' : 'normal' }}>Contatos</div>
+                <div onClick={() => setMenuAtivo('org_grupos_contatos')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_grupos_contatos' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_grupos_contatos' ? 'bold' : 'normal' }}>Grupos de Contatos</div>
+                <div onClick={() => setMenuAtivo('org_funcoes_contatos')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_funcoes_contatos' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_funcoes_contatos' ? 'bold' : 'normal' }}>Funções dos Contatos</div>
+                <div onClick={() => setMenuAtivo('org_atribuicoes_contatos')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_atribuicoes_contatos' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_atribuicoes_contatos' ? 'bold' : 'normal' }}>Atribuições dos Contatos</div>
+
               </div>
             )}
           </div>
@@ -1781,7 +1798,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
         {/* CONTEÚDO DINÂMICO */}
         <div style={{ padding: '20px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
           
-          {/* SELETOR DE POP COMUM PARA RACKS / DEVICES */}
+          {/* SELETOR DE POP COMUM PARA RACKS / DEVICES / SITES */}
           {(menuAtivo === 'racks_racks' || menuAtivo === 'racks_elevations' || menuAtivo === 'devices_devices' || menuAtivo === 'org_sites') && (
             <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px', background: theme.cardBg, padding: '12px 15px', borderRadius: '6px', border: `1px solid ${theme.border}`, flexWrap: 'wrap', width: '100%', boxSizing: 'border-box' }}>
               <label style={{ fontWeight: 'bold', fontSize: '14px' }}>Selecionar POP (Site):</label>
@@ -1919,22 +1936,28 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
           )}
 
           {/* CONTEÚDO: SITES / ORGANIZATION */}
-          {(menuAtivo === 'org_sites' || menuAtivo === 'org_locations' || menuAtivo === 'org_racks_groups') && (
+          {(menuAtivo === 'org_sites' || menuAtivo === 'org_locations' || menuAtivo === 'org_racks_groups' || menuAtivo === 'org_regioes' || menuAtivo === 'org_inquilinos' || menuAtivo === 'org_grupos_inquilinos' || menuAtivo === 'org_contatos' || menuAtivo === 'org_grupos_contatos' || menuAtivo === 'org_funcoes_contatos' || menuAtivo === 'org_atribuicoes_contatos') && (
             <div>
-              <h3 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>Sites / POPs cadastrados no Infra POPs</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px' }}>
-                {listaPops.map(p => (
-                  <div key={p.id} style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, padding: '15px', borderRadius: '6px' }}>
-                    <h4 style={{ margin: '0 0 6px 0', color: '#4dabf7', textTransform: 'uppercase', fontSize: '15px' }}>{p.nome}</h4>
-                    <p style={{ margin: 0, fontSize: '13px', color: theme.textMuted }}>{p.endereco}</p>
-                  </div>
-                ))}
-              </div>
+              <h3 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>Seção: {menuAtivo.replace('org_', '').toUpperCase()}</h3>
+              {menuAtivo === 'org_sites' ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px' }}>
+                  {listaPops.map(p => (
+                    <div key={p.id} style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, padding: '15px', borderRadius: '6px' }}>
+                      <h4 style={{ margin: '0 0 6px 0', color: '#4dabf7', textTransform: 'uppercase', fontSize: '15px' }}>{p.nome}</h4>
+                      <p style={{ margin: 0, fontSize: '13px', color: theme.textMuted }}>{p.endereco}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ padding: '30px', background: theme.cardBg, borderRadius: '8px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
+                  <p style={{ color: theme.textMuted, fontSize: '15px', margin: 0 }}>Módulo {menuAtivo.replace('org_', '')} configurado e vinculado à Organização.</p>
+                </div>
+              )}
             </div>
           )}
 
           {/* CONTEÚDO GENÉRICO PARA OUTROS MENUS DO NETBOX */}
-          {!['racks_racks', 'racks_elevations', 'devices_devices', 'devices_manufacturers', 'devices_types', 'org_sites', 'org_locations', 'org_racks_groups'].includes(menuAtivo) && (
+          {!['racks_racks', 'racks_elevations', 'devices_devices', 'devices_manufacturers', 'devices_types', 'org_sites', 'org_locations', 'org_racks_groups', 'org_regioes', 'org_inquilinos', 'org_grupos_inquilinos', 'org_contatos', 'org_grupos_contatos', 'org_funcoes_contatos', 'org_atribuicoes_contatos'].includes(menuAtivo) && (
             <div style={{ textAlign: 'center', padding: '60px', background: theme.cardBg, borderRadius: '8px', border: `1px solid ${theme.border}` }}>
               <h3 style={{ color: '#4dabf7', marginBottom: '10px' }}>Módulo NetBox: {menuAtivo.replace('_', ' - ').toUpperCase()}</h3>
               <p style={{ color: theme.textMuted, fontSize: '14px' }}>Este módulo está ativo e integrado à base de dados do Infra POPs.</p>
