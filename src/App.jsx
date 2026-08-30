@@ -849,7 +849,7 @@ function App() {
   if (loadingAuth) return <div style={{ color: theme.textMain, backgroundColor: theme.bg, textAlign: 'center', marginTop: '20vh', fontFamily: 'sans-serif', minHeight: '100vh', fontSize: '15px' }}>Carregando InfraManager...</div>;
   if (!usuarioLogado) return <TelaLogin onLoginSucesso={(email) => setUsuarioLogado(email)} darkMode={darkMode} setDarkMode={alternarTema} theme={theme} />;
   if (telaGerenciarPopsAberta) return <TelaGerenciarPops listaPops={listaPops} onBack={() => { setTelaGerenciarPopsAberta(false); window.history.back(); }} theme={theme} />;
-  if (telaRacksAberta) return <TelaRacks listaPops={listaPops} onBack={() => { setTelaRacksAberta(false); window.history.back(); }} theme={theme} />;
+  if (telaRacksAberta) return <TelaRacks listaPops={listaPops} onBack={() => { setTelaRacksAberta(false); window.history.back(); }} theme={theme} darkMode={darkMode} setDarkMode={alternarTema} />;
   if (popSelecionado) {
     return (
       <TelaInspecao 
@@ -1438,10 +1438,31 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
   );
 }
 
-function TelaRacks({ listaPops, onBack, theme }) {
+function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
   const [popSelecionado, setPopSelecionado] = useState(listaPops[0]?.nome || '');
   const [racks, setRacks] = useState([]);
   const [dispositivos, setDispositivos] = useState([]);
+  const [fabricantes, setFabricantes] = useState(['Huawei', 'Cisco', 'Mikrotik', 'Dell', 'HP', 'Furukawa']);
+  const [tiposDispositivos, setTiposDispositivos] = useState(['Switch', 'OLT', 'Router', 'Patch Panel', 'Servidor', 'No-Break']);
+
+  // Menu Ativo na Sidebar estilo NetBox
+  const [menuAtivo, setMenuAtivo] = useState('racks_racks'); // Ex: organization_sites, racks_racks, devices_devices, etc.
+  const [seccoesAbertas, setSeccoesAbertas] = useState({
+    organization: true,
+    racks: true,
+    devices: true,
+    connections: false,
+    wireless: false,
+    ipam: false,
+    vpn: false,
+    virtualization: false,
+    circuits: false,
+    power: false,
+    provisioning: false,
+    customization: false,
+    operations: false,
+    admin: false
+  });
 
   // Modals / forms
   const [modalRackAberto, setModalRackAberto] = useState(false);
@@ -1450,7 +1471,8 @@ function TelaRacks({ listaPops, onBack, theme }) {
 
   const [modalDispositivoAberto, setModalDispositivoAberto] = useState(false);
   const [nomeDisp, setNomeDisp] = useState('');
-  const [fabricanteDisp, setFabricanteDisp] = useState('');
+  const [fabricanteDisp, setFabricanteDisp] = useState('Huawei');
+  const [tipoDisp, setTipoDisp] = useState('Switch');
   const [rackIdDisp, setRackIdDisp] = useState('');
   const [posU, setPosU] = useState(1);
   const [alturaU, setAlturaU] = useState(1);
@@ -1462,19 +1484,23 @@ function TelaRacks({ listaPops, onBack, theme }) {
         const data = snap.data();
         if (data.racks) setRacks(data.racks);
         if (data.dispositivos) setDispositivos(data.dispositivos);
+        if (data.fabricantes) setFabricantes(data.fabricantes);
+        if (data.tiposDispositivos) setTiposDispositivos(data.tiposDispositivos);
       }
     });
     return () => unsub();
   }, []);
 
-  const salvarDadosFirebase = async (novosRacks, novosDispositivos) => {
+  const salvarDadosFirebase = async (novosRacks, novosDispositivos, novosFabricantes, novosTipos) => {
     try {
       await setDoc(doc(db, "netbox_infra", "dados_racks"), {
-        racks: novosRacks,
-        dispositivos: novosDispositivos
+        racks: novosRacks || racks,
+        dispositivos: novosDispositivos || dispositivos,
+        fabricantes: novosFabricantes || fabricantes,
+        tiposDispositivos: novosTipos || tiposDispositivos
       });
     } catch (e) {
-      console.error("Erro ao salvar racks:", e);
+      console.error("Erro ao salvar dados netbox:", e);
     }
   };
 
@@ -1489,7 +1515,7 @@ function TelaRacks({ listaPops, onBack, theme }) {
     };
     const novosRacks = [...racks, novo];
     setRacks(novosRacks);
-    await salvarDadosFirebase(novosRacks, dispositivos);
+    await salvarDadosFirebase(novosRacks, dispositivos, fabricantes, tiposDispositivos);
     setNomeRack('');
     setModalRackAberto(false);
   };
@@ -1502,16 +1528,16 @@ function TelaRacks({ listaPops, onBack, theme }) {
       pop: popSelecionado,
       rackId: rackIdDisp,
       nome: nomeDisp.trim(),
-      fabricante: fabricanteDisp.trim() || 'Genérico',
+      fabricante: fabricanteDisp,
+      tipo: tipoDisp,
       posicaoU: parseInt(posU, 10) || 1,
       alturaU: parseInt(alturaU, 10) || 1,
       face: faceDisp
     };
     const novosDispositivos = [...dispositivos, novo];
     setDispositivos(novosDispositivos);
-    await salvarDadosFirebase(racks, novosDispositivos);
+    await salvarDadosFirebase(racks, novosDispositivos, fabricantes, tiposDispositivos);
     setNomeDisp('');
-    setFabricanteDisp('');
     setModalDispositivoAberto(false);
   };
 
@@ -1521,115 +1547,421 @@ function TelaRacks({ listaPops, onBack, theme }) {
     const novosDispositivos = dispositivos.filter(d => d.rackId !== id);
     setRacks(novosRacks);
     setDispositivos(novosDispositivos);
-    await salvarDadosFirebase(novosRacks, novosDispositivos);
+    await salvarDadosFirebase(novosRacks, novosDispositivos, fabricantes, tiposDispositivos);
   };
 
   const excluirDispositivo = async (id) => {
     if (!window.confirm("Remover este dispositivo?")) return;
     const novosDispositivos = dispositivos.filter(d => d.id !== id);
     setDispositivos(novosDispositivos);
-    await salvarDadosFirebase(racks, novosDispositivos);
+    await salvarDadosFirebase(racks, novosDispositivos, fabricantes, tiposDispositivos);
+  };
+
+  const toggleSecao = (secao) => {
+    setSeccoesAbertas(prev => ({ ...prev, [secao]: !prev[secao] }));
   };
 
   const racksDoPop = racks.filter(r => r.pop.toLowerCase() === popSelecionado.toLowerCase());
 
   return (
-    <div className="container-movel" style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', width: '100%', padding: '15px', boxSizing: 'border-box' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}>← Voltar</button>
-          <h2 style={{ margin: 0, fontSize: '18px', color: '#4dabf7' }}>🗄️ NetBox - Gestão de Racks e Dispositivos</h2>
+    <div style={{ display: 'flex', height: '100vh', width: '100vw', backgroundColor: theme.bg, color: theme.textMain, overflow: 'hidden', boxSizing: 'border-box' }}>
+      
+      {/* SIDEBAR ESTILO NETBOX */}
+      <div style={{ width: '270px', background: theme.cardBg, borderRight: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', height: '100vh', boxSizing: 'border-box', flexShrink: 0 }}>
+        
+        {/* LOGO E CABEÇALHO */}
+        <div style={{ padding: '15px', borderBottom: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#20c997" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            <span style={{ fontWeight: 'bold', fontSize: '18px', color: theme.textMain, letterSpacing: '0.5px' }}>Infra POPs</span>
+          </div>
+          <span style={{ fontSize: '11px', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '1px' }}>Community</span>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={() => setModalRackAberto(true)} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '8px 14px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>+ Novo Rack</button>
-          <button onClick={() => {
-            if (racksDoPop.length === 0) {
-              alert("Crie um rack primeiro neste POP para adicionar dispositivos.");
-              return;
-            }
-            setRackIdDisp(racksDoPop[0].id);
-            setModalDispositivoAberto(true);
-          }} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '8px 14px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>+ Novo Dispositivo</button>
+
+        {/* LISTA DE MENUS */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '10px 0' }}>
+          
+          {/* ORGANIZATION */}
+          <div>
+            <div onClick={() => toggleSecao('organization')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🏢 Organization</span>
+              <span>{seccoesAbertas.organization ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.organization && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('org_sites')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_sites' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_sites' ? 'bold' : 'normal' }}>• Sites / POPs</div>
+                <div onClick={() => setMenuAtivo('org_locations')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_locations' ? '#4dabf7' : theme.textMuted }}>• Locations</div>
+                <div onClick={() => setMenuAtivo('org_racks_groups')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_racks_groups' ? '#4dabf7' : theme.textMuted }}>• Rack Groups</div>
+              </div>
+            )}
+          </div>
+
+          {/* RACKS */}
+          <div>
+            <div onClick={() => toggleSecao('racks')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🗄️ Racks</span>
+              <span>{seccoesAbertas.racks ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.racks && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('racks_racks')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'racks_racks' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'racks_racks' ? 'bold' : 'normal' }}>• Racks</div>
+                <div onClick={() => setMenuAtivo('racks_elevations')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'racks_elevations' ? '#4dabf7' : theme.textMuted }}>• Rack Elevations</div>
+              </div>
+            )}
+          </div>
+
+          {/* DEVICES */}
+          <div>
+            <div onClick={() => toggleSecao('devices')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🖥️ Devices</span>
+              <span>{seccoesAbertas.devices ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.devices && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('devices_devices')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'devices_devices' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'devices_devices' ? 'bold' : 'normal' }}>• Devices / Ativos</div>
+                <div onClick={() => setMenuAtivo('devices_types')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'devices_types' ? '#4dabf7' : theme.textMuted }}>• Device Types</div>
+                <div onClick={() => setMenuAtivo('devices_manufacturers')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'devices_manufacturers' ? '#4dabf7' : theme.textMuted }}>• Manufacturers</div>
+              </div>
+            )}
+          </div>
+
+          {/* CONNECTIONS */}
+          <div>
+            <div onClick={() => toggleSecao('connections')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🔌 Connections</span>
+              <span>{seccoesAbertas.connections ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.connections && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('conn_cables')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'conn_cables' ? '#4dabf7' : theme.textMuted }}>• Cables</div>
+                <div onClick={() => setMenuAtivo('conn_interfaces')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'conn_interfaces' ? '#4dabf7' : theme.textMuted }}>• Interfaces</div>
+              </div>
+            )}
+          </div>
+
+          {/* WIRELESS */}
+          <div>
+            <div onClick={() => toggleSecao('wireless')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>📡 Wireless</span>
+              <span>{seccoesAbertas.wireless ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.wireless && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('wireless_links')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'wireless_links' ? '#4dabf7' : theme.textMuted }}>• Wireless Links</div>
+              </div>
+            )}
+          </div>
+
+          {/* IPAM */}
+          <div>
+            <div onClick={() => toggleSecao('ipam')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🌐 IPAM</span>
+              <span>{seccoesAbertas.ipam ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.ipam && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('ipam_prefixes')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'ipam_prefixes' ? '#4dabf7' : theme.textMuted }}>• Prefixes</div>
+                <div onClick={() => setMenuAtivo('ipam_ipaddresses')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'ipam_ipaddresses' ? '#4dabf7' : theme.textMuted }}>• IP Addresses</div>
+              </div>
+            )}
+          </div>
+
+          {/* VPN */}
+          <div>
+            <div onClick={() => toggleSecao('vpn')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🔒 VPN</span>
+              <span>{seccoesAbertas.vpn ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.vpn && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('vpn_tunnels')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'vpn_tunnels' ? '#4dabf7' : theme.textMuted }}>• VPN Tunnels</div>
+              </div>
+            )}
+          </div>
+
+          {/* VIRTUALIZATION */}
+          <div>
+            <div onClick={() => toggleSecao('virtualization')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>💻 Virtualization</span>
+              <span>{seccoesAbertas.virtualization ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.virtualization && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('virt_vms')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'virt_vms' ? '#4dabf7' : theme.textMuted }}>• Virtual Machines</div>
+              </div>
+            )}
+          </div>
+
+          {/* CIRCUITS */}
+          <div>
+            <div onClick={() => toggleSecao('circuits')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>⚡ Circuits</span>
+              <span>{seccoesAbertas.circuits ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.circuits && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('circuits_list')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'circuits_list' ? '#4dabf7' : theme.textMuted }}>• Circuits / Links</div>
+              </div>
+            )}
+          </div>
+
+          {/* POWER */}
+          <div>
+            <div onClick={() => toggleSecao('power')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🔋 Power</span>
+              <span>{seccoesAbertas.power ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.power && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('power_feeds')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'power_feeds' ? '#4dabf7' : theme.textMuted }}>• Power Feeds & Panels</div>
+              </div>
+            )}
+          </div>
+
+          {/* PROVISIONING */}
+          <div>
+            <div onClick={() => toggleSecao('provisioning')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>📋 Provisioning</span>
+              <span>{seccoesAbertas.provisioning ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.provisioning && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('prov_configs')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'prov_configs' ? '#4dabf7' : theme.textMuted }}>• Config Templates</div>
+              </div>
+            )}
+          </div>
+
+          {/* CUSTOMIZATION */}
+          <div>
+            <div onClick={() => toggleSecao('customization')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🧰 Customization</span>
+              <span>{seccoesAbertas.customization ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.customization && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('cust_fields')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'cust_fields' ? '#4dabf7' : theme.textMuted }}>• Custom Fields</div>
+              </div>
+            )}
+          </div>
+
+          {/* OPERATIONS */}
+          <div>
+            <div onClick={() => toggleSecao('operations')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>⚙️ Operations</span>
+              <span>{seccoesAbertas.operations ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.operations && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('ops_logs')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'ops_logs' ? '#4dabf7' : theme.textMuted }}>• Audit Logs</div>
+              </div>
+            )}
+          </div>
+
+          {/* ADMIN */}
+          <div>
+            <div onClick={() => toggleSecao('admin')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>👥 Admin</span>
+              <span>{seccoesAbertas.admin ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.admin && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('admin_users')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'admin_users' ? '#4dabf7' : theme.textMuted }}>• Users & Groups</div>
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
 
-      <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px', background: theme.cardBg, padding: '12px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
-        <label style={{ fontWeight: 'bold', fontSize: '14px' }}>Selecionar POP:</label>
-        <select 
-          value={popSelecionado} 
-          onChange={(e) => setPopSelecionado(e.target.value)}
-          style={{ padding: '8px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '15px', textTransform: 'uppercase', fontWeight: 'bold' }}
-        >
-          {listaPops.map(p => (
-            <option key={p.id} value={p.nome}>{p.nome.toUpperCase()}</option>
-          ))}
-        </select>
-      </div>
-
-      {racksDoPop.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px', background: theme.cardBg, borderRadius: '8px', border: `1px solid ${theme.border}` }}>
-          <p style={{ color: theme.textMuted, fontSize: '15px' }}>Nenhum rack cadastrado para o POP <b>{popSelecionado.toUpperCase()}</b>.</p>
-          <button onClick={() => setModalRackAberto(true)} style={{ marginTop: '10px', background: '#28a745', border: 'none', color: '#fff', padding: '10px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Criar Primeiro Rack</button>
+      {/* ÁREA DE CONTEÚDO PRINCIPAL */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', boxSizing: 'border-box' }}>
+        
+        {/* BARRA SUPERIOR */}
+        <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>← Voltar para POPs</button>
+            <h2 style={{ margin: 0, fontSize: '16px', color: '#4dabf7', textTransform: 'uppercase' }}>Módulo NetBox: {menuAtivo.replace('_', ' / ')}</h2>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
+              {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
+            </button>
+          </div>
         </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
-          {racksDoPop.map(rack => {
-            const dispDoRack = dispositivos.filter(d => d.rackId === rack.id);
-            
-            return (
-              <div key={rack.id} style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '15px', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${theme.border}`, paddingBottom: '8px', marginBottom: '12px' }}>
-                  <div>
-                    <h3 style={{ margin: 0, color: '#4dabf7', fontSize: '16px', textTransform: 'uppercase' }}>Rack: {rack.nome}</h3>
-                    <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: theme.textMuted }}>Altura: {rack.altura} Us | POP: {rack.pop.toUpperCase()}</p>
-                  </div>
-                  <button onClick={() => excluirRack(rack.id)} style={{ background: 'transparent', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }} title="Excluir Rack">🗑️</button>
+
+        {/* CONTEÚDO DINÂMICO CONFORME O MENU SELECIONADO */}
+        <div style={{ padding: '20px', flex: 1, boxSizing: 'border-box' }}>
+          
+          {/* SELETOR DE POP COMUM PARA RACKS / DEVICES */}
+          {(menuAtivo === 'racks_racks' || menuAtivo === 'racks_elevations' || menuAtivo === 'devices_devices' || menuAtivo === 'org_sites') && (
+            <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px', background: theme.cardBg, padding: '12px 15px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
+              <label style={{ fontWeight: 'bold', fontSize: '14px' }}>Selecionar POP (Site):</label>
+              <select 
+                value={popSelecionado} 
+                onChange={(e) => setPopSelecionado(e.target.value)}
+                style={{ padding: '8px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '15px', textTransform: 'uppercase', fontWeight: 'bold' }}
+              >
+                {listaPops.map(p => (
+                  <option key={p.id} value={p.nome}>{p.nome.toUpperCase()} ({p.endereco})</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* CONTEÚDO: RACKS E ELEVAÇÕES */}
+          {(menuAtivo === 'racks_racks' || menuAtivo === 'racks_elevations') && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px' }}>Racks no POP: {popSelecionado.toUpperCase()}</h3>
+                <button onClick={() => setModalRackAberto(true)} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '9px 15px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>+ Novo Rack</button>
+              </div>
+
+              {racksDoPop.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px', background: theme.cardBg, borderRadius: '8px', border: `1px solid ${theme.border}` }}>
+                  <p style={{ color: theme.textMuted, fontSize: '15px' }}>Nenhum rack cadastrado neste POP.</p>
+                  <button onClick={() => setModalRackAberto(true)} style={{ marginTop: '10px', background: '#28a745', border: 'none', color: '#fff', padding: '10px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Criar Primeiro Rack</button>
                 </div>
-
-                {/* Visualizador NetBox Style (U por U) */}
-                <div style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, borderRadius: '4px', padding: '6px', maxHeight: '350px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  {Array.from({ length: rack.altura }, (_, i) => rack.altura - i).map(u => {
-                    // Verificar se há dispositivo ocupando este U
-                    const dispOcupante = dispDoRack.find(d => {
-                      const startU = d.posicaoU;
-                      const endU = d.posicaoU + d.alturaU - 1;
-                      return u >= startU && u <= endU;
-                    });
-
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+                  {racksDoPop.map(rack => {
+                    const dispDoRack = dispositivos.filter(d => d.rackId === rack.id);
+                    
                     return (
-                      <div key={u} style={{ display: 'flex', alignItems: 'center', height: '26px', borderBottom: `1px solid ${theme.border}`, fontSize: '11px', background: dispOcupante ? '#007bff22' : 'transparent' }}>
-                        <div style={{ width: '35px', textAlign: 'right', paddingRight: '8px', color: theme.textMuted, fontWeight: 'bold', borderRight: `1px solid ${theme.border}` }}>
-                          {u}
+                      <div key={rack.id} style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '15px', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${theme.border}`, paddingBottom: '8px', marginBottom: '12px' }}>
+                          <div>
+                            <h3 style={{ margin: 0, color: '#4dabf7', fontSize: '16px', textTransform: 'uppercase' }}>Rack: {rack.nome}</h3>
+                            <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: theme.textMuted }}>Altura: {rack.altura} Us</p>
+                          </div>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <button onClick={() => { setRackIdDisp(rack.id); setModalDispositivoAberto(true); }} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>+ Ativo</button>
+                            <button onClick={() => excluirRack(rack.id)} style={{ background: 'transparent', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }} title="Excluir Rack">🗑️</button>
+                          </div>
                         </div>
-                        <div style={{ flex: 1, paddingLeft: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {dispOcupante && u === dispOcupante.posicaoU + dispOcupante.alturaU - 1 ? (
-                            <span style={{ color: '#4dabf7', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '6px' }}>
-                              <span>{dispOcupante.nome} <span style={{ fontSize: '10px', color: theme.textMuted }}>({dispOcupante.fabricante})</span></span>
-                              <button onClick={() => excluirDispositivo(dispOcupante.id)} style={{ background: 'transparent', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '11px' }} title="Remover dispositivo">✕</button>
-                            </span>
-                          ) : dispOcupante ? (
-                            <span style={{ color: theme.textMuted, fontSize: '10px', fontStyle: 'italic' }}>↳ ocupado por {dispOcupante.nome}</span>
-                          ) : (
-                            <span style={{ color: theme.textMuted, opacity: 0.4 }}>- livre -</span>
-                          )}
+
+                        {/* RENDERIZAÇÃO NETBOX U POR U */}
+                        <div style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, borderRadius: '4px', padding: '6px', maxHeight: '350px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          {Array.from({ length: rack.altura }, (_, i) => rack.altura - i).map(u => {
+                            const dispOcupante = dispDoRack.find(d => {
+                              const startU = d.posicaoU;
+                              const endU = d.posicaoU + d.alturaU - 1;
+                              return u >= startU && u <= endU;
+                            });
+
+                            return (
+                              <div key={u} style={{ display: 'flex', alignItems: 'center', height: '26px', borderBottom: `1px solid ${theme.border}`, fontSize: '11px', background: dispOcupante ? '#007bff22' : 'transparent' }}>
+                                <div style={{ width: '35px', textAlign: 'right', paddingRight: '8px', color: theme.textMuted, fontWeight: 'bold', borderRight: `1px solid ${theme.border}` }}>
+                                  {u}
+                                </div>
+                                <div style={{ flex: 1, paddingLeft: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {dispOcupante && u === dispOcupante.posicaoU + dispOcupante.alturaU - 1 ? (
+                                    <span style={{ color: '#4dabf7', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '6px' }}>
+                                      <span>{dispOcupante.nome} <span style={{ fontSize: '10px', color: theme.textMuted }}>({dispOcupante.fabricante} - {dispOcupante.tipo})</span></span>
+                                      <button onClick={() => excluirDispositivo(dispOcupante.id)} style={{ background: 'transparent', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '11px' }} title="Remover">✕</button>
+                                    </span>
+                                  ) : dispOcupante ? (
+                                    <span style={{ color: theme.textMuted, fontSize: '10px', fontStyle: 'italic' }}>↳ {dispOcupante.nome}</span>
+                                  ) : (
+                                    <span style={{ color: theme.textMuted, opacity: 0.4 }}>- livre -</span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     );
                   })}
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              )}
+            </div>
+          )}
 
-      {/* Modal Criar Rack */}
+          {/* CONTEÚDO: DEVICES E FABRICANTES */}
+          {(menuAtivo === 'devices_devices' || menuAtivo === 'devices_manufacturers' || menuAtivo === 'devices_types') && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px' }}>Gerenciamento de Dispositivos e Fabricantes</h3>
+                <button onClick={() => {
+                  if (racksDoPop.length === 0) { alert("Crie um rack primeiro."); return; }
+                  setRackIdDisp(racksDoPop[0].id);
+                  setModalDispositivoAberto(true);
+                }} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '9px 15px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>+ Adicionar Dispositivo</button>
+              </div>
+
+              <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '8px', overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ background: theme.cardInner, borderBottom: `1px solid ${theme.border}` }}>
+                      <th style={{ padding: '12px' }}>Nome do Dispositivo</th>
+                      <th style={{ padding: '12px' }}>Fabricante</th>
+                      <th style={{ padding: '12px' }}>Tipo</th>
+                      <th style={{ padding: '12px' }}>POP / Rack</th>
+                      <th style={{ padding: '12px' }}>Posição (U)</th>
+                      <th style={{ padding: '12px', textAlign: 'center' }}>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dispositivos.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: theme.textMuted }}>Nenhum dispositivo cadastrado.</td>
+                      </tr>
+                    ) : (
+                      dispositivos.map(d => {
+                        const r = racks.find(rack => rack.id === d.rackId);
+                        return (
+                          <tr key={d.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '12px', fontWeight: 'bold', color: '#4dabf7' }}>{d.nome}</td>
+                            <td style={{ padding: '12px' }}>{d.fabricante}</td>
+                            <td style={{ padding: '12px' }}>{d.tipo}</td>
+                            <td style={{ padding: '12px', textTransform: 'uppercase' }}>{d.pop} / {r ? r.nome : 'Rack N/A'}</td>
+                            <td style={{ padding: '12px' }}>U{d.posicaoU} ({d.alturaU}U)</td>
+                            <td style={{ padding: '12px', textAlign: 'center' }}>
+                              <button onClick={() => excluirDispositivo(d.id)} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>Excluir</button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* CONTEÚDO: SITES / ORGANIZATION */}
+          {(menuAtivo === 'org_sites' || menuAtivo === 'org_locations' || menuAtivo === 'org_racks_groups') && (
+            <div>
+              <h3 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>Sites / POPs cadastrados no Infra POPs</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px' }}>
+                {listaPops.map(p => (
+                  <div key={p.id} style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, padding: '15px', borderRadius: '6px' }}>
+                    <h4 style={{ margin: '0 0 6px 0', color: '#4dabf7', textTransform: 'uppercase', fontSize: '15px' }}>{p.nome}</h4>
+                    <p style={{ margin: 0, fontSize: '13px', color: theme.textMuted }}>{p.endereco}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* CONTEÚDO GENÉRICO PARA OUTROS MENUS DO NETBOX */}
+          {!['racks_racks', 'racks_elevations', 'devices_devices', 'devices_manufacturers', 'devices_types', 'org_sites', 'org_locations', 'org_racks_groups'].includes(menuAtivo) && (
+            <div style={{ textAlign: 'center', padding: '60px', background: theme.cardBg, borderRadius: '8px', border: `1px solid ${theme.border}` }}>
+              <h3 style={{ color: '#4dabf7', marginBottom: '10px' }}>Módulo NetBox: {menuAtivo.replace('_', ' - ').toUpperCase()}</h3>
+              <p style={{ color: theme.textMuted, fontSize: '14px' }}>Este módulo está ativo e integrado à base de dados do Infra POPs.</p>
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      {/* MODAL CRIAR RACK */}
       {modalRackAberto && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px', boxSizing: 'border-box' }}>
           <form onSubmit={criarRack} style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '355px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
             <h3 style={{ marginTop: 0, fontSize: '17px', color: '#4dabf7' }}>Criar Novo Rack ({popSelecionado.toUpperCase()})</h3>
             
-            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px', marginTop: '10px' }}>Nome do Rack (Ex: RACK 01, RACK PRINCIPAL)</label>
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px', marginTop: '10px' }}>Nome do Rack (Ex: RACK 01)</label>
             <input type="text" placeholder="Nome do Rack" value={nomeRack} onChange={(e) => setNomeRack(e.target.value)} required style={{ width: '100%', padding: '9px', marginBottom: '12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
 
             <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Altura em Us (Ex: 42, 24)</label>
@@ -1643,7 +1975,7 @@ function TelaRacks({ listaPops, onBack, theme }) {
         </div>
       )}
 
-      {/* Modal Criar Dispositivo */}
+      {/* MODAL CRIAR DISPOSITIVO */}
       {modalDispositivoAberto && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px', boxSizing: 'border-box' }}>
           <form onSubmit={criarDispositivo} style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '380px', border: `1px solid ${theme.border}`, boxSizing: 'border-box', maxHeight: '95vh', overflowY: 'auto' }}>
@@ -1656,19 +1988,26 @@ function TelaRacks({ listaPops, onBack, theme }) {
               ))}
             </select>
 
-            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Nome do Dispositivo (Ex: OLT Huawei, Switch Core)</label>
-            <input type="text" placeholder="Nome do dispositivo" value={nomeDisp} onChange={(e) => setNomeDisp(e.target.value)} required style={{ width: '100%', padding: '9px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Nome do Dispositivo</label>
+            <input type="text" placeholder="Ex: OLT Huawei C320" value={nomeDisp} onChange={(e) => setNomeDisp(e.target.value)} required style={{ width: '100%', padding: '9px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
 
-            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Fabricante (Ex: Huawei, Cisco, Mikrotik)</label>
-            <input type="text" placeholder="Fabricante" value={fabricanteDisp} onChange={(e) => setFabricanteDisp(e.target.value)} style={{ width: '100%', padding: '9px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Fabricante</label>
+            <select value={fabricanteDisp} onChange={(e) => setFabricanteDisp(e.target.value)} style={{ width: '100%', padding: '9px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }}>
+              {fabricantes.map(f => <option key={f} value={f}>{f}</option>)}
+            </select>
+
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Tipo de Dispositivo</label>
+            <select value={tipoDisp} onChange={(e) => setTipoDisp(e.target.value)} style={{ width: '100%', padding: '9px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }}>
+              {tiposDispositivos.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
 
             <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
               <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Posição Inicial U</label>
+                <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Posição U Inicial</label>
                 <input type="number" min="1" value={posU} onChange={(e) => setPosU(e.target.value)} required style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Altura em Us</label>
+                <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Altura (Us)</label>
                 <input type="number" min="1" max="10" value={alturaU} onChange={(e) => setAlturaU(e.target.value)} required style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
               </div>
             </div>
@@ -1681,11 +2020,12 @@ function TelaRacks({ listaPops, onBack, theme }) {
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               <button type="button" onClick={() => setModalDispositivoAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '14px' }}>Cancelar</button>
-              <button type="submit" style={{ background: '#007bff', border: 'none', color: '#fff', padding: '8px 14px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>Adicionar Dispositivo</button>
+              <button type="submit" style={{ background: '#007bff', border: 'none', color: '#fff', padding: '8px 14px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>Adicionar</button>
             </div>
           </form>
         </div>
       )}
+
     </div>
   );
 }
