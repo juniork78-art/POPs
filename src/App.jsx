@@ -1774,14 +1774,14 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
       {/* ÁREA DE CONTEÚDO PRINCIPAL */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', boxSizing: 'border-box' }}>
         
-        {/* BARRA SUPERIOR AJUSTADA COM ALTURA E PADDING SEGUROS PARA BOTÕES */}
-        <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '14px 20px', minHeight: '64px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxSizing: 'border-box' }}>
+        {/* BARRA SUPERIOR AJUSTADA COM PARTES SEGURAS E PADDING ADEQUADO */}
+        <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '16px 24px', minHeight: '68px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
             <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>← Voltar para POPs</button>
             <h2 style={{ margin: 0, fontSize: '15px', color: '#4dabf7', textTransform: 'uppercase' }}>Módulo NetBox: {menuAtivo.replace('_', ' / ')}</h2>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingRight: '10px' }}>
+            <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
             </button>
           </div>
@@ -1884,7 +1884,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                   if (racksDoPop.length === 0) { alert("Crie um rack primeiro."); return; }
                   setRackIdDisp(racksDoPop[0].id);
                   setModalDispositivoAberto(true);
-                }} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '9px 15px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>+ Adicionar Dispositivo</button>
+                }} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '9px 15px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', marginRight: '5px' }}>+ Adicionar Dispositivo</button>
               </div>
 
               <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '8px', overflowX: 'auto' }}>
