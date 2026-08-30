@@ -1,4 +1,4 @@
-
+import React, { useState, useEffect } from 'react';
 import { auth, db } from './firebase';
 import { 
   signInWithEmailAndPassword, 
@@ -1533,7 +1533,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
         if (data.tiposDispositivos) setTiposDispositivos(data.tiposDispositivos);
         if (data.regioesLista) setRegioesLista(data.regioesLista);
         if (data.modelosExportacao) setModelosExportacao(data.modelosExportacao);
-        if (data.gruposSites) setGruposSites(data.gruposSites);
+        if (Array.isArray(data.gruposSites)) setGruposSites(data.gruposSites);
       }
     });
     return () => unsub();
@@ -2859,7 +2859,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
               </div>
 
               <div style={{ display: 'flex', borderBottom: `1px solid ${theme.border}`, gap: '20px', fontSize: '14px', fontWeight: 'bold', paddingTop: '5px', marginBottom: '18px' }}>
-                <span style={{ padding: '10px 12px', border: `1px solid ${theme.border}`, borderBottom: 'none', borderRadius: '6px 6px 0 0', color: theme.textMain }}>Resultados <span style={{ background: '#6c757d', color: '#fff', padding: '2px 6px', borderRadius: '5px', fontSize: '12px' }}>{gruposSites.length}</span></span>
+                <span style={{ padding: '10px 12px', border: `1px solid ${theme.border}`, borderBottom: 'none', borderRadius: '6px 6px 0 0', color: theme.textMain }}>Resultados <span style={{ background: '#6c757d', color: '#fff', padding: '2px 6px', borderRadius: '5px', fontSize: '12px' }}>{(Array.isArray(gruposSites) ? gruposSites : []).length}</span></span>
                 <span style={{ padding: '10px 12px', color: theme.textMuted, cursor: 'pointer' }}>Filtros</span>
               </div>
 
@@ -2882,7 +2882,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                     <th style={{ width: '70px', padding: '10px' }}></th>
                   </tr></thead>
                   <tbody>
-                    {gruposSites.filter(g => g.nome.toLowerCase().includes(buscaGrupoSite.toLowerCase())).map(g => {
+                    {(Array.isArray(gruposSites) ? gruposSites : []).filter(g => g && typeof g.nome === 'string' && g.nome.toLowerCase().includes(buscaGrupoSite.toLowerCase())).map(g => {
                       const ehFilho = !!g.paiId;
                       return (
                         <tr key={g.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
@@ -2896,10 +2896,10 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                         </tr>
                       );
                     })}
-                    {gruposSites.filter(g => g.nome.toLowerCase().includes(buscaGrupoSite.toLowerCase())).length === 0 && <tr><td colSpan="5" style={{ padding: '25px', textAlign: 'center', color: theme.textMuted }}>Nenhum grupo encontrado.</td></tr>}
+                    {(Array.isArray(gruposSites) ? gruposSites : []).filter(g => g && typeof g.nome === 'string' && g.nome.toLowerCase().includes(buscaGrupoSite.toLowerCase())).length === 0 && <tr><td colSpan="5" style={{ padding: '25px', textAlign: 'center', color: theme.textMuted }}>Nenhum grupo encontrado.</td></tr>}
                   </tbody>
                 </table>
-                <div style={{ padding: '8px', fontSize: '12px', color: theme.textMuted }}>Exibindo {gruposSites.filter(g => g.nome.toLowerCase().includes(buscaGrupoSite.toLowerCase())).length} de {gruposSites.length}</div>
+                <div style={{ padding: '8px', fontSize: '12px', color: theme.textMuted }}>Exibindo {(Array.isArray(gruposSites) ? gruposSites : []).filter(g => g && typeof g.nome === 'string' && g.nome.toLowerCase().includes(buscaGrupoSite.toLowerCase())).length} de {(Array.isArray(gruposSites) ? gruposSites : []).length}</div>
               </div>
             </div>
           )}
