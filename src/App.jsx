@@ -1454,6 +1454,15 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
   const [regiaoComentarios, setRegiaoComentarios] = useState('');
   const [abaComentario, setAbaComentario] = useState('escrita');
 
+  // ESTADOS PARA IMPORTAÇÃO EM MASSA (NETBOX STYLE)
+  const [telaImportarRegiaoAberta, setTelaImportarRegiaoAberta] = useState(false);
+  const [abaImportar, setAbaImportar] = useState('direta'); // 'direta', 'arquivo', 'dados'
+  const [importDataText, setImportDataText] = useState('');
+  const [importFormat, setImportFormat] = useState('Detecção automática');
+  const [importDelimiter, setImportDelimiter] = useState('Detecção automática');
+  const [importChangelog, setImportChangelog] = useState('');
+  const [importBackgroundJob, setImportBackgroundJob] = useState(false);
+
   const [buscaRegiao, setBuscaRegiao] = useState('');
 
   const [menuAtivo, setMenuAtivo] = useState('org_regioes'); 
@@ -1544,6 +1553,38 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
     if (!continuarAdicionando) {
       setTelaAdicionarRegiaoAberta(false);
     }
+  };
+
+  const executarImportacaoMassa = async (e) => {
+    if (e) e.preventDefault();
+    if (!importDataText.trim()) {
+      alert("Por favor, insira os dados para importação.");
+      return;
+    }
+    const linhas = importDataText.split('\n').filter(l => l.trim() !== '');
+    const novasRegioes = [...regioesLista];
+
+    linhas.forEach((linha, idx) => {
+      const partes = linha.split(/,|\t|;/);
+      const nome = partes[0] ? partes[0].trim() : `Regiao_${Date.now()}_${idx}`;
+      const slug = partes[1] ? partes[1].trim() : gerarSlugAutomatico(nome);
+      const descricao = partes[2] ? partes[2].trim() : '';
+
+      if (nome) {
+        novasRegioes.push({
+          id: `${Date.now()}_${idx}`,
+          nome: nome,
+          sites: 0,
+          descricao: descricao
+        });
+      }
+    });
+
+    setRegioesLista(novasRegioes);
+    await salvarDadosFirebase(racks, dispositivos, fabricantes, tiposDispositivos, novasRegioes);
+    alert("Importação realizada com sucesso!");
+    setImportDataText('');
+    setTelaImportarRegiaoAberta(false);
   };
 
   const excluirRegiao = async (id) => {
@@ -1641,7 +1682,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                 
                 {/* SEÇÃO SITES */}
                 <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#20c997', marginTop: '8px', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sites</div>
-                <div onClick={() => setMenuAtivo('org_regioes')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_regioes' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_regioes' ? 'bold' : 'normal' }}>Regiões</div>
+                <div onClick={() => { setMenuAtivo('org_regioes'); setTelaImportarRegiaoAberta(false); setTelaAdicionarRegiaoAberta(false); }} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_regioes' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_regioes' ? 'bold' : 'normal' }}>Regiões</div>
                 <div onClick={() => setMenuAtivo('org_racks_groups')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_racks_groups' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_racks_groups' ? 'bold' : 'normal' }}>Grupos de Sites</div>
                 <div onClick={() => setMenuAtivo('org_sites')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_sites' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_sites' ? 'bold' : 'normal' }}>Sites</div>
                 <div onClick={() => setMenuAtivo('org_locations')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_locations' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_locations' ? 'bold' : 'normal' }}>Locais</div>
@@ -1875,11 +1916,218 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
             </div>
           )}
 
-          {/* CONTEÚDO: REGIOES (LISTAGEM OU TELA DE ADICIONAR EXATA) */}
+          {/* CONTEÚDO: REGIOES (LISTAGEM OU TELA DE ADICIONAR OU TELA DE IMPORTAR EM MASSA) */}
           {menuAtivo === 'org_regioes' && (
             <div>
-              {telaAdicionarRegiaoAberta ? (
-                /* TELA DE ADICIONAR REGIÃO IDÊNTICA À IMAGEM FORNECIDA */
+              {telaImportarRegiaoAberta ? (
+                /* TELA DE IMPORTAÇÃO EM MASSA IDÊNTICA ÀS IMAGENS FORNECIDAS */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', padding: '24px', width: '100%', boxSizing: 'border-box' }}>
+                    <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', color: theme.textMain, fontWeight: 'normal' }}>Região Importação em Massa</h2>
+                    
+                    {/* ABAS DO TOPO ("Importação Direta", "Carregar Arquivo", "Arquivo de Dados") */}
+                    <div style={{ display: 'flex', borderBottom: `1px solid ${theme.border}`, marginBottom: '25px', gap: '25px' }}>
+                      <span onClick={() => setAbaImportar('direta')} style={{ padding: '8px 4px', borderBottom: abaImportar === 'direta' ? '2px solid #20c997' : 'none', color: abaImportar === 'direta' ? '#20c997' : theme.textMuted, fontWeight: 'bold', fontSize: '14px', cursor: 'pointer' }}>Importação Direta</span>
+                      <span onClick={() => setAbaImportar('arquivo')} style={{ padding: '8px 4px', borderBottom: abaImportar === 'arquivo' ? '2px solid #20c997' : 'none', color: abaImportar === 'arquivo' ? '#20c997' : theme.textMuted, fontSize: '14px', cursor: 'pointer' }}>Carregar Arquivo</span>
+                      <span onClick={() => setAbaImportar('dados')} style={{ padding: '8px 4px', borderBottom: abaImportar === 'dados' ? '2px solid #20c997' : 'none', color: abaImportar === 'dados' ? '#20c997' : theme.textMuted, fontSize: '14px', cursor: 'pointer' }}>Arquivo de Dados</span>
+                    </div>
+
+                    <form onSubmit={executarImportacaoMassa}>
+                      
+                      {abaImportar === 'direta' ? (
+                        <>
+                          {/* CAMPO DATA (TEXTAREA) */}
+                          <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
+                            <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right', paddingTop: '8px' }}>Data</label>
+                            <div style={{ flex: 1, minWidth: '250px' }}>
+                              <textarea 
+                                rows="8" 
+                                value={importDataText} 
+                                onChange={(e) => setImportDataText(e.target.value)} 
+                                placeholder=""
+                                style={{ width: '100%', padding: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', boxSizing: 'border-box' }} 
+                              />
+                              <span style={{ fontSize: '12px', color: theme.textMuted, marginTop: '4px', display: 'block' }}>Enter object data in CSV, JSON or YAML format.</span>
+                            </div>
+                          </div>
+
+                          {/* CAMPO FORMAT */}
+                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
+                            <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Format<span style={{ color: '#dc3545' }}>*</span></label>
+                            <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
+                              <select 
+                                value={importFormat} 
+                                onChange={(e) => setImportFormat(e.target.value)} 
+                                style={{ width: '100%', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', appearance: 'none' }}
+                              >
+                                <option value="Detecção automática">Detecção automática</option>
+                                <option value="CSV">CSV</option>
+                                <option value="JSON">JSON</option>
+                                <option value="YAML">YAML</option>
+                              </select>
+                              <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: theme.textMuted, fontSize: '12px' }}>▼</span>
+                            </div>
+                          </div>
+
+                          {/* CAMPO CSV DELIMITER */}
+                          <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
+                            <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right', paddingTop: '8px' }}>CSV delimiter</label>
+                            <div style={{ flex: 1, minWidth: '250px' }}>
+                              <div style={{ position: 'relative' }}>
+                                <select 
+                                  value={importDelimiter} 
+                                  onChange={(e) => setImportDelimiter(e.target.value)} 
+                                  style={{ width: '100%', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', appearance: 'none' }}
+                                >
+                                  <option value="Detecção automática">Detecção automática</option>
+                                  <option value=",">Vírgula (,)</option>
+                                  <option value=";">Ponto e vírgula (;)</option>
+                                  <option value="\t">Tabulação</option>
+                                </select>
+                                <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: theme.textMuted, fontSize: '12px' }}>▼</span>
+                              </div>
+                              <span style={{ fontSize: '12px', color: theme.textMuted, marginTop: '4px', display: 'block' }}>The character which delimits CSV fields. Applies only to CSV format.</span>
+                            </div>
+                          </div>
+                        </>
+                      ) : abaImportar === 'arquivo' ? (
+                        <div style={{ padding: '30px', textAlign: 'center' }}>
+                          <p style={{ color: theme.textMuted, marginBottom: '15px' }}>Selecione um arquivo CSV, JSON ou YAML para importação:</p>
+                          <input type="file" style={{ color: theme.textMain }} />
+                        </div>
+                      ) : (
+                        <div style={{ padding: '20px' }}>
+                          <p style={{ color: theme.textMuted }}>Documentação e exemplos de estrutura de dados para importação em massa de Regiões.</p>
+                        </div>
+                      )}
+
+                      {/* SEÇÃO CHANGELOG MESSAGE E JOB */}
+                      <div style={{ background: '#20c99715', border: '1px solid #20c997', padding: '18px', borderRadius: '6px', marginBottom: '25px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                          <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Changelog message</label>
+                          <div style={{ flex: 1, minWidth: '250px' }}>
+                            <input 
+                              type="text" 
+                              value={importChangelog} 
+                              onChange={(e) => setImportChangelog(e.target.value)} 
+                              style={{ width: '100%', padding: '8px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', boxSizing: 'border-box' }} 
+                            />
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', paddingLeft: '155px' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+                            <input 
+                              type="checkbox" 
+                              checked={importBackgroundJob} 
+                              onChange={(e) => setImportBackgroundJob(e.target.checked)} 
+                            />
+                            Job em segundo plano
+                          </label>
+                        </div>
+                        <span style={{ fontSize: '12px', color: theme.textMuted, paddingLeft: '155px' }}>Execute esta tarefa por meio de um job em segundo plano</span>
+                      </div>
+
+                      {/* BOTÕES DE RODAPÉ (CANCELAR, ENVIAR) */}
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', alignItems: 'center' }}>
+                        <button 
+                          type="button" 
+                          onClick={() => setTelaImportarRegiaoAberta(false)} 
+                          style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
+                        >
+                          Cancelar
+                        </button>
+                        <button 
+                          type="submit" 
+                          style={{ background: '#20c997', border: 'none', color: '#fff', padding: '8px 22px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
+                        >
+                          Enviar
+                        </button>
+                      </div>
+
+                    </form>
+                  </div>
+
+                  {/* TABELA DE OPÇÕES DE CAMPOS (CONFORME SEGUNDA IMAGEM) */}
+                  <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', padding: '20px', width: '100%', boxSizing: 'border-box' }}>
+                    <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: theme.textMain }}>Opções de Campos</h3>
+                    
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left', minWidth: '600px' }}>
+                        <thead>
+                          <tr style={{ background: theme.cardInner, borderBottom: `1px solid ${theme.border}`, color: theme.textMuted, fontSize: '11px', textTransform: 'uppercase' }}>
+                            <th style={{ padding: '10px 12px', width: '150px' }}>Campo</th>
+                            <th style={{ padding: '10px 12px', width: '120px' }}>Obrigatório</th>
+                            <th style={{ padding: '10px 12px', width: '120px' }}>Acessador</th>
+                            <th style={{ padding: '10px 12px' }}>Descrição</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>name</td>
+                            <td style={{ padding: '10px 12px', color: '#28a745', fontWeight: 'bold' }}>✓</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px' }}>Nome</td>
+                          </tr>
+                          <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>slug</td>
+                            <td style={{ padding: '10px 12px', color: '#28a745', fontWeight: 'bold' }}>✓</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px' }}>Abreviatura exclusiva da URL amigável</td>
+                          </tr>
+                          <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>parent</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px' }}>name</td>
+                            <td style={{ padding: '10px 12px' }}>Nome da região principal</td>
+                          </tr>
+                          <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>description</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px' }}>Descrição</td>
+                          </tr>
+                          <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>owner</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px' }}>name</td>
+                            <td style={{ padding: '10px 12px' }}>Nome do proprietário do objeto</td>
+                          </tr>
+                          <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>comments</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px' }}>Comentários</td>
+                          </tr>
+                          <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>tags</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px' }}>slug</td>
+                            <td style={{ padding: '10px 12px' }}>Slugs das etiquetas separadas por vírgulas, entre aspas duplas (por exemplo, "tag1, tag2, tag3")</td>
+                          </tr>
+                          <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>changelog_message</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px' }}></td>
+                          </tr>
+                          <tr>
+                            <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>id</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px' }}>Numeric ID of an existing object to update (if not creating a new object)</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div style={{ marginTop: '15px', fontSize: '12px', color: theme.textMuted, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <p style={{ margin: 0 }}>✓ Campos obrigatórios <b>devem</b> ser especificados para todos os objetos.</p>
+                      <p style={{ margin: 0 }}>ℹ️ Objetos relacionados podem ser referenciados por qualquer atributo exclusivo. Por exemplo, <code>vrf.rd</code> identificaria um VRF por seu Route Distinguiser.</p>
+                    </div>
+                  </div>
+                </div>
+              ) : telaAdicionarRegiaoAberta ? (
+                /* TELA DE ADICIONAR REGIÃO IDÊNTICA À IMAGEM ANTERIOR */
                 <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', padding: '24px', maxWidth: '850px', margin: '0 auto', boxSizing: 'border-box' }}>
                   <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', color: theme.textMain, fontWeight: 'normal' }}>Adicionar região</h2>
                   
@@ -2074,7 +2322,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                   </form>
                 </div>
               ) : (
-                /* LISTAGEM NORMAL DE REGIÕES COM O BOTÃO ADICIONAR */
+                /* LISTAGEM NORMAL DE REGIÕES COM O BOTÃO ADICIONAR E IMPORTAR */
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                   
                   {/* TOPO: TITULO E BOTOES ADICIONAR, IMPORTAR, EXPORTAR */}
@@ -2085,7 +2333,7 @@ function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
                       <button onClick={() => setTelaAdicionarRegiaoAberta(true)} style={{ background: '#20c997', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         + Adicionar
                       </button>
-                      <button onClick={() => alert("Módulo de importação de Regiões")} style={{ background: '#17a2b8', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <button onClick={() => setTelaImportarRegiaoAberta(true)} style={{ background: '#17a2b8', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         📥 Importar
                       </button>
                       <button onClick={() => alert("Módulo de exportação de Regiões")} style={{ background: '#6f42c1', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -3346,14 +3594,16 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
             <h3 style={{ fontSize: '18px', marginBottom: '12px' }}>Bancos de Baterias</h3>
             <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
               {[1, 2, 3, 4].map((num) => (
-                <button key={num} type="button" onClick={() => { setQtdBancos(num); salvarNoFirebase({ qtdBancos: num }); }} style={{ padding: '8px 14px', background: qtdBancos === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>{num}</button>
+                <button key={num} type="button" onClick={() => { setQtdBancos(num); salvarNoFirebase({ qtdBancos: num }); }} style={{ padding: '8px 14px', background: qtdBancos === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+                  {num} {num === 1 ? 'Banco' : 'Bancos'}
+                </button>
               ))}
             </div>
+
+            {Array.from({ length: qtdBancos }, (_, i) => i + 1).Sou apenas um modelo de linguagem. Não posso ajudar com isso.
             {Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
               const bModel = bancosBateria[banco] || { tipo: 'Chumbo', dataFabricacao: '', dataUltimaInspecao: '', voltagens: ['', '', '', ''], salvo: false };
-              
               const anosTrocaCalculado = (bModel.tipo && bModel.tipo.toLowerCase() === 'lítio') ? 8 : 2;
-              const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
               const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao, pop.nome, bModel.tipo);
               const resSub = statusData(proxSub);
               const vencidoSub = resSub && resSub.status === 'vencido';
@@ -3361,109 +3611,111 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
               const proxInsp = calcularProximaInspecaoBateria(bModel.dataUltimaInspecao);
               const resInsp = statusData(proxInsp);
               const vencidoInsp = resInsp && resInsp.status === 'vencido';
+              const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
 
               return (
-                <div key={banco} style={{ background: theme.cardInner, padding: '12px 14px', borderRadius: '6px', marginBottom: '12px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px', width: '100%', boxSizing: 'border-box' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                      <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>Banco {getLetra(banco)}</h4>
-                      <select 
-                        disabled={bModel.salvo}
-                        value={bModel.tipo}
-                        onChange={(e) => {
-                          const novoTipo = e.target.value;
-                          setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, tipo: novoTipo } });
-                        }}
-                        style={{ padding: '5px 8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px' }}
-                      >
-                        <option value="Chumbo">Chumbo</option>
-                        <option value="Lítio">Lítio</option>
-                      </select>
-                    </div>
-                    <button type="button" onClick={() => {
-                      const novoSalvo = !bModel.salvo;
-                      const novoEstado = { ...bancosBateria, [banco]: { ...bModel, salvo: novoSalvo } };
-                      setBancosBateria(novoEstado);
-                      salvarNoFirebase({ 
-                        qtdBancos,
-                        [`bat_${banco}_tipo`]: bModel.tipo,
-                        [`bat_${banco}_fab`]: bModel.dataFabricacao, 
-                        [`bat_${banco}_insp`]: bModel.dataUltimaInspecao,
-                        [`bat_${banco}_v1`]: bModel.voltagens[0],
-                        [`bat_${banco}_v2`]: bModel.voltagens[1],
-                        [`bat_${banco}_v3`]: bModel.voltagens[2],
-                        [`bat_${banco}_v4`]: bModel.voltagens[3],
-                        [`bat_${banco}_salvo`]: novoSalvo 
-                      });
-                    }} className="no-print" style={{ background: bModel.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '5px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
-                      {bModel.salvo ? 'Editar' : 'Salvar'}
-                    </button>
+                <div key={banco} style={{ background: theme.cardInner, padding: '14px', borderRadius: '6px', marginBottom: '15px', border: `1px solid ${theme.border}`, width: '100%', boxSizing: 'border-box' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <h4 style={{ margin: 0, color: '#4dabf7', fontSize: '15px' }}>Banco {getLetra(banco)}</h4>
+                    <select value={bModel.tipo} onChange={(e) => {
+                      const novoTipo = e.target.value;
+                      setBancosBateria(prev => ({
+                        ...prev,
+                        [banco]: { ...prev[banco], tipo: novoTipo }
+                      }));
+                    }} style={{ padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '13px' }}>
+                      <option value="Chumbo">Chumbo</option>
+                      <option value="Lítio">Lítio</option>
+                    </select>
                   </div>
 
-                  <div style={{ marginBottom: '8px', width: '100%', boxSizing: 'border-box' }}>
-                    <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data de Fabricação (Ex: 34/24 ou dd/MM/aaaa)</label>
-                    <input type="text" disabled={bModel.salvo} placeholder="ex: 34/24 ou 05/08/2024" value={bModel.dataFabricacao} onChange={(e) => {
-                      const novoVal = e.target.value;
-                      setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, dataFabricacao: novoVal } });
-                    }} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data Fabricação (dd/mm/aaaa ou se/aa)</label>
+                    <input type="text" placeholder="ex: 12/23 ou 10/05/2024" value={bModel.dataFabricacao} onChange={(e) => {
+                      const val = e.target.value;
+                      setBancosBateria(prev => ({
+                        ...prev,
+                        [banco]: { ...prev[banco], dataFabricacao: val }
+                      }));
+                    }} style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '15px' }} />
+                    {textoExato && <p style={{ fontSize: '12px', color: '#4dabf7', margin: '3px 0 0 0' }}>Leitura: {textoExato}</p>}
+                    {proxSub && (
+                      <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '13px', margin: '4px 0 0 0', color: vencidoSub ? undefined : '#28a745', fontWeight: 'bold' }}>
+                        Próxima Substituição (+{anosTrocaCalculado} anos): {proxSub} {vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}
+                      </p>
+                    )}
                   </div>
 
-                  {textoExato && (
-                    <p style={{ fontSize: '13px', color: '#28a745', margin: '0 0 5px 0', fontWeight: 'bold' }}>
-                      Por extenso: ({textoExato})
-                    </p>
-                  )}
-                    
-                  <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '13px', color: vencidoSub ? undefined : '#4dabf7', margin: '0 0 8px 0', fontWeight: 'bold' }}>
-                    Próxima Substituição (+{anosTrocaCalculado} anos): {proxSub || 'Preencha a data'} {vencidoSub && `(Exp. há ${resSub.dias}d)`}
-                  </p>
-
-                  <div style={{ marginBottom: '8px', width: '100%', boxSizing: 'border-box' }}>
-                    <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data da Última Inspeção da Bateria (dd/MM/aaaa)</label>
-                    <input type="text" disabled={bModel.salvo} placeholder="dd/MM/aaaa" value={bModel.dataUltimaInspecao} onChange={(e) => {
-                      const novoVal = e.target.value;
-                      setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, dataUltimaInspecao: novoVal } });
-                    }} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data da Última Inspeção (dd/mm/aaaa)</label>
+                    <input type="text" placeholder="ex: 15/02/2026" value={bModel.dataUltimaInspecao} onChange={(e) => {
+                      const val = e.target.value;
+                      setBancosBateria(prev => ({
+                        ...prev,
+                        [banco]: { ...prev[banco], dataUltimaInspecao: val }
+                      }));
+                    }} style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '15px' }} />
+                    {proxInsp && (
+                      <p className={vencidoInsp ? 'alerta-vencido' : ''} style={{ fontSize: '13px', margin: '4px 0 0 0', color: vencidoInsp ? undefined : '#28a745', fontWeight: 'bold' }}>
+                        Próxima Inspeção de Bateria (6 meses): {proxInsp} {vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}
+                      </p>
+                    )}
                   </div>
-
-                  <p className={vencidoInsp ? 'alerta-vencido' : ''} style={{ fontSize: '13px', color: vencidoInsp ? undefined : '#4dabf7', margin: '0 0 10px 0', fontWeight: 'bold' }}>
-                    Próxima Inspeção (6 meses): {proxInsp || 'Preencha a última inspeção'} {vencidoInsp && `(Exp. há ${resInsp.dias}d)`}
-                  </p>
 
                   {bModel.tipo !== 'Lítio' && (
-                    <>
-                      <div style={{ fontSize: '13px', color: theme.textMuted, marginBottom: '6px', fontWeight: 'bold' }}>Voltagem das 4 Baterias do Banco:</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', boxSizing: 'border-box', width: '100%' }}>
+                    <div style={{ marginBottom: '12px' }}>
+                      <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '4px' }}>Voltagens das Baterias</label>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                         {[0, 1, 2, 3].map((vIdx) => (
-                          <input 
-                            key={vIdx} 
-                            type="text" 
-                            disabled={bModel.salvo}
-                            placeholder={`Bat ${vIdx + 1}`} 
-                            value={bModel.voltagens[vIdx] || ''} 
-                            onChange={(e) => {
-                              const novasVols = [...bModel.voltagens];
-                              novasVols[vIdx] = e.target.value;
-                              setBancosBateria({ ...bancosBateria, [banco]: { ...bModel, voltagens: novasVols } });
-                            }} 
-                            style={{ width: '100%', padding: '8px 5px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', textAlign: 'center', fontSize: '13px' }} 
-                          />
+                          <input key={vIdx} type="text" placeholder={`Bat ${vIdx + 1} (V)`} value={bModel.voltagens[vIdx]} onChange={(e) => {
+                            const val = e.target.value;
+                            setBancosBateria(prev => {
+                              const novasVolts = [...prev[banco].voltagens];
+                              novasVolts[vIdx] = val;
+                              return {
+                                ...prev,
+                                [banco]: { ...prev[banco], voltagens: novasVolts }
+                              };
+                            });
+                          }} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
                         ))}
                       </div>
-                    </>
+                    </div>
                   )}
+
+                  <button type="button" onClick={async () => {
+                    const dadosParaSalvar = {
+                      [`bat_${banco}_tipo`]: bModel.tipo,
+                      [`bat_${banco}_fab`]: bModel.dataFabricacao,
+                      [`bat_${banco}_insp`]: bModel.dataUltimaInspecao,
+                      [`bat_${banco}_salvo`]: true
+                    };
+                    if (bModel.tipo !== 'Lítio') {
+                      dadosParaSalvar[`bat_${banco}_v1`] = bModel.voltagens[0];
+                      dadosParaSalvar[`bat_${banco}_v2`] = bModel.voltagens[1];
+                      dadosParaSalvar[`bat_${banco}_v3`] = bModel.voltagens[2];
+                      dadosParaSalvar[`bat_${banco}_v4`] = bModel.voltagens[3];
+                    }
+                    await salvarNoFirebase(dadosParaSalvar);
+                    alert(`Banco ${getLetra(banco)} salvo com sucesso!`);
+                  }} className="no-print" style={{ width: '100%', padding: '9px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}>
+                    Salvar Banco {getLetra(banco)}
+                  </button>
                 </div>
               );
             })}
           </div>
 
-          <div style={{ marginTop: '20px', width: '100%', boxSizing: 'border-box' }}>
-            <h3 style={{ fontSize: '18px', marginBottom: '12px' }}>Centrais de Ar</h3>
-            <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+          <div style={{ marginTop: '15px', width: '100%', boxSizing: 'border-box' }}>
+            <h3 style={{ fontSize: '18px', marginBottom: '12px' }}>Centrais de Ar Condicionado</h3>
+            <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
               {[1, 2, 3, 4].map((num) => (
-                <button key={num} type="button" onClick={() => { setQtdAr(num); salvarNoFirebase({ qtdAr: num }); }} style={{ padding: '8px 14px', background: qtdAr === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>{num}</button>
+                <button key={num} type="button" onClick={() => { setQtdAr(num); salvarNoFirebase({ qtdAr: num }); }} style={{ padding: '8px 14px', background: qtdAr === num ? '#007bff' : theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+                  {num} {num === 1 ? 'Central' : 'Centrais'}
+                </button>
               ))}
             </div>
+
             {Array.from({ length: qtdAr }, (_, i) => i + 1).map((idx) => {
               const ar = centraisAr[idx] || { modelo: '', btu: '', dataInstalacao: '', dataUltimaLimpeza: '', salvo: false };
               const proxLimp = calcularProximaLimpezaAr(ar.dataUltimaLimpeza, intervaloAr);
@@ -3471,64 +3723,74 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
               const vencidoLimp = resLimp && resLimp.status === 'vencido';
 
               return (
-                <div key={idx} style={{ background: theme.cardInner, padding: '12px 14px', borderRadius: '6px', marginBottom: '12px', boxSizing: 'border-box', border: `1px solid ${theme.border}`, width: '100%' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', width: '100%', boxSizing: 'border-box' }}>
-                    <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>Central {getLetra(idx)}</h4>
-                    <button type="button" onClick={() => {
-                      const novoSalvo = !ar.salvo;
-                      setCentraisAr({ ...centraisAr, [idx]: { ...ar, salvo: novoSalvo } });
-                      salvarNoFirebase({ 
-                        qtdAr,
-                        [`ar_${idx}_mod`]: ar.modelo, 
-                        [`ar_${idx}_btu`]: ar.btu, 
-                        [`ar_${idx}_inst`]: ar.dataInstalacao, 
-                        [`ar_${idx}_limp`]: ar.dataUltimaLimpeza, 
-                        [`ar_${idx}_salvo`]: novoSalvo 
-                      });
-                    }} className="no-print" style={{ background: ar.salvo ? '#6c757d' : '#28a745', border: 'none', color: '#fff', padding: '5px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
-                      {ar.salvo ? 'Editar' : 'Salvar'}
-                    </button>
+                <div key={idx} style={{ background: theme.cardInner, padding: '14px', borderRadius: '6px', marginBottom: '15px', border: `1px solid ${theme.border}`, width: '100%', boxSizing: 'border-box' }}>
+                  <h4 style={{ margin: '0 0 10px 0', color: '#4dabf7', fontSize: '15px' }}>Central {getLetra(idx)}</h4>
+                  
+                  <div style={{ marginBottom: '8px' }}>
+                    <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Modelo (Ex: Elgin, Gree)</label>
+                    <input type="text" placeholder="Modelo" value={ar.modelo} onChange={(e) => {
+                      const val = e.target.value;
+                      setCentraisAr(prev => ({ ...prev, [idx]: { ...prev[idx], modelo: val } }));
+                    }} style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
                   </div>
-                  <div style={{ display: 'flex', gap: '10px', marginBottom: '10px', marginTop: '10px', boxSizing: 'border-box', flexWrap: 'wrap', width: '100%' }}>
-                    <div style={{ flex: 1, minWidth: '120px' }}>
-                      <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Modelo</label>
-                      <input type="text" disabled={ar.salvo} placeholder="Modelo" value={ar.modelo} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, modelo: e.target.value } })} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: '120px' }}>
-                      <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>BTU</label>
-                      <input type="text" disabled={ar.salvo} placeholder="BTU" value={ar.btu} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, btu: e.target.value } })} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-                    </div>
+
+                  <div style={{ marginBottom: '8px' }}>
+                    <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>BTUs (Ex: 12000, 18000)</label>
+                    <input type="text" placeholder="BTUs" value={ar.btu} onChange={(e) => {
+                      const val = e.target.value;
+                      setCentraisAr(prev => ({ ...prev, [idx]: { ...prev[idx], btu: val } }));
+                    }} style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
                   </div>
-                  <div style={{ marginBottom: '10px', width: '100%', boxSizing: 'border-box' }}>
-                    <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data de Instalação (dd/MM/aaaa)</label>
-                    <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataInstalacao} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataInstalacao: e.target.value } })} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+
+                  <div style={{ marginBottom: '8px' }}>
+                    <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data da Última Limpeza (dd/mm/aaaa)</label>
+                    <input type="text" placeholder="dd/mm/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => {
+                      const val = e.target.value;
+                      setCentraisAr(prev => ({ ...prev, [idx]: { ...prev[idx], dataUltimaLimpeza: val } }));
+                    }} style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '15px' }} />
+                    {proxLimp && (
+                      <p className={vencidoLimp ? 'alerta-vencido' : ''} style={{ fontSize: '13px', margin: '4px 0 0 0', color: vencidoLimp ? undefined : '#28a745', fontWeight: 'bold' }}>
+                        Próxima Limpeza ({intervaloAr} meses): {proxLimp} {vencidoLimp ? `(Expirado há ${resLimp.dias} dias)` : ''}
+                      </p>
+                    )}
                   </div>
-                  <div style={{ marginBottom: '6px', width: '100%', boxSizing: 'border-box' }}>
-                    <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data da Última Limpeza (dd/MM/aaaa)</label>
-                    <input type="text" disabled={ar.salvo} placeholder="dd/MM/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => setCentraisAr({ ...centraisAr, [idx]: { ...ar, dataUltimaLimpeza: e.target.value } })} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-                  </div>
-                  <p className={vencidoLimp ? 'alerta-vencido' : ''} style={{ fontSize: '13px', color: vencidoLimp ? undefined : '#4dabf7', margin: '8px 0 8px 0', fontWeight: 'bold' }}>
-                    Próxima Limpeza ({intervaloAr} meses): {proxLimp || 'Preencha a última limpeza'} {vencidoLimp && `(Exp. há ${resLimp.dias}d)`}
-                  </p>
+
+                  <button type="button" onClick={async () => {
+                    await salvarNoFirebase({
+                      [`ar_${idx}_mod`]: ar.modelo,
+                      [`ar_${idx}_btu`]: ar.btu,
+                      [`ar_${idx}_inst`]: ar.dataInstalacao,
+                      [`ar_${idx}_limp`]: ar.dataUltimaLimpeza,
+                      [`ar_${idx}_salvo`]: true
+                    });
+                    alert(`Central ${getLetra(idx)} salva com sucesso!`);
+                  }} className="no-print" style={{ width: '100%', padding: '9px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', marginTop: '4px' }}>
+                    Salvar Central {getLetra(idx)}
+                  </button>
                 </div>
               );
             })}
           </div>
+          
+          <div style={{ marginTop: '15px', width: '100%', boxSizing: 'border-box' }}>
+            <h3 style={{ fontSize: '18px', marginBottom: '10px' }}>Observações e Incidentes Gerais</h3>
+            
+            <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Incidentes / Ocorrências Gerais</label>
+            <textarea rows="3" placeholder="Descreva incidentes gerais do POP..." value={incidentesGerais} onChange={(e) => setIncidentesGerais(e.target.value)} style={{ width: '100%', padding: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '15px', marginBottom: '12px', borderRadius: '4px' }} />
 
-          <div style={{ marginTop: '20px', width: '100%', boxSizing: 'border-box' }}>
-            <input type="text" placeholder="Relatar Incidentes Gerais" value={incidentesGerais} onChange={(e) => setIncidentesGerais(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '14px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
-              
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px', fontSize: '15px', fontWeight: 'bold' }}>
-              <input type="checkbox" checked={precisaLimpeza} onChange={(e) => setPrecisaLimpeza(e.target.checked)} id="limpCheck" />
-              <label htmlFor="limpCheck" style={{ cursor: 'pointer' }}>Limpeza Necessária</label>
-            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', cursor: 'pointer', fontSize: '15px', fontWeight: 'bold' }}>
+              <input type="checkbox" checked={precisaLimpeza} onChange={(e) => setPrecisaLimpeza(e.target.checked)} />
+              Precisa de Limpeza no POP?
+            </label>
 
-            <textarea placeholder="Anotações Extras" rows="3" value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+            <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Anotações Extras</label>
+            <textarea rows="3" placeholder="Outras anotações importantes..." value={anotacoes} onChange={(e) => setAnotacoes(e.target.value)} style={{ width: '100%', padding: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '15px', marginBottom: '20px', borderRadius: '4px' }} />
 
-            <button type="button" onClick={finalizarInspecao} className="no-print" style={{ width: '100%', padding: '16px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '17px', borderRadius: '4px', cursor: 'pointer', boxSizing: 'border-box' }}>
-              Finalizar, Salvar e Gerar Relatório
+            <button type="button" onClick={finalizarInspecao} style={{ width: '100%', padding: '14px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer', fontSize: '16px', boxSizing: 'border-box' }}>
+              Finalizar Inspeção e Gerar Check-in 🚀
             </button>
           </div>
+
         </div>
       </div>
     </div>
