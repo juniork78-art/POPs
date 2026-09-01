@@ -15,6 +15,31 @@ import {
   setDoc, 
   onSnapshot 
 } from 'firebase/firestore';
+// Favicon da aplicação — ícone de rack de servidores ao lado de "NIIP POPs" na aba do navegador.
+(() => {
+  const faviconSvg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+      <rect width="64" height="64" rx="14" fill="#0d6efd"/>
+      <!-- Corpo principal do Rack -->
+      <rect x="16" y="12" width="32" height="40" rx="4" fill="#212529" stroke="#fff" stroke-width="3"/>
+      <!-- Unidades / Servidores Empilhados -->
+      <line x1="16" y1="25" x2="48" y2="25" stroke="#fff" stroke-width="2"/>
+      <line x1="16" y1="38" x2="48" y2="38" stroke="#fff" stroke-width="2"/>
+      <!-- LEDs / Indicadores de status -->
+      <circle cx="22" cy="18" r="2" fill="#28a745"/>
+      <circle cx="28" cy="18" r="2" fill="#28a745"/>
+      <circle cx="22" cy="31" r="2" fill="#ffc107"/>
+      <circle cx="28" cy="31" r="2" fill="#28a745"/>
+      <circle cx="22" cy="45" r="2" fill="#28a745"/>
+      <circle cx="28" cy="45" r="2" fill="#28a745"/>
+    </svg>`;
+  
+  const favicon = document.createElement('link');
+  favicon.rel = 'icon';
+  favicon.type = 'image/svg+xml';
+  favicon.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(faviconSvg);
+  document.head.appendChild(favicon);
+})();
 
 const style = document.createElement('style');
 style.innerHTML = `
