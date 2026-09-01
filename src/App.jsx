@@ -1477,6 +1477,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
   const [anotacoes, setAnotacoes] = useState('');
 
   const [listaContatos, setListaContatos] = useState([{ nome: '', funcao: '', telefone: '', ultimaInsp: '' }]);
+  const [contatosChaveSalvo, setContatosChaveSalvo] = useState(false);
 
   const [chaveUltimaInsp, setChaveUltimaInsp] = useState('');
 
@@ -1573,6 +1574,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         }
 
         if (data.chave_ultima_insp !== undefined) setChaveUltimaInsp(data.chave_ultima_insp);
+        if (data.contatos_chave_salvo === true) setContatosChaveSalvo(true);
 
         if (data.statusAtivos) {
           const filtrados = { ...data.statusAtivos };
@@ -2234,24 +2236,34 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <h3 style={{ fontSize: '18px', margin: 0, color: '#4dabf7' }}>📞 Contatos e 🔑 Chaves do POP</h3>
               <div style={{ display: 'flex', gap: '6px' }}>
-                <button type="button" onClick={() => setListaContatos([...listaContatos, { nome: '', funcao: '', telefone: '', ultimaInsp: '' }])} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
+                <button type="button" disabled={contatosChaveSalvo === true} onClick={() => setListaContatos([...listaContatos, { nome: '', funcao: '', telefone: '', ultimaInsp: '' }])} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
                   + Adicionar Contato
                 </button>
-                <button type="button" onClick={() => {
-                  salvarNoFirebase({
-                    listaContatos,
-                    chave_ultima_insp: chaveUltimaInsp
-                  });
-                  alert("Contatos e Chave salvos com sucesso!");
-                }} style={{ background: '#6c757d', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
-                  EDITAR
-                </button>
+                {contatosChaveSalvo === true ? (
+                  <button type="button" onClick={() => {
+                    setContatosChaveSalvo(false);
+                  }} style={{ background: '#6c757d', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+                    EDITAR
+                  </button>
+                ) : (
+                  <button type="button" onClick={async () => {
+                    await salvarNoFirebase({
+                      listaContatos,
+                      chave_ultima_insp: chaveUltimaInsp,
+                      contatos_chave_salvo: true
+                    });
+                    setContatosChaveSalvo(true);
+                    alert("Contatos e Chave salvos com sucesso!");
+                  }} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+                    SALVAR
+                  </button>
+                )}
               </div>
             </div>
 
             {listaContatos.map((contato, idx) => (
               <div key={idx} style={{ background: theme.cardBg, padding: '12px', borderRadius: '4px', marginBottom: '10px', border: `1px solid ${theme.border}`, position: 'relative' }}>
-                {listaContatos.length > 1 && (
+                {listaContatos.length > 1 && !contatosChaveSalvo && (
                   <button type="button" onClick={() => {
                     const novaLista = listaContatos.filter((_, i) => i !== idx);
                     setListaContatos(novaLista);
@@ -2260,7 +2272,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 <p style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold', color: '#4dabf7' }}>Contato {idx + 1}</p>
                 <div style={{ marginBottom: '8px' }}>
                   <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Nome do Responsável</label>
-                  <input type="text" placeholder="Nome do responsável" value={contato.nome} onChange={(e) => {
+                  <input type="text" placeholder="Nome do responsável" disabled={contatosChaveSalvo === true} value={contato.nome} onChange={(e) => {
                     const novaLista = [...listaContatos];
                     novaLista[idx].nome = e.target.value;
                     setListaContatos(novaLista);
@@ -2268,7 +2280,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 </div>
                 <div style={{ marginBottom: '8px' }}>
                   <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Função (Ex: Síndica, Gerente, Resp. POP)</label>
-                  <input type="text" placeholder="Ex: Síndica" value={contato.funcao} onChange={(e) => {
+                  <input type="text" placeholder="Ex: Síndica" disabled={contatosChaveSalvo === true} value={contato.funcao} onChange={(e) => {
                     const novaLista = [...listaContatos];
                     novaLista[idx].funcao = e.target.value;
                     setListaContatos(novaLista);
@@ -2276,7 +2288,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 </div>
                 <div style={{ marginBottom: '8px' }}>
                   <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Telefone</label>
-                  <input type="text" placeholder="(00) 00000-0000" value={contato.telefone} onChange={(e) => {
+                  <input type="text" placeholder="(00) 00000-0000" disabled={contatosChaveSalvo === true} value={contato.telefone} onChange={(e) => {
                     const novaLista = [...listaContatos];
                     novaLista[idx].telefone = e.target.value;
                     setListaContatos(novaLista);
@@ -2284,7 +2296,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data da Inspeção do Contato (dd/MM/aaaa)</label>
-                  <input type="text" placeholder="dd/MM/aaaa" value={contato.ultimaInsp} onChange={(e) => {
+                  <input type="text" placeholder="dd/MM/aaaa" disabled={contatosChaveSalvo === true} value={contato.ultimaInsp} onChange={(e) => {
                     const novaLista = [...listaContatos];
                     novaLista[idx].ultimaInsp = e.target.value;
                     setListaContatos(novaLista);
@@ -2300,7 +2312,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
             <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '10px', marginTop: '12px' }}>
               <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data da Inspeção da Chave (dd/MM/aaaa)</label>
-              <input type="text" placeholder="dd/MM/aaaa" value={chaveUltimaInsp} onChange={(e) => setChaveUltimaInsp(e.target.value)} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+              <input type="text" placeholder="dd/MM/aaaa" disabled={contatosChaveSalvo === true} value={chaveUltimaInsp} onChange={(e) => setChaveUltimaInsp(e.target.value)} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
               {chaveUltimaInsp ? (
                 <p style={{ fontSize: '13px', color: '#4dabf7', margin: '4px 0 0 0', fontWeight: 'bold' }}>
                   Próxima Insp. Chave (3 meses): {calcularProximaInspecaoGeral(chaveUltimaInsp)}
@@ -2459,24 +2471,33 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                     </div>
                   )}
 
-                  <button type="button" onClick={async () => {
-                    const dadosParaSalvar = {
-                      [`bat_${banco}_tipo`]: bModel.tipo,
-                      [`bat_${banco}_fab`]: bModel.dataFabricacao,
-                      [`bat_${banco}_insp`]: bModel.dataUltimaInspecao,
-                      [`bat_${banco}_salvo`]: true
-                    };
-                    if (bModel.tipo !== 'Lítio') {
-                      dadosParaSalvar[`bat_${banco}_v1`] = bModel.voltagens[0];
-                      dadosParaSalvar[`bat_${banco}_v2`] = bModel.voltagens[1];
-                      dadosParaSalvar[`bat_${banco}_v3`] = bModel.voltagens[2];
-                      dadosParaSalvar[`bat_${banco}_v4`] = bModel.voltagens[3];
-                    }
-                    await salvarNoFirebase(dadosParaSalvar);
-                    alert(`Banco ${getLetra(banco)} salvo com sucesso!`);
-                  }} className="no-print" style={{ width: '100%', padding: '9px', background: '#6c757d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}>
-                    EDITAR
-                  </button>
+                  {bModel.salvo === true ? (
+                    <button type="button" onClick={() => {
+                      setBancosBateria(prev => ({ ...prev, [banco]: { ...prev[banco], salvo: false } }));
+                    }} className="no-print" style={{ width: '100%', padding: '9px', background: '#6c757d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}>
+                      EDITAR
+                    </button>
+                  ) : (
+                    <button type="button" onClick={async () => {
+                      const dadosParaSalvar = {
+                        [`bat_${banco}_tipo`]: bModel.tipo,
+                        [`bat_${banco}_fab`]: bModel.dataFabricacao,
+                        [`bat_${banco}_insp`]: bModel.dataUltimaInspecao,
+                        [`bat_${banco}_salvo`]: true
+                      };
+                      if (bModel.tipo !== 'Lítio') {
+                        dadosParaSalvar[`bat_${banco}_v1`] = bModel.voltagens[0];
+                        dadosParaSalvar[`bat_${banco}_v2`] = bModel.voltagens[1];
+                        dadosParaSalvar[`bat_${banco}_v3`] = bModel.voltagens[2];
+                        dadosParaSalvar[`bat_${banco}_v4`] = bModel.voltagens[3];
+                      }
+                      await salvarNoFirebase(dadosParaSalvar);
+                      setBancosBateria(prev => ({ ...prev, [banco]: { ...prev[banco], salvo: true } }));
+                      alert(`Banco ${getLetra(banco)} salvo com sucesso!`);
+                    }} className="no-print" style={{ width: '100%', padding: '9px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}>
+                      SALVAR
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -2531,18 +2552,27 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                     )}
                   </div>
 
-                  <button type="button" onClick={async () => {
-                    await salvarNoFirebase({
-                      [`ar_${idx}_mod`]: ar.modelo,
-                      [`ar_${idx}_btu`]: ar.btu,
-                      [`ar_${idx}_inst`]: ar.dataInstalacao,
-                      [`ar_${idx}_limp`]: ar.dataUltimaLimpeza,
-                      [`ar_${idx}_salvo`]: true
-                    });
-                    alert(`Central ${getLetra(idx)} salva com sucesso!`);
-                  }} className="no-print" style={{ width: '100%', padding: '9px', background: '#6c757d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', marginTop: '4px' }}>
-                    EDITAR
-                  </button>
+                  {ar.salvo === true ? (
+                    <button type="button" onClick={() => {
+                      setCentraisAr(prev => ({ ...prev, [idx]: { ...prev[idx], salvo: false } }));
+                    }} className="no-print" style={{ width: '100%', padding: '9px', background: '#6c757d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', marginTop: '4px' }}>
+                      EDITAR
+                    </button>
+                  ) : (
+                    <button type="button" onClick={async () => {
+                      await salvarNoFirebase({
+                        [`ar_${idx}_mod`]: ar.modelo,
+                        [`ar_${idx}_btu`]: ar.btu,
+                        [`ar_${idx}_inst`]: ar.dataInstalacao,
+                        [`ar_${idx}_limp`]: ar.dataUltimaLimpeza,
+                        [`ar_${idx}_salvo`]: true
+                      });
+                      setCentraisAr(prev => ({ ...prev, [idx]: { ...prev[idx], salvo: true } }));
+                      alert(`Central ${getLetra(idx)} salva com sucesso!`);
+                    }} className="no-print" style={{ width: '100%', padding: '9px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', marginTop: '4px' }}>
+                      SALVAR
+                    </button>
+                  )}
                 </div>
               );
             })}
