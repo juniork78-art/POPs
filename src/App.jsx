@@ -2405,7 +2405,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 <div key={banco} style={{ background: theme.cardInner, padding: '14px', borderRadius: '6px', marginBottom: '15px', border: `1px solid ${theme.border}`, width: '100%', boxSizing: 'border-box' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <h4 style={{ margin: 0, color: '#4dabf7', fontSize: '15px' }}>Banco {getLetra(banco)}</h4>
-                    <select value={bModel.tipo} onChange={(e) => {
+                    <select disabled={bModel.salvo === true} value={bModel.tipo} onChange={(e) => {
                       const novoTipo = e.target.value;
                       setBancosBateria(prev => ({
                         ...prev,
@@ -2419,7 +2419,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
                   <div style={{ marginBottom: '10px' }}>
                     <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data Fabricação (dd/mm/aaaa ou se/aa)</label>
-                    <input type="text" placeholder="ex: 12/23 ou 10/05/2024" value={bModel.dataFabricacao} onChange={(e) => {
+                    <input type="text" disabled={bModel.salvo === true} placeholder="ex: 12/23 ou 10/05/2024" value={bModel.dataFabricacao} onChange={(e) => {
                       const val = e.target.value;
                       setBancosBateria(prev => ({
                         ...prev,
@@ -2436,7 +2436,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
                   <div style={{ marginBottom: '10px' }}>
                     <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data da Última Inspeção (dd/mm/aaaa)</label>
-                    <input type="text" placeholder="ex: 15/02/2026" value={bModel.dataUltimaInspecao} onChange={(e) => {
+                    <input type="text" disabled={bModel.salvo === true} placeholder="ex: 15/02/2026" value={bModel.dataUltimaInspecao} onChange={(e) => {
                       const val = e.target.value;
                       setBancosBateria(prev => ({
                         ...prev,
@@ -2455,7 +2455,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                       <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '4px' }}>Voltagens das Baterias</label>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                         {[0, 1, 2, 3].map((vIdx) => (
-                          <input key={vIdx} type="text" placeholder={`Bat ${vIdx + 1} (V)`} value={bModel.voltagens[vIdx]} onChange={(e) => {
+                          <input key={vIdx} type="text" disabled={bModel.salvo === true} placeholder={`Bat ${vIdx + 1} (V)`} value={bModel.voltagens[vIdx]} onChange={(e) => {
                             const val = e.target.value;
                             setBancosBateria(prev => {
                               const novasVolts = [...prev[banco].voltagens];
@@ -2525,7 +2525,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                   
                   <div style={{ marginBottom: '8px' }}>
                     <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Modelo (Ex: Elgin, Gree)</label>
-                    <input type="text" placeholder="Modelo" value={ar.modelo} onChange={(e) => {
+                    <input type="text" disabled={ar.salvo === true} placeholder="Modelo" value={ar.modelo} onChange={(e) => {
                       const val = e.target.value;
                       setCentraisAr(prev => ({ ...prev, [idx]: { ...prev[idx], modelo: val } }));
                     }} style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
@@ -2533,7 +2533,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
                   <div style={{ marginBottom: '8px' }}>
                     <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>BTUs (Ex: 12000, 18000)</label>
-                    <input type="text" placeholder="BTUs" value={ar.btu} onChange={(e) => {
+                    <input type="text" disabled={ar.salvo === true} placeholder="BTUs" value={ar.btu} onChange={(e) => {
                       const val = e.target.value;
                       setCentraisAr(prev => ({ ...prev, [idx]: { ...prev[idx], btu: val } }));
                     }} style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
@@ -2541,7 +2541,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
                   <div style={{ marginBottom: '8px' }}>
                     <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data da Última Limpeza (dd/mm/aaaa)</label>
-                    <input type="text" placeholder="dd/mm/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => {
+                    <input type="text" disabled={ar.salvo === true} placeholder="dd/mm/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => {
                       const val = e.target.value;
                       setCentraisAr(prev => ({ ...prev, [idx]: { ...prev[idx], dataUltimaLimpeza: val } }));
                     }} style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '15px' }} />
