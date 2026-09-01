@@ -54,6 +54,21 @@ style.innerHTML = `
   }
 `;
 document.head.appendChild(style);
+// Favicon da aplicação — aparece ao lado de "NIIP POPs" na aba do navegador.
+(() => {
+  const faviconSvg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+      <rect width="64" height="64" rx="14" fill="#0d6efd"/>
+      <path d="M32 13v38M20 25l12-12 12 12M20 39l12 12 12-12" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="32" cy="32" r="5" fill="#fff"/>
+    </svg>`;
+  const favicon = document.createElement('link');
+  favicon.rel = 'icon';
+  favicon.type = 'image/svg+xml';
+  favicon.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(faviconSvg);
+  document.head.appendChild(favicon);
+})();
+
 
 const getLetra = (index) => String.fromCharCode(64 + index);
 
@@ -250,6 +265,10 @@ function App() {
     return sessionStorage.getItem('estado_telaGerenciarPops') === 'true';
   });
 
+  const [telaRacksAberta, setTelaRacksAberta] = useState(() => {
+    return sessionStorage.getItem('estado_telaRacks') === 'true';
+  });
+
   useEffect(() => {
     if (popSelecionado) sessionStorage.setItem('estado_popSelecionado', JSON.stringify(popSelecionado));
     else sessionStorage.removeItem('estado_popSelecionado');
@@ -259,6 +278,11 @@ function App() {
     if (telaGerenciarPopsAberta) sessionStorage.setItem('estado_telaGerenciarPops', 'true');
     else sessionStorage.removeItem('estado_telaGerenciarPops');
   }, [telaGerenciarPopsAberta]);
+
+  useEffect(() => {
+    if (telaRacksAberta) sessionStorage.setItem('estado_telaRacks', 'true');
+    else sessionStorage.removeItem('estado_telaRacks');
+  }, [telaRacksAberta]);
 
   const alternarTema = () => {
     setDarkMode(prev => {
@@ -668,14 +692,15 @@ function App() {
     const handlePopState = () => {
       if (popSelecionado) setPopSelecionado(null);
       else if (telaGerenciarPopsAberta) setTelaGerenciarPopsAberta(false);
+      else if (telaRacksAberta) setTelaRacksAberta(false);
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [popSelecionado, telaGerenciarPopsAberta]);
+  }, [popSelecionado, telaGerenciarPopsAberta, telaRacksAberta]);
 
   useEffect(() => {
-    if (popSelecionado || telaGerenciarPopsAberta) window.history.pushState(null, '', window.location.pathname);
-  }, [popSelecionado, telaGerenciarPopsAberta]);
+    if (popSelecionado || telaGerenciarPopsAberta || telaRacksAberta) window.history.pushState(null, '', window.location.pathname);
+  }, [popSelecionado, telaGerenciarPopsAberta, telaRacksAberta]);
 
   useEffect(() => {
     if (usuarioLogado) {
@@ -830,6 +855,7 @@ function App() {
   if (loadingAuth) return <div style={{ color: theme.textMain, backgroundColor: theme.bg, textAlign: 'center', marginTop: '20vh', fontFamily: 'sans-serif', minHeight: '100vh', fontSize: '15px' }}>Carregando InfraManager...</div>;
   if (!usuarioLogado) return <TelaLogin onLoginSucesso={(email) => setUsuarioLogado(email)} darkMode={darkMode} setDarkMode={alternarTema} theme={theme} />;
   if (telaGerenciarPopsAberta) return <TelaGerenciarPops listaPops={listaPops} onBack={() => { setTelaGerenciarPopsAberta(false); window.history.back(); }} theme={theme} />;
+  if (telaRacksAberta) return <TelaRacks listaPops={listaPops} onBack={() => { setTelaRacksAberta(false); window.history.back(); }} theme={theme} darkMode={darkMode} setDarkMode={alternarTema} />;
   if (popSelecionado) {
     return (
       <TelaInspecao 
@@ -886,6 +912,7 @@ function App() {
         onPopClick={(pop) => setPopSelecionado(pop)} 
         onOpenDrawer={() => setDrawerAberto(true)}
         onOpenGerenciarPops={() => setTelaGerenciarPopsAberta(true)}
+        onOpenRacks={() => setTelaRacksAberta(true)}
         onOpenAvisos={() => setShowAvisoGlobal(true)}
         onGerarRelatorioGeral={abrirModalFiltroRelatorio}
         totalAlertas={totalAlertas}
@@ -893,6 +920,7 @@ function App() {
           sessionStorage.removeItem('avisoMostrado'); 
           sessionStorage.removeItem('estado_popSelecionado');
           sessionStorage.removeItem('estado_telaGerenciarPops');
+          sessionStorage.removeItem('estado_telaRacks');
           signOut(auth); 
           setUsuarioLogado(null); 
         }} 
@@ -1283,7 +1311,7 @@ function TelaLogin({ onLoginSucesso, darkMode, setDarkMode, theme }) {
   );
 }
 
-function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias, cronogramaContatos, cronogramaChaves, onPopClick, onOpenDrawer, onOpenGerenciarPops, onOpenAvisos, onGerarRelatorioGeral, totalAlertas, onLogout, darkMode, setDarkMode, theme }) {
+function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias, cronogramaContatos, cronogramaChaves, onPopClick, onOpenDrawer, onOpenGerenciarPops, onOpenRacks, onOpenAvisos, onGerarRelatorioGeral, totalAlertas, onLogout, darkMode, setDarkMode, theme }) {
   const [busca, setBusca] = useState('');
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
@@ -1360,6 +1388,7 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
           <h1 style={{ margin: 0, fontSize: '16px', color: theme.textMain }}>| Olá, {tecnico.split('@')[0].toUpperCase()}</h1>
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <button onClick={onOpenRacks} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>🗄️ RACKS</button>
           <button onClick={onGerarRelatorioGeral} style={{ background: '#d9534f', border: 'none', color: '#fff', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>📊 Relatório de Vencidos</button>
           <button onClick={onOpenAvisos} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '15px' }}>
             🔔
@@ -1411,6 +1440,1610 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
           );
         })}
       </div>
+    </div>
+  );
+}
+// GRUPOS DE SITES: módulo integrado ao menu Organização
+function TelaRacks({ listaPops, onBack, theme, darkMode, setDarkMode }) {
+  const [popSelecionado, setPopSelecionado] = useState(listaPops[0]?.nome || '');
+  const [racks, setRacks] = useState([]);
+  const [dispositivos, setDispositivos] = useState([]);
+  const [fabricantes, setFabricantes] = useState(['Huawei', 'Cisco', 'Mikrotik', 'Dell', 'HP', 'Furukawa']);
+  const [tiposDispositivos, setTiposDispositivos] = useState(['Switch', 'OLT', 'Router', 'Patch Panel', 'Servidor', 'No-Break']);
+
+  const [regioesLista, setRegioesLista] = useState([
+    { id: '1', nome: 'Africa', sites: 0, descricao: '' },
+    { id: '2', nome: 'Asia', sites: 0, descricao: '' }
+  ]);
+  
+  const [telaAdicionarRegiaoAberta, setTelaAdicionarRegiaoAberta] = useState(false);
+  const [regiaoPai, setRegiaoPai] = useState('');
+  const [regiaoNome, setRegiaoNome] = useState('');
+  const [regiaoSlug, setRegiaoSlug] = useState('');
+  const [regiaoDescricao, setRegiaoDescricao] = useState('');
+  const [regiaoTags, setRegiaoTags] = useState('');
+  const [regiaoOwnerGroup, setRegiaoOwnerGroup] = useState('');
+  const [regiaoOwner, setRegiaoOwner] = useState('');
+  const [regiaoComentarios, setRegiaoComentarios] = useState('');
+  const [abaComentario, setAbaComentario] = useState('escrita');
+
+  const [telaImportarRegiaoAberta, setTelaImportarRegiaoAberta] = useState(false);
+  const [abaImportar, setAbaImportar] = useState('direta');
+  const [importDataText, setImportDataText] = useState('');
+  const [importFormat, setImportFormat] = useState('Detecção automática');
+  const [importDelimiter, setImportDelimiter] = useState('Detecção automática');
+  const [importChangelog, setImportChangelog] = useState('');
+  const [importBackgroundJob, setImportBackgroundJob] = useState(false);
+
+  const [buscaRegiao, setBuscaRegiao] = useState('');
+  const [menuExportarAberto, setMenuExportarAberto] = useState(false);
+  const [telaModeloExportacaoAberta, setTelaModeloExportacaoAberta] = useState(false);
+  const [modelosExportacao, setModelosExportacao] = useState([]);
+  const [gruposSites, setGruposSites] = useState([
+    { id: '1', nome: 'Customer Sites', sites: 20, descricao: '', paiId: null },
+    { id: '2', nome: 'Branch Offices', sites: 19, descricao: '', paiId: '1' },
+    { id: '3', nome: 'Headquarters', sites: 1, descricao: '', paiId: '1' }
+  ]);
+  const [buscaGrupoSite, setBuscaGrupoSite] = useState('');
+  const [modalGrupoSiteAberto, setModalGrupoSiteAberto] = useState(false);
+  const [grupoSiteNome, setGrupoSiteNome] = useState('');
+  const [grupoSiteDescricao, setGrupoSiteDescricao] = useState('');
+  const [grupoSitePaiId, setGrupoSitePaiId] = useState('');
+  const [menuExportarGrupoSiteAberto, setMenuExportarGrupoSiteAberto] = useState(false);
+  const [importarGrupoSiteAberto, setImportarGrupoSiteAberto] = useState(false);
+  const [importarGrupoSiteTexto, setImportarGrupoSiteTexto] = useState('');
+  const [modeloExportacaoNome, setModeloExportacaoNome] = useState('');
+  const [modeloExportacaoTipos, setModeloExportacaoTipos] = useState(['DCIM > Região']);
+  const [modeloExportacaoDescricao, setModeloExportacaoDescricao] = useState('');
+  const [modeloExportacaoCodigo, setModeloExportacaoCodigo] = useState('');
+  const [modeloExportacaoOrigem, setModeloExportacaoOrigem] = useState('');
+  const [modeloExportacaoArquivo, setModeloExportacaoArquivo] = useState('');
+  const [modeloExportacaoMime, setModeloExportacaoMime] = useState('');
+  const [modeloExportacaoNomeArquivo, setModeloExportacaoNomeArquivo] = useState('');
+  const [modeloExportacaoExtensao, setModeloExportacaoExtensao] = useState('');
+  const [modeloExportacaoParametros, setModeloExportacaoParametros] = useState('{}');
+  const [modeloExportacaoAnexo, setModeloExportacaoAnexo] = useState(true);
+  const [modeloExportacaoOwnerGroup, setModeloExportacaoOwnerGroup] = useState('');
+  const [modeloExportacaoOwner, setModeloExportacaoOwner] = useState('');
+  const [modeloExportacaoChangelog, setModeloExportacaoChangelog] = useState('');
+
+  const [menuAtivo, setMenuAtivo] = useState('org_regioes'); 
+  const [seccoesAbertas, setSeccoesAbertas] = useState({
+    organization: true,
+    racks: true,
+    devices: true,
+    connections: false,
+    wireless: false,
+    ipam: false,
+    vpn: false,
+    virtualization: false,
+    circuits: false,
+    power: false,
+    provisioning: false,
+    customization: false,
+    operations: false,
+    admin: false
+  });
+
+  const [modalRackAberto, setModalRackAberto] = useState(false);
+  const [nomeRack, setNomeRack] = useState('');
+  const [alturaRack, setAlturaRack] = useState(42);
+
+  const [modalDispositivoAberto, setModalDispositivoAberto] = useState(false);
+  const [nomeDisp, setNomeDisp] = useState('');
+  const [fabricanteDisp, setFabricanteDisp] = useState('Huawei');
+  const [tipoDisp, setTipoDisp] = useState('Switch');
+  const [rackIdDisp, setRackIdDisp] = useState('');
+  const [posU, setPosU] = useState(1);
+  const [alturaU, setAlturaU] = useState(1);
+  const [faceDisp, setFaceDisp] = useState('frontal');
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, "netbox_infra", "dados_racks"), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.racks) setRacks(data.racks);
+        if (data.dispositivos) setDispositivos(data.dispositivos);
+        if (data.fabricantes) setFabricantes(data.fabricantes);
+        if (data.tiposDispositivos) setTiposDispositivos(data.tiposDispositivos);
+        if (data.regioesLista) setRegioesLista(data.regioesLista);
+        if (data.modelosExportacao) setModelosExportacao(data.modelosExportacao);
+        if (data.gruposSites) setGruposSites(data.gruposSites);
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  const salvarDadosFirebase = async (novosRacks, novosDispositivos, novosFabricantes, novosTipos, novasRegioes) => {
+    try {
+      await setDoc(doc(db, "netbox_infra", "dados_racks"), {
+        racks: novosRacks || racks,
+        dispositivos: novosDispositivos || dispositivos,
+        fabricantes: novosFabricantes || fabricantes,
+        tiposDispositivos: novosTipos || tiposDispositivos,
+        regioesLista: novasRegioes || regioesLista,
+        gruposSites: gruposSites
+      }, { merge: true });
+    } catch (e) {
+      console.error("Erro ao salvar dados netbox:", e);
+    }
+  };
+
+  const gerarSlugAutomatico = (texto) => {
+    return texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  };
+
+  const limparFormularioModeloExportacao = () => {
+    setModeloExportacaoNome('');
+    setModeloExportacaoTipos(['DCIM > Região']);
+    setModeloExportacaoDescricao('');
+    setModeloExportacaoCodigo('');
+    setModeloExportacaoOrigem('');
+    setModeloExportacaoArquivo('');
+    setModeloExportacaoMime('');
+    setModeloExportacaoNomeArquivo('');
+    setModeloExportacaoExtensao('');
+    setModeloExportacaoParametros('{}');
+    setModeloExportacaoAnexo(true);
+    setModeloExportacaoOwnerGroup('');
+    setModeloExportacaoOwner('');
+    setModeloExportacaoChangelog('');
+  };
+
+  const salvarModeloExportacao = async (e, continuarAdicionando = false) => {
+    if (e) e.preventDefault();
+    if (!modeloExportacaoNome.trim()) {
+      alert('Informe o nome do modelo de exportação.');
+      return;
+    }
+
+    try {
+      JSON.parse(modeloExportacaoParametros || '{}');
+    } catch (erro) {
+      alert('Os parâmetros do ambiente precisam estar em JSON válido.');
+      return;
+    }
+
+    const novoModelo = {
+      id: Date.now().toString(),
+      nome: modeloExportacaoNome.trim(),
+      tiposObjetos: modeloExportacaoTipos,
+      descricao: modeloExportacaoDescricao.trim(),
+      modeloCodigo: modeloExportacaoCodigo,
+      origemDados: modeloExportacaoOrigem,
+      arquivo: modeloExportacaoArquivo,
+      tipoMime: modeloExportacaoMime.trim(),
+      nomeArquivo: modeloExportacaoNomeArquivo.trim(),
+      extensaoArquivo: modeloExportacaoExtensao.trim(),
+      parametrosAmbiente: modeloExportacaoParametros || '{}',
+      comoAnexo: modeloExportacaoAnexo,
+      ownerGroup: modeloExportacaoOwnerGroup,
+      owner: modeloExportacaoOwner,
+      changelog: modeloExportacaoChangelog.trim(),
+      criadoEm: new Date().toISOString()
+    };
+
+    const novosModelos = [...modelosExportacao, novoModelo];
+    try {
+      await setDoc(doc(db, 'netbox_infra', 'dados_racks'), { modelosExportacao: novosModelos }, { merge: true });
+      setModelosExportacao(novosModelos);
+      alert('Modelo de exportação criado com sucesso!');
+      limparFormularioModeloExportacao();
+      if (!continuarAdicionando) {
+        setTelaModeloExportacaoAberta(false);
+      }
+    } catch (erro) {
+      console.error('Erro ao salvar modelo de exportação:', erro);
+      alert('Erro ao salvar o modelo de exportação: ' + erro.message);
+    }
+  };
+
+  const exportarRegioesCSV = (apenasVisualizacao = false) => {
+    const dados = apenasVisualizacao
+      ? regioesLista.filter(r => r.nome.toLowerCase().includes(buscaRegiao.toLowerCase()))
+      : regioesLista;
+
+    const escaparCSV = (valor) => {
+      const texto = String(valor ?? '');
+      return `\"${texto.replace(/\"/g, '\"\"')}\"`;
+    };
+
+    const linhas = [
+      ['ID', 'Nome', 'Sites', 'Descrição'],
+      ...dados.map(r => [r.id, r.nome, r.sites, r.descricao || ''])
+    ];
+
+    const csv = linhas.map(linha => linha.map(escaparCSV).join(';')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = apenasVisualizacao ? 'regioes_visualizacao_atual.csv' : 'regioes_todos_os_dados.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    setMenuExportarAberto(false);
+  };
+
+  const salvarGruposSitesFirebase = async (novosGrupos) => {
+    try {
+      await setDoc(doc(db, 'netbox_infra', 'dados_racks'), { gruposSites: novosGrupos }, { merge: true });
+      setGruposSites(novosGrupos);
+    } catch (e) {
+      console.error('Erro ao salvar grupos de sites:', e);
+      alert('Erro ao salvar grupo de sites: ' + e.message);
+    }
+  };
+
+  const criarGrupoSite = async (e) => {
+    if (e) e.preventDefault();
+    if (!grupoSiteNome.trim()) return;
+    const novo = {
+      id: Date.now().toString(),
+      nome: grupoSiteNome.trim(),
+      sites: 0,
+      descricao: grupoSiteDescricao.trim(),
+      paiId: grupoSitePaiId || null
+    };
+    await salvarGruposSitesFirebase([...gruposSites, novo]);
+    setGrupoSiteNome('');
+    setGrupoSiteDescricao('');
+    setGrupoSitePaiId('');
+    setModalGrupoSiteAberto(false);
+  };
+
+  const excluirGrupoSite = async (id) => {
+    const possuiFilhos = gruposSites.some(g => g.paiId === id);
+    if (possuiFilhos) {
+      alert('Não é possível excluir este grupo enquanto ele possuir subgrupos.');
+      return;
+    }
+    if (!window.confirm('Deseja realmente excluir este grupo de sites?')) return;
+    await salvarGruposSitesFirebase(gruposSites.filter(g => g.id !== id));
+  };
+
+  const exportarGruposSitesCSV = (apenasVisualizacao = false) => {
+    const termo = buscaGrupoSite.trim().toLowerCase();
+    const dados = apenasVisualizacao
+      ? gruposSites.filter(g => g.nome.toLowerCase().includes(termo))
+      : gruposSites;
+    const escapar = (valor) => `"${String(valor ?? '').replace(/"/g, '""')}"`;
+    const linhas = [
+      ['Nome', 'Sites', 'Descrição', 'Grupo Pai'],
+      ...dados.map(g => [g.nome, g.sites, g.descricao || '', gruposSites.find(p => p.id === g.paiId)?.nome || ''])
+    ];
+    const csv = linhas.map(l => l.map(escapar).join(';')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = apenasVisualizacao ? 'grupos_de_sites_visualizacao_atual.csv' : 'grupos_de_sites.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    setMenuExportarGrupoSiteAberto(false);
+  };
+
+  const importarGruposSites = async () => {
+    if (!importarGrupoSiteTexto.trim()) return;
+    const linhas = importarGrupoSiteTexto.split('\n').filter(l => l.trim());
+    const novos = [...gruposSites];
+    linhas.forEach((linha, index) => {
+      const partes = linha.split(/[,;\t]/).map(v => v.trim());
+      if (!partes[0]) return;
+      novos.push({
+        id: `${Date.now()}_${index}`,
+        nome: partes[0],
+        sites: parseInt(partes[1], 10) || 0,
+        descricao: partes[2] || '',
+        paiId: null
+      });
+    });
+    await salvarGruposSitesFirebase(novos);
+    setImportarGrupoSiteTexto('');
+    setImportarGrupoSiteAberto(false);
+  };
+
+  const criarRegiaoSubmit = async (e, continuarAdicionando = false) => {
+    if (e) e.preventDefault();
+    if (!regiaoNome.trim()) return;
+    const nova = {
+      id: Date.now().toString(),
+      nome: regiaoNome.trim(),
+      sites: 0,
+      descricao: regiaoDescricao.trim() || regiaoComentarios.trim()
+    };
+    const novasRegioes = [...regioesLista, nova];
+    setRegioesLista(novasRegioes);
+    await salvarDadosFirebase(racks, dispositivos, fabricantes, tiposDispositivos, novasRegioes);
+    
+    setRegiaoNome('');
+    setRegiaoSlug('');
+    setRegiaoDescricao('');
+    setRegiaoComentarios('');
+    setRegiaoPai('');
+    setRegiaoTags('');
+    setRegiaoOwnerGroup('');
+    setRegiaoOwner('');
+
+    if (!continuarAdicionando) {
+      setTelaAdicionarRegiaoAberta(false);
+    }
+  };
+
+  const executarImportacaoMassa = async (e) => {
+    if (e) e.preventDefault();
+    if (!importDataText.trim()) {
+      alert("Por favor, insira os dados para importação.");
+      return;
+    }
+    const linhas = importDataText.split('\n').filter(l => l.trim() !== '');
+    const novasRegioes = [...regioesLista];
+
+    linhas.forEach((linha, idx) => {
+      const partes = linha.split(/,|\t|;/);
+      const nome = partes[0] ? partes[0].trim() : `Regiao_${Date.now()}_${idx}`;
+      const slug = partes[1] ? partes[1].trim() : gerarSlugAutomatico(nome);
+      const descricao = partes[2] ? partes[2].trim() : '';
+
+      if (nome) {
+        novasRegioes.push({
+          id: `${Date.now()}_${idx}`,
+          nome: nome,
+          sites: 0,
+          descricao: descricao
+        });
+      }
+    });
+
+    setRegioesLista(novasRegioes);
+    await salvarDadosFirebase(racks, dispositivos, fabricantes, tiposDispositivos, novasRegioes);
+    alert("Importação realizada com sucesso!");
+    setImportDataText('');
+    setTelaImportarRegiaoAberta(false);
+  };
+
+  const excluirRegiao = async (id) => {
+    if (!window.confirm("Deseja realmente excluir esta região?")) return;
+    const novasRegioes = regioesLista.filter(r => r.id !== id);
+    setRegioesLista(novasRegioes);
+    await salvarDadosFirebase(racks, dispositivos, fabricantes, tiposDispositivos, novasRegioes);
+  };
+
+  const criarRack = async (e) => {
+    e.preventDefault();
+    if (!nomeRack.trim()) return;
+    const novo = {
+      id: Date.now().toString(),
+      pop: popSelecionado,
+      nome: nomeRack.trim().toUpperCase(),
+      altura: parseInt(alturaRack, 10) || 42
+    };
+    const novosRacks = [...racks, novo];
+    setRacks(novosRacks);
+    await salvarDadosFirebase(novosRacks, dispositivos, fabricantes, tiposDispositivos, regioesLista);
+    setNomeRack('');
+    setModalRackAberto(false);
+  };
+
+  const criarDispositivo = async (e) => {
+    e.preventDefault();
+    if (!nomeDisp.trim() || !rackIdDisp) return;
+    const novo = {
+      id: Date.now().toString(),
+      pop: popSelecionado,
+      rackId: rackIdDisp,
+      nome: nomeDisp.trim(),
+      fabricante: fabricanteDisp,
+      tipo: tipoDisp,
+      posicaoU: parseInt(posU, 10) || 1,
+      alturaU: parseInt(alturaU, 10) || 1,
+      face: faceDisp
+    };
+    const novosDispositivos = [...dispositivos, novo];
+    setDispositivos(novosDispositivos);
+    await salvarDadosFirebase(racks, novosDispositivos, fabricantes, tiposDispositivos, regioesLista);
+    setNomeDisp('');
+    setModalDispositivoAberto(false);
+  };
+
+  const excluirRack = async (id) => {
+    if (!window.confirm("Deseja realmente excluir este rack e seus dispositivos?")) return;
+    const novosRacks = racks.filter(r => r.id !== id);
+    const novosDispositivos = dispositivos.filter(d => d.rackId !== id);
+    setRacks(novosRacks);
+    setDispositivos(novosDispositivos);
+    await salvarDadosFirebase(novosRacks, novosDispositivos, fabricantes, tiposDispositivos, regioesLista);
+  };
+
+  const excluirDispositivo = async (id) => {
+    if (!window.confirm("Remover este dispositivo?")) return;
+    const novosDispositivos = dispositivos.filter(d => d.id !== id);
+    setDispositivos(novosDispositivos);
+    await salvarDadosFirebase(racks, novosDispositivos, fabricantes, tiposDispositivos, regioesLista);
+  };
+
+  const toggleSecao = (secao) => {
+    setSeccoesAbertas(prev => ({ ...prev, [secao]: !prev[secao] }));
+  };
+
+  const racksDoPop = racks.filter(r => r.pop.toLowerCase() === popSelecionado.toLowerCase());
+
+  return (
+    <div style={{ display: 'flex', height: '100vh', width: '100%', maxWidth: '100%', backgroundColor: theme.bg, color: theme.textMain, overflow: 'hidden', boxSizing: 'border-box' }}>
+      
+      <div style={{ width: '270px', minWidth: '270px', background: theme.cardBg, borderRight: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', height: '100vh', boxSizing: 'border-box', flexShrink: 0 }}>
+        
+        <div style={{ padding: '15px', borderBottom: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#20c997" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            <span style={{ fontWeight: 'bold', fontSize: '18px', color: theme.textMain, letterSpacing: '0.5px' }}>Infra POPs</span>
+          </div>
+          <span style={{ fontSize: '11px', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '1px' }}>Community</span>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '10px 0' }}>
+          
+          <div>
+            <div onClick={() => toggleSecao('organization')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🏢 Organização</span>
+              <span>{seccoesAbertas.organization ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.organization && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px', paddingBottom: '8px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#20c997', marginTop: '8px', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sites</div>
+                <div onClick={() => { setMenuAtivo('org_regioes'); setTelaImportarRegiaoAberta(false); setTelaAdicionarRegiaoAberta(false); }} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_regioes' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_regioes' ? 'bold' : 'normal' }}>Regiões</div>
+                <div onClick={() => { setMenuAtivo('org_racks_groups'); setTelaModeloExportacaoAberta(false); setMenuExportarAberto(false); setImportarGrupoSiteAberto(false); setModalGrupoSiteAberto(false); }} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_racks_groups' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_racks_groups' ? 'bold' : 'normal' }}>Grupos de Sites</div>
+                <div onClick={() => setMenuAtivo('org_sites')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_sites' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_sites' ? 'bold' : 'normal' }}>Sites</div>
+                <div onClick={() => setMenuAtivo('org_locations')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_locations' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_locations' ? 'bold' : 'normal' }}>Locais</div>
+
+                <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#20c997', marginTop: '10px', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Locação</div>
+                <div onClick={() => setMenuAtivo('org_inquilinos')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_inquilinos' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_inquilinos' ? 'bold' : 'normal' }}>Inquilinos</div>
+                <div onClick={() => setMenuAtivo('org_grupos_inquilinos')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_grupos_inquilinos' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_grupos_inquilinos' ? 'bold' : 'normal' }}>Grupos de Inquilinos</div>
+
+                <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#20c997', marginTop: '10px', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Contatos</div>
+                <div onClick={() => setMenuAtivo('org_contatos')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_contatos' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_contatos' ? 'bold' : 'normal' }}>Contatos</div>
+                <div onClick={() => setMenuAtivo('org_grupos_contatos')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_grupos_contatos' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_grupos_contatos' ? 'bold' : 'normal' }}>Grupos de Contatos</div>
+                <div onClick={() => setMenuAtivo('org_funcoes_contatos')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_funcoes_contatos' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_funcoes_contatos' ? 'bold' : 'normal' }}>Funções dos Contatos</div>
+                <div onClick={() => setMenuAtivo('org_atribuicoes_contatos')} style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'org_atribuicoes_contatos' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'org_atribuicoes_contatos' ? 'bold' : 'normal' }}>Atribuições dos Contatos</div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div onClick={() => toggleSecao('racks')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🗄️ Racks</span>
+              <span>{seccoesAbertas.racks ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.racks && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('racks_racks')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'racks_racks' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'racks_racks' ? 'bold' : 'normal' }}>• Racks</div>
+                <div onClick={() => setMenuAtivo('racks_elevations')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'racks_elevations' ? '#4dabf7' : theme.textMuted }}>• Rack Elevations</div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div onClick={() => toggleSecao('devices')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🖥️ Devices</span>
+              <span>{seccoesAbertas.devices ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.devices && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('devices_devices')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'devices_devices' ? '#4dabf7' : theme.textMuted, fontWeight: menuAtivo === 'devices_devices' ? 'bold' : 'normal' }}>• Devices / Ativos</div>
+                <div onClick={() => setMenuAtivo('devices_types')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'devices_types' ? '#4dabf7' : theme.textMuted }}>• Device Types</div>
+                <div onClick={() => setMenuAtivo('devices_manufacturers')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'devices_manufacturers' ? '#4dabf7' : theme.textMuted }}>• Manufacturers</div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div onClick={() => toggleSecao('connections')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🔌 Connections</span>
+              <span>{seccoesAbertas.connections ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.connections && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('conn_cables')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'conn_cables' ? '#4dabf7' : theme.textMuted }}>• Cables</div>
+                <div onClick={() => setMenuAtivo('conn_interfaces')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'conn_interfaces' ? '#4dabf7' : theme.textMuted }}>• Interfaces</div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div onClick={() => toggleSecao('wireless')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>📡 Wireless</span>
+              <span>{seccoesAbertas.wireless ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.wireless && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('wireless_links')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'wireless_links' ? '#4dabf7' : theme.textMuted }}>• Wireless Links</div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div onClick={() => toggleSecao('ipam')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🌐 IPAM</span>
+              <span>{seccoesAbertas.ipam ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.ipam && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('ipam_prefixes')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'ipam_prefixes' ? '#4dabf7' : theme.textMuted }}>• Prefixes</div>
+                <div onClick={() => setMenuAtivo('ipam_ipaddresses')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'ipam_ipaddresses' ? '#4dabf7' : theme.textMuted }}>• IP Addresses</div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div onClick={() => toggleSecao('vpn')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🔒 VPN</span>
+              <span>{seccoesAbertas.vpn ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.vpn && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('vpn_tunnels')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'vpn_tunnels' ? '#4dabf7' : theme.textMuted }}>• VPN Tunnels</div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div onClick={() => toggleSecao('virtualization')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>💻 Virtualization</span>
+              <span>{seccoesAbertas.virtualization ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.virtualization && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('virt_vms')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'virt_vms' ? '#4dabf7' : theme.textMuted }}>• Virtual Machines</div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div onClick={() => toggleSecao('circuits')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>⚡ Circuits</span>
+              <span>{seccoesAbertas.circuits ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.circuits && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('circuits_list')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'circuits_list' ? '#4dabf7' : theme.textMuted }}>• Circuits / Links</div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div onClick={() => toggleSecao('power')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🔋 Power</span>
+              <span>{seccoesAbertas.power ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.power && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('power_feeds')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'power_feeds' ? '#4dabf7' : theme.textMuted }}>• Power Feeds & Panels</div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div onClick={() => toggleSecao('provisioning')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>📋 Provisioning</span>
+              <span>{seccoesAbertas.provisioning ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.provisioning && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('prov_configs')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'prov_configs' ? '#4dabf7' : theme.textMuted }}>• Config Templates</div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div onClick={() => toggleSecao('customization')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>🧰 Customization</span>
+              <span>{seccoesAbertas.customization ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.customization && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('cust_fields')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'cust_fields' ? '#4dabf7' : theme.textMuted }}>• Custom Fields</div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div onClick={() => toggleSecao('operations')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>⚙️ Operations</span>
+              <span>{seccoesAbertas.operations ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.operations && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('ops_logs')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'ops_logs' ? '#4dabf7' : theme.textMuted }}>• Audit Logs</div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div onClick={() => toggleSecao('admin')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: theme.textMain }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>👥 Admin</span>
+              <span>{seccoesAbertas.admin ? '▼' : '▶'}</span>
+            </div>
+            {seccoesAbertas.admin && (
+              <div style={{ display: 'flex', flexDirection: 'column', background: theme.cardInner, paddingLeft: '15px' }}>
+                <div onClick={() => setMenuAtivo('admin_users')} style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '13px', color: menuAtivo === 'admin_users' ? '#4dabf7' : theme.textMuted }}>• Users & Groups</div>
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
+
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', minWidth: 0, boxSizing: 'border-box' }}>
+        
+        <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', width: '100%', boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>← Voltar para POPs</button>
+            <h2 style={{ margin: 0, fontSize: '14px', color: '#4dabf7', textTransform: 'uppercase' }}>Módulo NetBox: {menuAtivo.replace('_', ' / ')}</h2>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <span style={{ fontSize: '14px', color: theme.textMuted }}>💡 admin <br/><b style={{ color: theme.textMain }}>Administrador</b></span>
+            <button type="button" onClick={setDarkMode} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 14px', borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
+            </button>
+          </div>
+        </div>
+
+        <div style={{ padding: '20px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
+          
+          {(menuAtivo === 'racks_racks' || menuAtivo === 'racks_elevations' || menuAtivo === 'devices_devices' || menuAtivo === 'org_sites') && (
+            <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px', background: theme.cardBg, padding: '12px 15px', borderRadius: '6px', border: `1px solid ${theme.border}`, flexWrap: 'wrap', width: '100%', boxSizing: 'border-box' }}>
+              <label style={{ fontWeight: 'bold', fontSize: '14px' }}>Selecionar POP (Site):</label>
+              <select 
+                value={popSelecionado} 
+                onChange={(e) => setPopSelecionado(e.target.value)}
+                style={{ padding: '8px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '15px', textTransform: 'uppercase', fontWeight: 'bold', flex: 1, minWidth: '220px', boxSizing: 'border-box' }}
+              >
+                {listaPops.map(p => (
+                  <option key={p.id} value={p.nome}>{p.nome.toUpperCase()} ({p.endereco})</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {menuAtivo === 'org_regioes' && (
+            <div>
+              {telaModeloExportacaoAberta ? (
+                <div style={{ width: '100%', minHeight: 'calc(100vh - 130px)', background: theme.bg, boxSizing: 'border-box' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', gap: '10px', flexWrap: 'wrap' }}>
+                    <h2 style={{ margin: 0, fontSize: '22px', color: theme.textMain, fontWeight: '600' }}>Adicionar modelo de exportação</h2>
+                    <button type="button" onClick={() => alert('Crie um modelo informando os campos de renderização e o código que deverá ser usado na exportação.')} style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '7px 12px', borderRadius: '5px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>❔ Ajuda</button>
+                  </div>
+
+                  <div style={{ borderBottom: `1px solid ${theme.border}`, marginBottom: '32px' }}>
+                    <span style={{ display: 'inline-block', padding: '9px 14px', border: `1px solid ${theme.border}`, borderBottom: `2px solid ${theme.cardBg}`, borderRadius: '5px 5px 0 0', background: theme.cardBg, color: theme.textMain, fontSize: '14px' }}>Criar</span>
+                  </div>
+
+                  <form onSubmit={(e) => salvarModeloExportacao(e, false)} style={{ maxWidth: '760px', margin: '0 auto', paddingBottom: '20px' }}>
+                    <div style={{ color: theme.textMain, fontWeight: 'bold', fontSize: '17px', marginBottom: '12px' }}>Modelo de Exportação</div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', gap: '14px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '145px', fontSize: '14px', color: theme.textMain, textAlign: 'right' }}>Nome<span style={{ color: '#dc3545' }}>*</span></label>
+                      <input type="text" required value={modeloExportacaoNome} onChange={(e) => setModeloExportacaoNome(e.target.value)} style={{ flex: 1, minWidth: '280px', padding: '10px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', fontSize: '14px', boxSizing: 'border-box' }} />
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', gap: '14px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '145px', fontSize: '14px', color: theme.textMain, textAlign: 'right' }}>Tipos de objetos<span style={{ color: '#dc3545' }}>*</span></label>
+                      <div style={{ flex: 1, minWidth: '280px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', padding: '8px 10px', background: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: '5px', minHeight: '42px', boxSizing: 'border-box' }}>
+                        {modeloExportacaoTipos.map(tipo => (
+                          <span key={tipo} style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '5px 9px', background: theme.cardInner, border: `1px solid ${theme.border}`, borderRadius: '4px', color: theme.textMain, fontSize: '13px' }}>
+                            {tipo}
+                            <button type="button" onClick={() => setModeloExportacaoTipos(prev => prev.filter(t => t !== tipo))} style={{ border: 'none', background: 'transparent', color: theme.textMuted, cursor: 'pointer', padding: 0, fontSize: '14px' }}>×</button>
+                          </span>
+                        ))}
+                        <select value="" onChange={(e) => { if (e.target.value && !modeloExportacaoTipos.includes(e.target.value)) setModeloExportacaoTipos(prev => [...prev, e.target.value]); }} style={{ marginLeft: 'auto', border: 'none', background: 'transparent', color: theme.textMuted, outline: 'none', cursor: 'pointer', minWidth: '28px' }}>
+                          <option value="">⌄</option>
+                          <option value="DCIM > Região">DCIM &gt; Região</option>
+                          <option value="DCIM > Site">DCIM &gt; Site</option>
+                          <option value="DCIM > Rack">DCIM &gt; Rack</option>
+                          <option value="DCIM > Dispositivo">DCIM &gt; Dispositivo</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', gap: '14px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '145px', fontSize: '14px', color: theme.textMain, textAlign: 'right' }}>Descrição</label>
+                      <input type="text" value={modeloExportacaoDescricao} onChange={(e) => setModeloExportacaoDescricao(e.target.value)} style={{ flex: 1, minWidth: '280px', padding: '10px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', fontSize: '14px', boxSizing: 'border-box' }} />
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '30px', gap: '14px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '145px', paddingTop: '10px', fontSize: '14px', color: theme.textMain, textAlign: 'right' }}>Modelo de código</label>
+                      <textarea rows="9" value={modeloExportacaoCodigo} onChange={(e) => setModeloExportacaoCodigo(e.target.value)} style={{ flex: 1, minWidth: '280px', padding: '10px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', fontSize: '14px', resize: 'vertical', boxSizing: 'border-box' }} />
+                    </div>
+
+                    <div style={{ color: theme.textMain, fontWeight: 'bold', fontSize: '17px', marginBottom: '12px' }}>Origem de dados</div>
+
+                    {[
+                      ['Origem de dados', modeloExportacaoOrigem, setModeloExportacaoOrigem, ['---------', 'Regiões', 'Dados atuais']],
+                      ['Arquivo', modeloExportacaoArquivo, setModeloExportacaoArquivo, ['---------', 'CSV', 'JSON', 'YAML']]
+                    ].map(([label, value, setter, options]) => (
+                      <div key={label} style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', gap: '14px', flexWrap: 'wrap' }}>
+                        <label style={{ width: '145px', fontSize: '14px', color: theme.textMain, textAlign: 'right' }}>{label}</label>
+                        <select value={value} onChange={(e) => setter(e.target.value)} style={{ flex: 1, minWidth: '280px', padding: '10px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', fontSize: '14px', boxSizing: 'border-box' }}>
+                          {options.map(op => <option key={op} value={op === '---------' ? '' : op}>{op}</option>)}
+                        </select>
+                      </div>
+                    ))}
+
+                    <div style={{ margin: '4px 0 28px 159px', fontSize: '13px', color: theme.textMuted }}>Selecione a origem que será utilizada para construir a exportação.</div>
+
+                    <div style={{ color: theme.textMain, fontWeight: 'bold', fontSize: '17px', marginBottom: '12px' }}>Renderizando</div>
+
+                    {[
+                      ['Tipo MIME', modeloExportacaoMime, setModeloExportacaoMime, ''],
+                      ['File name', modeloExportacaoNomeArquivo, setModeloExportacaoNomeArquivo, 'Nome do arquivo a ser fornecido ao arquivo de exportação renderizado'],
+                      ['Extensão do arquivo', modeloExportacaoExtensao, setModeloExportacaoExtensao, 'Extensão para anexar ao nome do arquivo renderizado']
+                    ].map(([label, value, setter, help]) => (
+                      <div key={label} style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '16px', gap: '14px', flexWrap: 'wrap' }}>
+                        <label style={{ width: '145px', paddingTop: '10px', fontSize: '14px', color: theme.textMain, textAlign: 'right' }}>{label}</label>
+                        <div style={{ flex: 1, minWidth: '280px' }}>
+                          <input type="text" value={value} onChange={(e) => setter(e.target.value)} style={{ width: '100%', padding: '10px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', fontSize: '14px', boxSizing: 'border-box' }} />
+                          {label === 'Tipo MIME' && <div style={{ fontSize: '12px', color: theme.textMuted, marginTop: '4px' }}>Defaults to <code>text/plain; charset=utf-8</code></div>}
+                          {help && <div style={{ fontSize: '12px', color: theme.textMuted, marginTop: '4px' }}>{help}</div>}
+                        </div>
+                      </div>
+                    ))}
+
+                    <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '16px', gap: '14px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '145px', paddingTop: '10px', fontSize: '14px', color: theme.textMain, textAlign: 'right' }}>Parâmetros do ambiente</label>
+                      <div style={{ flex: 1, minWidth: '280px' }}>
+                        <textarea rows="7" value={modeloExportacaoParametros} onChange={(e) => setModeloExportacaoParametros(e.target.value)} style={{ width: '100%', padding: '10px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', fontSize: '14px', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'monospace' }} />
+                        <div style={{ fontSize: '12px', color: theme.textMuted, marginTop: '4px' }}>Quaisquer parâmetros adicionais para construir o ambiente Jinja.</div>
+                      </div>
+                    </div>
+
+                    <div style={{ marginLeft: '159px', marginBottom: '28px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: theme.textMain }}>
+                        <input type="checkbox" checked={modeloExportacaoAnexo} onChange={(e) => setModeloExportacaoAnexo(e.target.checked)} />
+                        Como anexo
+                      </label>
+                      <div style={{ marginLeft: '24px', marginTop: '3px', fontSize: '12px', color: theme.textMuted }}>Baixar arquivo como anexo</div>
+                    </div>
+
+                    <div style={{ color: theme.textMain, fontWeight: 'bold', fontSize: '17px', marginBottom: '12px' }}>Proprietário</div>
+                    {[
+                      ['Owner group', modeloExportacaoOwnerGroup, setModeloExportacaoOwnerGroup],
+                      ['Owner', modeloExportacaoOwner, setModeloExportacaoOwner]
+                    ].map(([label, value, setter]) => (
+                      <div key={label} style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', gap: '14px', flexWrap: 'wrap' }}>
+                        <label style={{ width: '145px', fontSize: '14px', color: theme.textMain, textAlign: 'right' }}>{label}</label>
+                        <select value={value} onChange={(e) => setter(e.target.value)} style={{ flex: 1, minWidth: '280px', padding: '10px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', fontSize: '14px', boxSizing: 'border-box' }}>
+                          <option value="">---------</option>
+                          <option value="Administrador">Administrador</option>
+                        </select>
+                      </div>
+                    ))}
+
+                    <div style={{ background: '#20c99715', border: '1px solid #20c997', padding: '16px', borderRadius: '5px', marginTop: '24px', marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '145px', fontSize: '14px', color: theme.textMain, textAlign: 'right' }}>Changelog message</label>
+                      <input type="text" value={modeloExportacaoChangelog} onChange={(e) => setModeloExportacaoChangelog(e.target.value)} style={{ flex: 1, minWidth: '280px', padding: '10px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', fontSize: '14px', boxSizing: 'border-box' }} />
+                    </div>
+
+                    <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '18px', display: 'flex', justifyContent: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
+                      <button type="button" onClick={() => { limparFormularioModeloExportacao(); setTelaModeloExportacaoAberta(false); }} style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 16px', borderRadius: '5px', cursor: 'pointer', fontSize: '14px' }}>Cancelar</button>
+                      <button type="submit" style={{ background: '#008f83', border: '1px solid #008f83', color: '#fff', padding: '8px 18px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>Criar</button>
+                      <button type="button" onClick={(e) => salvarModeloExportacao(e, true)} style={{ background: theme.cardBg, border: '1px solid #008f83', color: '#008f83', padding: '8px 16px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>Criar e Adicionar Outro</button>
+                    </div>
+                  </form>
+                </div>
+              ) : telaImportarRegiaoAberta ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', padding: '24px', width: '100%', boxSizing: 'border-box' }}>
+                    <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', color: theme.textMain, fontWeight: 'normal' }}>Região Importação em Massa</h2>
+                    
+                    <div style={{ display: 'flex', borderBottom: `1px solid ${theme.border}`, marginBottom: '25px', gap: '25px' }}>
+                      <span onClick={() => setAbaImportar('direta')} style={{ padding: '8px 4px', borderBottom: abaImportar === 'direta' ? '2px solid #20c997' : 'none', color: abaImportar === 'direta' ? '#20c997' : theme.textMuted, fontWeight: 'bold', fontSize: '14px', cursor: 'pointer' }}>Importação Direta</span>
+                      <span onClick={() => setAbaImportar('arquivo')} style={{ padding: '8px 4px', borderBottom: abaImportar === 'arquivo' ? '2px solid #20c997' : 'none', color: abaImportar === 'arquivo' ? '#20c997' : theme.textMuted, fontSize: '14px', cursor: 'pointer' }}>Carregar Arquivo</span>
+                      <span onClick={() => setAbaImportar('dados')} style={{ padding: '8px 4px', borderBottom: abaImportar === 'dados' ? '2px solid #20c997' : 'none', color: abaImportar === 'dados' ? '#20c997' : theme.textMuted, fontSize: '14px', cursor: 'pointer' }}>Arquivo de Dados</span>
+                    </div>
+
+                    <form onSubmit={executarImportacaoMassa}>
+                      {abaImportar === 'direta' ? (
+                        <>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
+                            <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right', paddingTop: '8px' }}>Data</label>
+                            <div style={{ flex: 1, minWidth: '250px' }}>
+                              <textarea 
+                                rows="8" 
+                                value={importDataText} 
+                                onChange={(e) => setImportDataText(e.target.value)} 
+                                style={{ width: '100%', padding: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', boxSizing: 'border-box' }} 
+                              />
+                              <span style={{ fontSize: '12px', color: theme.textMuted, marginTop: '4px', display: 'block' }}>Enter object data in CSV, JSON or YAML format.</span>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
+                            <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Format<span style={{ color: '#dc3545' }}>*</span></label>
+                            <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
+                              <select 
+                                value={importFormat} 
+                                onChange={(e) => setImportFormat(e.target.value)} 
+                                style={{ width: '100%', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', appearance: 'none' }}
+                              >
+                                <option value="Detecção automática">Detecção automática</option>
+                                <option value="CSV">CSV</option>
+                                <option value="JSON">JSON</option>
+                                <option value="YAML">YAML</option>
+                              </select>
+                              <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: theme.textMuted, fontSize: '12px' }}>▼</span>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
+                            <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right', paddingTop: '8px' }}>CSV delimiter</label>
+                            <div style={{ flex: 1, minWidth: '250px' }}>
+                              <div style={{ position: 'relative' }}>
+                                <select 
+                                  value={importDelimiter} 
+                                  onChange={(e) => setImportDelimiter(e.target.value)} 
+                                  style={{ width: '100%', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', appearance: 'none' }}
+                                >
+                                  <option value="Detecção automática">Detecção automática</option>
+                                  <option value=",">Vírgula (,)</option>
+                                  <option value=";">Ponto e vírgula (;)</option>
+                                  <option value="\t">Tabulação</option>
+                                </select>
+                                <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: theme.textMuted, fontSize: '12px' }}>▼</span>
+                              </div>
+                              <span style={{ fontSize: '12px', color: theme.textMuted, marginTop: '4px', display: 'block' }}>The character which delimits CSV fields. Applies only to CSV format.</span>
+                            </div>
+                          </div>
+                        </>
+                      ) : abaImportar === 'arquivo' ? (
+                        <div style={{ padding: '30px', textAlign: 'center' }}>
+                          <p style={{ color: theme.textMuted, marginBottom: '15px' }}>Selecione um arquivo CSV, JSON ou YAML para importação:</p>
+                          <input type="file" style={{ color: theme.textMain }} />
+                        </div>
+                      ) : (
+                        <div style={{ padding: '20px' }}>
+                          <p style={{ color: theme.textMuted }}>Documentação e exemplos de estrutura de dados para importação em massa de Regiões.</p>
+                        </div>
+                      )}
+
+                      <div style={{ background: '#20c99715', border: '1px solid #20c997', padding: '18px', borderRadius: '6px', marginBottom: '25px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                          <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Changelog message</label>
+                          <div style={{ flex: 1, minWidth: '250px' }}>
+                            <input 
+                              type="text" 
+                              value={importChangelog} 
+                              onChange={(e) => setImportChangelog(e.target.value)} 
+                              style={{ width: '100%', padding: '8px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', boxSizing: 'border-box' }} 
+                            />
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', paddingLeft: '155px' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+                            <input 
+                              type="checkbox" 
+                              checked={importBackgroundJob} 
+                              onChange={(e) => setImportBackgroundJob(e.target.checked)} 
+                            />
+                            Job em segundo plano
+                          </label>
+                        </div>
+                        <span style={{ fontSize: '12px', color: theme.textMuted, paddingLeft: '155px' }}>Execute esta tarefa por meio de um job em segundo plano</span>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', alignItems: 'center' }}>
+                        <button 
+                          type="button" 
+                          onClick={() => setTelaImportarRegiaoAberta(false)} 
+                          style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
+                        >
+                          Cancelar
+                        </button>
+                        <button 
+                          type="submit" 
+                          style={{ background: '#20c997', border: 'none', color: '#fff', padding: '8px 22px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
+                        >
+                          Enviar
+                        </button>
+                      </div>
+
+                    </form>
+                  </div>
+
+                  <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', padding: '20px', width: '100%', boxSizing: 'border-box' }}>
+                    <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: theme.textMain }}>Opções de Campos</h3>
+                    
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left', minWidth: '600px' }}>
+                        <thead>
+                          <tr style={{ background: theme.cardInner, borderBottom: `1px solid ${theme.border}`, color: theme.textMuted, fontSize: '11px', textTransform: 'uppercase' }}>
+                            <th style={{ padding: '10px 12px', width: '150px' }}>Campo</th>
+                            <th style={{ padding: '10px 12px', width: '120px' }}>Obrigatório</th>
+                            <th style={{ padding: '10px 12px', width: '120px' }}>Acessador</th>
+                            <th style={{ padding: '10px 12px' }}>Descrição</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>name</td>
+                            <td style={{ padding: '10px 12px', color: '#28a745', fontWeight: 'bold' }}>✓</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px' }}>Nome</td>
+                          </tr>
+                          <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>slug</td>
+                            <td style={{ padding: '10px 12px', color: '#28a745', fontWeight: 'bold' }}>✓</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px' }}>Abreviatura exclusiva da URL amigável</td>
+                          </tr>
+                          <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>parent</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px' }}>name</td>
+                            <td style={{ padding: '10px 12px' }}>Nome da região principal</td>
+                          </tr>
+                          <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>description</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px' }}>Descrição</td>
+                          </tr>
+                          <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>owner</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px' }}>name</td>
+                            <td style={{ padding: '10px 12px' }}>Nome do proprietário do objeto</td>
+                          </tr>
+                          <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>comments</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px' }}>Comentários</td>
+                          </tr>
+                          <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>tags</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px' }}>slug</td>
+                            <td style={{ padding: '10px 12px' }}>Slugs das etiquetas separadas por vírgulas, entre aspas duplas (por exemplo, "tag1, tag2, tag3")</td>
+                          </tr>
+                          <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>changelog_message</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px' }}></td>
+                          </tr>
+                          <tr>
+                            <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>id</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px', color: theme.textMuted }}>—</td>
+                            <td style={{ padding: '10px 12px' }}>Numeric ID of an existing object to update (if not creating a new object)</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              ) : telaAdicionarRegiaoAberta ? (
+                <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', padding: '24px', maxWidth: '850px', margin: '0 auto', boxSizing: 'border-box' }}>
+                  <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', color: theme.textMain, fontWeight: 'normal' }}>Adicionar região</h2>
+                  
+                  <div style={{ display: 'flex', borderBottom: `1px solid ${theme.border}`, marginBottom: '25px' }}>
+                    <span style={{ padding: '8px 16px', borderBottom: '2px solid #20c997', color: '#20c997', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer' }}>Criar</span>
+                  </div>
+
+                  <form onSubmit={(e) => criarRegiaoSubmit(e, false)}>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Pai</label>
+                      <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
+                        <select 
+                          value={regiaoPai} 
+                          onChange={(e) => setRegiaoPai(e.target.value)} 
+                          style={{ width: '100%', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', appearance: 'none' }}
+                        >
+                          <option value="">---------</option>
+                          {regioesLista.map(r => (
+                            <option key={r.id} value={r.nome}>{r.nome}</option>
+                          ))}
+                        </select>
+                        <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: theme.textMuted, fontSize: '12px' }}>▼</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Nome<span style={{ color: '#dc3545' }}>*</span></label>
+                      <div style={{ flex: 1, minWidth: '250px' }}>
+                        <input 
+                          type="text" 
+                          value={regiaoNome} 
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setRegiaoNome(val);
+                            setRegiaoSlug(gerarSlugAutomatico(val));
+                          }} 
+                          required 
+                          style={{ width: '100%', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', boxSizing: 'border-box' }} 
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right', paddingTop: '8px' }}>Slug<span style={{ color: '#dc3545' }}>*</span></label>
+                      <div style={{ flex: 1, minWidth: '250px' }}>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <input 
+                            type="text" 
+                            value={regiaoSlug} 
+                            onChange={(e) => setRegiaoSlug(e.target.value)} 
+                            required 
+                            style={{ width: '100%', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', boxSizing: 'border-box' }} 
+                          />
+                          <button 
+                            type="button" 
+                            onClick={() => setRegiaoSlug(gerarSlugAutomatico(regiaoNome))} 
+                            style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '9px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+                          >
+                            🔄
+                          </button>
+                        </div>
+                        <span style={{ fontSize: '12px', color: theme.textMuted, marginTop: '4px', display: 'block' }}>Abreviatura exclusiva da URL amigável</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Descrição</label>
+                      <div style={{ flex: 1, minWidth: '250px' }}>
+                        <input 
+                          type="text" 
+                          value={regiaoDescricao} 
+                          onChange={(e) => setRegiaoDescricao(e.target.value)} 
+                          style={{ width: '100%', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', boxSizing: 'border-box' }} 
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '22px', gap: '15px', flexWrap: 'wrap' }}>
+                      <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Tags</label>
+                      <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
+                        <select 
+                          value={regiaoTags} 
+                          onChange={(e) => setRegiaoTags(e.target.value)} 
+                          style={{ width: '100%', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', appearance: 'none' }}
+                        >
+                          <option value="">---------</option>
+                        </select>
+                        <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: theme.textMuted, fontSize: '12px' }}>▼</span>
+                      </div>
+                    </div>
+
+                    <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '20px', marginBottom: '20px' }}>
+                      <h3 style={{ fontSize: '15px', fontWeight: 'bold', color: theme.textMain, textAlign: 'center', marginBottom: '18px' }}>Proprietário</h3>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
+                        <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Owner group</label>
+                        <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
+                          <select 
+                            value={regiaoOwnerGroup} 
+                            onChange={(e) => setRegiaoOwnerGroup(e.target.value)} 
+                            style={{ width: '100%', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', appearance: 'none' }}
+                          >
+                            <option value="">---------</option>
+                          </select>
+                          <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: theme.textMuted, fontSize: '12px' }}>▼</span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', gap: '15px', flexWrap: 'wrap' }}>
+                        <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Owner</label>
+                        <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
+                          <select 
+                            value={regiaoOwner} 
+                            onChange={(e) => setRegiaoOwner(e.target.value)} 
+                            style={{ width: '100%', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', appearance: 'none' }}
+                          >
+                            <option value="">---------</option>
+                          </select>
+                          <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: theme.textMuted, fontSize: '12px' }}>▼</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '20px', marginBottom: '25px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', gap: '15px', flexWrap: 'wrap' }}>
+                        <label style={{ width: '140px', fontSize: '14px', fontWeight: '500', color: theme.textMain, textAlign: 'right' }}>Comentários</label>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <button 
+                            type="button" 
+                            onClick={() => setAbaComentario('escrita')} 
+                            style={{ padding: '6px 12px', background: abaComentario === 'escrita' ? theme.cardInner : 'transparent', border: `1px solid ${abaComentario === 'escrita' ? theme.border : 'transparent'}`, color: theme.textMain, borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
+                          >
+                            Escrita
+                          </button>
+                          <button 
+                            type="button" 
+                            onClick={() => setAbaComentario('prev')} 
+                            style={{ padding: '6px 12px', background: abaComentario === 'prev' ? theme.cardInner : 'transparent', border: `1px solid ${abaComentario === 'prev' ? theme.border : 'transparent'}`, color: theme.textMuted, borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
+                          >
+                            Pré-visualização
+                          </button>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                        <div style={{ width: '140px' }}></div>
+                        <div style={{ flex: 1, minWidth: '250px' }}>
+                          <textarea 
+                            rows="5" 
+                            value={regiaoComentarios} 
+                            onChange={(e) => setRegiaoComentarios(e.target.value)} 
+                            style={{ width: '100%', padding: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', boxSizing: 'border-box' }} 
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px', alignItems: 'center' }}>
+                      <button 
+                        type="button" 
+                        onClick={() => setTelaAdicionarRegiaoAberta(false)} 
+                        style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
+                      >
+                        Cancelar
+                      </button>
+                      <button 
+                        type="submit" 
+                        style={{ background: '#20c997', border: 'none', color: '#fff', padding: '8px 18px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
+                      >
+                        Criar
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={(e) => criarRegiaoSubmit(e, true)} 
+                        style={{ background: 'transparent', border: '1px solid #20c997', color: '#20c997', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
+                      >
+                        Criar e Adicionar Outro
+                      </button>
+                    </div>
+
+                  </form>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                    <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: theme.textMain }}>Regiões</h2>
+                    
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <button onClick={() => setTelaAdicionarRegiaoAberta(true)} style={{ background: '#20c997', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        + Adicionar
+                      </button>
+                      <button onClick={() => setTelaImportarRegiaoAberta(true)} style={{ background: '#17a2b8', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        📥 Importar
+                      </button>
+                      <div style={{ position: 'relative' }}>
+                        <button
+                          type="button"
+                          onClick={() => setMenuExportarAberto(prev => !prev)}
+                          style={{ background: '#6f42c1', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        >
+                          📤 Exportar <span style={{ fontSize: '11px' }}>{menuExportarAberto ? '▲' : '▼'}</span>
+                        </button>
+
+                        {menuExportarAberto && (
+                          <div style={{
+                            position: 'absolute',
+                            top: 'calc(100% + 6px)',
+                            right: 0,
+                            width: '255px',
+                            background: theme.cardBg,
+                            border: `1px solid ${theme.border}`,
+                            borderRadius: '6px',
+                            boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
+                            zIndex: 1000,
+                            overflow: 'hidden'
+                          }}>
+                            <button
+                              type="button"
+                              onClick={() => exportarRegioesCSV(true)}
+                              style={{ width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', color: theme.textMain, textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
+                            >
+                              Visualização Atual
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => exportarRegioesCSV(false)}
+                              style={{ width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', borderTop: `1px solid ${theme.border}`, color: theme.textMain, textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
+                            >
+                              Todos os Dados (CSV)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setMenuExportarAberto(false); setTelaImportarRegiaoAberta(false); setTelaAdicionarRegiaoAberta(false); setTelaModeloExportacaoAberta(true); }}
+                              style={{ width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', borderTop: `1px solid ${theme.border}`, color: theme.textMain, textAlign: 'left', cursor: 'pointer', fontSize: '14px' }}
+                            >
+                              Adicionar modelo de exportação...
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', borderBottom: `1px solid ${theme.border}`, gap: '20px', fontSize: '14px', fontWeight: 'bold', paddingTop: '5px' }}>
+                    <span style={{ paddingBottom: '8px', borderBottom: '2px solid #20c997', color: '#20c997', cursor: 'pointer' }}>Resultados <span style={{ background: '#20c99722', padding: '2px 6px', borderRadius: '10px', fontSize: '12px' }}>{regioesLista.length}</span></span>
+                    <span style={{ paddingBottom: '8px', color: theme.textMuted, cursor: 'pointer' }} onClick={() => alert("Filtros avançados de regiões")}>Filtros</span>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '8px', flex: 1, minWidth: '260px', alignItems: 'center' }}>
+                      <input 
+                        type="text" 
+                        placeholder="Busca rápida" 
+                        value={buscaRegiao} 
+                        onChange={(e) => setBuscaRegiao(e.target.value)} 
+                        style={{ padding: '8px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '14px', flex: 1, boxSizing: 'border-box' }} 
+                      />
+                      <button style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', color: theme.textMain }}>🔍</button>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button onClick={() => alert("Configuração de colunas da tabela")} style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        ⚙️ Configurar Tabela ▼
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '6px', overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', textAlign: 'left', minWidth: '600px' }}>
+                      <thead>
+                        <tr style={{ background: theme.cardInner, borderBottom: `1px solid ${theme.border}`, color: theme.textMuted, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          <th style={{ padding: '12px 15px', width: '40px' }}><input type="checkbox" /></th>
+                          <th style={{ padding: '12px 15px' }}>Nome</th>
+                          <th style={{ padding: '12px 15px' }}>Sites</th>
+                          <th style={{ padding: '12px 15px' }}>Descrição</th>
+                          <th style={{ padding: '12px 15px', textAlign: 'right', width: '100px' }}>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {regioesLista.filter(r => r.nome.toLowerCase().includes(buscaRegiao.toLowerCase())).length === 0 ? (
+                          <tr>
+                            <td colSpan="5" style={{ padding: '30px', textAlign: 'center', color: theme.textMuted }}>Nenhuma região encontrada.</td>
+                          </tr>
+                        ) : (
+                          regioesLista.filter(r => r.nome.toLowerCase().includes(buscaRegiao.toLowerCase())).map(reg => (
+                            <tr key={reg.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                              <td style={{ padding: '12px 15px' }}><input type="checkbox" /></td>
+                              <td style={{ padding: '12px 15px', fontWeight: 'bold', color: '#20c997', cursor: 'pointer' }} onClick={() => alert(`Detalhes da região: ${reg.nome}`)}>{reg.nome}</td>
+                              <td style={{ padding: '12px 15px' }}>{reg.sites}</td>
+                              <td style={{ padding: '12px 15px', color: theme.textMuted }}>{reg.descricao || '—'}</td>
+                              <td style={{ padding: '12px 15px', textAlign: 'right' }}>
+                                <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
+                                  <button onClick={() => alert(`Editar região ${reg.nome}`)} style={{ background: '#ffc107', border: 'none', color: '#000', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>✏️</button>
+                                  <button onClick={() => excluirRegiao(reg.id)} style={{ background: '#ffc107', border: 'none', color: '#000', padding: '6px 8px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>▼</button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                </div>
+              )}
+            </div>
+          )}
+
+          {(menuAtivo === 'racks_racks' || menuAtivo === 'racks_elevations') && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px' }}>Racks no POP: {popSelecionado.toUpperCase()}</h3>
+                <button onClick={() => setModalRackAberto(true)} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '9px 15px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>+ Novo Rack</button>
+              </div>
+
+              {racksDoPop.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px', background: theme.cardBg, borderRadius: '8px', border: `1px solid ${theme.border}` }}>
+                  <p style={{ color: theme.textMuted, fontSize: '15px' }}>Nenhum rack cadastrado neste POP.</p>
+                  <button onClick={() => setModalRackAberto(true)} style={{ marginTop: '10px', background: '#28a745', border: 'none', color: '#fff', padding: '10px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Criar Primeiro Rack</button>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+                  {racksDoPop.map(rack => {
+                    const dispDoRack = dispositivos.filter(d => d.rackId === rack.id);
+                    
+                    return (
+                      <div key={rack.id} style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '15px', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${theme.border}`, paddingBottom: '8px', marginBottom: '12px' }}>
+                          <div>
+                            <h3 style={{ margin: 0, color: '#4dabf7', fontSize: '16px', textTransform: 'uppercase' }}>Rack: {rack.nome}</h3>
+                            <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: theme.textMuted }}>Altura: {rack.altura} Us</p>
+                          </div>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <button onClick={() => { setRackIdDisp(rack.id); setModalDispositivoAberto(true); }} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>+ Ativo</button>
+                            <button onClick={() => excluirRack(rack.id)} style={{ background: 'transparent', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }} title="Excluir Rack">🗑️</button>
+                          </div>
+                        </div>
+
+                        <div style={{ background: theme.cardInner, border: `1px solid ${theme.border}`, borderRadius: '4px', padding: '6px', maxHeight: '350px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          {Array.from({ length: rack.altura }, (_, i) => rack.altura - i).map(u => {
+                            const dispOcupante = dispDoRack.find(d => {
+                              const startU = d.posicaoU;
+                              const endU = d.posicaoU + d.alturaU - 1;
+                              return u >= startU && u <= endU;
+                            });
+
+                            return (
+                              <div key={u} style={{ display: 'flex', alignItems: 'center', height: '26px', borderBottom: `1px solid ${theme.border}`, fontSize: '11px', background: dispOcupante ? '#007bff22' : 'transparent' }}>
+                                <div style={{ width: '35px', textAlign: 'right', paddingRight: '8px', color: theme.textMuted, fontWeight: 'bold', borderRight: `1px solid ${theme.border}` }}>
+                                  {u}
+                                </div>
+                                <div style={{ flex: 1, paddingLeft: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {dispOcupante && u === dispOcupante.posicaoU + dispOcupante.alturaU - 1 ? (
+                                    <span style={{ color: '#4dabf7', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '6px' }}>
+                                      <span>{dispOcupante.nome} <span style={{ fontSize: '10px', color: theme.textMuted }}>({dispOcupante.fabricante} - {dispOcupante.tipo})</span></span>
+                                      <button onClick={() => excluirDispositivo(dispOcupante.id)} style={{ background: 'transparent', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '11px' }} title="Remover">✕</button>
+                                    </span>
+                                  ) : dispOcupante ? (
+                                    <span style={{ color: theme.textMuted, fontSize: '10px', fontStyle: 'italic' }}>↳ {dispOcupante.nome}</span>
+                                  ) : (
+                                    <span style={{ color: theme.textMuted, opacity: 0.4 }}>- livre -</span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {(menuAtivo === 'devices_devices' || menuAtivo === 'devices_manufacturers' || menuAtivo === 'devices_types') && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px' }}>Gerenciamento de Dispositivos e Fabricantes</h3>
+                <button onClick={() => {
+                  if (racksDoPop.length === 0) { alert("Crie um rack primeiro."); return; }
+                  setRackIdDisp(racksDoPop[0].id);
+                  setModalDispositivoAberto(true);
+                }} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '9px 15px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', marginRight: '5px' }}>+ Adicionar Dispositivo</button>
+              </div>
+
+              <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '8px', overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', textAlign: 'left', minWidth: '600px' }}>
+                  <thead>
+                    <tr style={{ background: theme.cardInner, borderBottom: `1px solid ${theme.border}` }}>
+                      <th style={{ padding: '12px' }}>Nome do Dispositivo</th>
+                      <th style={{ padding: '12px' }}>Fabricante</th>
+                      <th style={{ padding: '12px' }}>Tipo</th>
+                      <th style={{ padding: '12px' }}>POP / Rack</th>
+                      <th style={{ padding: '12px' }}>Posição (U)</th>
+                      <th style={{ padding: '12px', textAlign: 'center' }}>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dispositivos.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: theme.textMuted }}>Nenhum dispositivo cadastrado.</td>
+                      </tr>
+                    ) : (
+                      dispositivos.map(d => {
+                        const r = racks.find(rack => rack.id === d.rackId);
+                        return (
+                          <tr key={d.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '12px', fontWeight: 'bold', color: '#4dabf7' }}>{d.nome}</td>
+                            <td style={{ padding: '12px' }}>{d.fabricante}</td>
+                            <td style={{ padding: '12px' }}>{d.tipo}</td>
+                            <td style={{ padding: '12px', textTransform: 'uppercase' }}>{d.pop} / {r ? r.nome : 'Rack N/A'}</td>
+                            <td style={{ padding: '12px' }}>U{d.posicaoU} ({d.alturaU}U)</td>
+                            <td style={{ padding: '12px', textAlign: 'center' }}>
+                              <button onClick={() => excluirDispositivo(d.id)} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>Excluir</button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {menuAtivo === 'org_racks_groups' && (
+            <div style={{ width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px' }}>Grupos De Sites</h3>
+                <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
+                  <button onClick={() => { setGrupoSiteNome(''); setGrupoSiteDescricao(''); setGrupoSitePaiId(''); setModalGrupoSiteAberto(true); }} style={{ background: '#008f83', border: 'none', color: '#fff', padding: '9px 15px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>+ Adicionar</button>
+                  <button onClick={() => setImportarGrupoSiteAberto(true)} style={{ background: '#12a6c7', border: 'none', color: '#fff', padding: '9px 15px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>↥ Importar</button>
+                  <div style={{ position: 'relative' }}>
+                    <button onClick={() => setMenuExportarGrupoSiteAberto(v => !v)} style={{ background: '#a83fd1', border: 'none', color: '#fff', padding: '9px 15px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>↧ Exportar <span style={{ fontSize: '11px' }}>{menuExportarGrupoSiteAberto ? '▲' : '▼'}</span></button>
+                    {menuExportarGrupoSiteAberto && (
+                      <div style={{ position: 'absolute', right: 0, top: '43px', width: '230px', background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '5px', boxShadow: '0 4px 12px rgba(0,0,0,0.25)', zIndex: 1000, overflow: 'hidden' }}>
+                        <div onClick={() => exportarGruposSitesCSV(true)} style={{ padding: '12px 14px', cursor: 'pointer', color: theme.textMain, fontSize: '14px', borderBottom: `1px solid ${theme.border}` }}>Visualização Atual</div>
+                        <div onClick={() => exportarGruposSitesCSV(false)} style={{ padding: '12px 14px', cursor: 'pointer', color: theme.textMain, fontSize: '14px' }}>Todos os Dados (CSV)</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', borderBottom: `1px solid ${theme.border}`, gap: '20px', fontSize: '14px', fontWeight: 'bold', paddingTop: '5px', marginBottom: '18px' }}>
+                <span style={{ padding: '10px 12px', border: `1px solid ${theme.border}`, borderBottom: 'none', borderRadius: '6px 6px 0 0', color: theme.textMain }}>Resultados <span style={{ background: '#6c757d', color: '#fff', padding: '2px 6px', borderRadius: '5px', fontSize: '12px' }}>{gruposSites.length}</span></span>
+                <span style={{ padding: '10px 12px', color: theme.textMuted, cursor: 'pointer' }}>Filtros</span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '14px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '10px', flex: 1, minWidth: '280px' }}>
+                  <input type="text" placeholder="Busca rápida" value={buscaGrupoSite} onChange={e => setBuscaGrupoSite(e.target.value)} style={{ width: '240px', padding: '9px 12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '6px', fontSize: '14px' }} />
+                  <button style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '6px', cursor: 'pointer' }}>⚱</button>
+                  <select style={{ width: '170px', padding: '8px 10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '6px' }} defaultValue=""><option value=""> </option><option value="nome">Nome</option><option value="sites">Sites</option></select>
+                </div>
+                <button style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, color: theme.textMain, padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>⚙ Configurar Tabela &nbsp;⌄</button>
+              </div>
+
+              <div style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '7px', overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                  <thead><tr style={{ background: theme.cardInner, borderBottom: `1px solid ${theme.border}` }}>
+                    <th style={{ width: '40px', padding: '10px', textAlign: 'center' }}><input type="checkbox" /></th>
+                    <th style={{ padding: '10px', textAlign: 'left' }}>NOME</th>
+                    <th style={{ padding: '10px', textAlign: 'left' }}>SITES</th>
+                    <th style={{ padding: '10px', textAlign: 'left' }}>DESCRIÇÃO</th>
+                    <th style={{ width: '70px', padding: '10px' }}></th>
+                  </tr></thead>
+                  <tbody>
+                    {gruposSites.filter(g => g.nome.toLowerCase().includes(buscaGrupoSite.toLowerCase())).map(g => {
+                      const ehFilho = !!g.paiId;
+                      return (
+                        <tr key={g.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                          <td style={{ padding: '10px', textAlign: 'center' }}><input type="checkbox" /></td>
+                          <td style={{ padding: '10px', color: '#008aa0', fontWeight: '500' }}><span style={{ display: 'inline-block', width: ehFilho ? '22px' : '0' }}>{ehFilho ? '·' : ''}</span>{g.nome}</td>
+                          <td style={{ padding: '10px', color: '#008aa0' }}>{g.sites}</td>
+                          <td style={{ padding: '10px', color: theme.textMuted }}>{g.descricao || '—'}</td>
+                          <td style={{ padding: '7px', textAlign: 'right' }}>
+                            <button onClick={() => excluirGrupoSite(g.id)} title="Excluir" style={{ background: '#f5a000', border: 'none', color: '#fff', padding: '6px 10px', borderRadius: '5px', cursor: 'pointer' }}>✎⌄</button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {gruposSites.filter(g => g.nome.toLowerCase().includes(buscaGrupoSite.toLowerCase())).length === 0 && <tr><td colSpan="5" style={{ padding: '25px', textAlign: 'center', color: theme.textMuted }}>Nenhum grupo encontrado.</td></tr>}
+                  </tbody>
+                </table>
+                <div style={{ padding: '8px', fontSize: '12px', color: theme.textMuted }}>Exibindo {gruposSites.filter(g => g.nome.toLowerCase().includes(buscaGrupoSite.toLowerCase())).length} de {gruposSites.length}</div>
+              </div>
+            </div>
+          )}
+
+          {(menuAtivo === 'org_sites' || menuAtivo === 'org_locations' || menuAtivo === 'org_inquilinos' || menuAtivo === 'org_grupos_inquilinos' || menuAtivo === 'org_contatos' || menuAtivo === 'org_grupos_contatos' || menuAtivo === 'org_funcoes_contatos' || menuAtivo === 'org_atribuicoes_contatos') && (
+            <div>
+              <h3 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>Seção: {menuAtivo.replace('org_', '').toUpperCase()}</h3>
+              {menuAtivo === 'org_sites' ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px' }}>
+                  {listaPops.map(p => (
+                    <div key={p.id} style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, padding: '15px', borderRadius: '6px' }}>
+                      <h4 style={{ margin: '0 0 6px 0', color: '#4dabf7', textTransform: 'uppercase', fontSize: '15px' }}>{p.nome}</h4>
+                      <p style={{ margin: 0, fontSize: '13px', color: theme.textMuted }}>{p.endereco}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ padding: '30px', background: theme.cardBg, borderRadius: '8px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
+                  <p style={{ color: theme.textMuted, fontSize: '15px', margin: 0 }}>Módulo {menuAtivo.replace('org_', '')} configurado e vinculado à Organização.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {modalGrupoSiteAberto && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1200, padding: '20px' }}>
+              <form onSubmit={criarGrupoSite} style={{ width: '440px', background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '24px', color: theme.textMain }}>
+                <h3 style={{ marginTop: 0 }}>Adicionar Grupo de Sites</h3>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>Nome *</label>
+                <input required value={grupoSiteNome} onChange={e => setGrupoSiteNome(e.target.value)} placeholder="Nome do grupo" style={{ width: '100%', padding: '10px', marginBottom: '14px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px' }} />
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>Grupo pai</label>
+                <select value={grupoSitePaiId} onChange={e => setGrupoSitePaiId(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '14px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px' }}><option value="">Nenhum</option>{gruposSites.map(g => <option key={g.id} value={g.id}>{g.nome}</option>)}</select>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>Descrição</label>
+                <textarea value={grupoSiteDescricao} onChange={e => setGrupoSiteDescricao(e.target.value)} rows="3" style={{ width: '100%', padding: '10px', marginBottom: '18px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', resize: 'vertical' }} />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}><button type="button" onClick={() => setModalGrupoSiteAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, padding: '9px 12px', cursor: 'pointer' }}>Cancelar</button><button type="submit" style={{ background: '#008f83', border: 'none', color: '#fff', padding: '9px 16px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>Criar</button></div>
+              </form>
+            </div>
+          )}
+
+          {importarGrupoSiteAberto && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1200, padding: '20px' }}>
+              <div style={{ width: '600px', maxWidth: '100%', background: theme.cardBg, border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '24px', color: theme.textMain }}>
+                <h3 style={{ marginTop: 0 }}>Importar Grupos de Sites</h3>
+                <p style={{ color: theme.textMuted, fontSize: '13px' }}>Uma linha por grupo: <b>Nome;Sites;Descrição</b></p>
+                <textarea value={importarGrupoSiteTexto} onChange={e => setImportarGrupoSiteTexto(e.target.value)} rows="8" placeholder="Customer Sites;20;\nBranch Offices;19;" style={{ width: '100%', padding: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '5px', resize: 'vertical' }} />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '15px' }}><button onClick={() => setImportarGrupoSiteAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, padding: '9px 12px', cursor: 'pointer' }}>Cancelar</button><button onClick={importarGruposSites} style={{ background: '#12a6c7', border: 'none', color: '#fff', padding: '9px 16px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>Importar</button></div>
+              </div>
+            </div>
+          )}
+
+          {!['org_regioes', 'racks_racks', 'racks_elevations', 'devices_devices', 'devices_manufacturers', 'devices_types', 'org_sites', 'org_locations', 'org_racks_groups', 'org_inquilinos', 'org_grupos_inquilinos', 'org_contatos', 'org_grupos_contatos', 'org_funcoes_contatos', 'org_atribuicoes_contatos'].includes(menuAtivo) && (
+            <div style={{ textAlign: 'center', padding: '60px', background: theme.cardBg, borderRadius: '8px', border: `1px solid ${theme.border}` }}>
+              <h3 style={{ color: '#4dabf7', marginBottom: '10px' }}>Módulo NetBox: {menuAtivo.replace('_', ' - ').toUpperCase()}</h3>
+              <p style={{ color: theme.textMuted, fontSize: '14px' }}>Este módulo está ativo e integrado à base de dados do Infra POPs.</p>
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      {modalRackAberto && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px', boxSizing: 'border-box' }}>
+          <form onSubmit={criarRack} style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '355px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+            <h3 style={{ marginTop: 0, fontSize: '17px', color: '#4dabf7' }}>Criar Novo Rack ({popSelecionado.toUpperCase()})</h3>
+            
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px', marginTop: '10px' }}>Nome do Rack (Ex: RACK 01)</label>
+            <input type="text" placeholder="Nome do Rack" value={nomeRack} onChange={(e) => setNomeRack(e.target.value)} required style={{ width: '100%', padding: '9px', marginBottom: '12px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Altura em Us (Ex: 42, 24)</label>
+            <input type="number" min="1" max="60" value={alturaRack} onChange={(e) => setAlturaRack(e.target.value)} required style={{ width: '100%', padding: '9px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button type="button" onClick={() => setModalRackAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '14px' }}>Cancelar</button>
+              <button type="submit" style={{ background: '#28a745', border: 'none', color: '#fff', padding: '8px 14px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>Criar Rack</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {modalDispositivoAberto && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100, padding: '15px', boxSizing: 'border-box' }}>
+          <form onSubmit={criarDispositivo} style={{ background: theme.cardBg, color: theme.textMain, padding: '25px', borderRadius: '8px', width: '380px', border: `1px solid ${theme.border}`, boxSizing: 'border-box', maxHeight: '95vh', overflowY: 'auto' }}>
+            <h3 style={{ marginTop: 0, fontSize: '17px', color: '#4dabf7' }}>Adicionar Dispositivo / Ativo</h3>
+            
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Rack de Destino</label>
+            <select value={rackIdDisp} onChange={(e) => setRackIdDisp(e.target.value)} required style={{ width: '100%', padding: '9px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }}>
+              {racksDoPop.map(r => (
+                <option key={r.id} value={r.id}>{r.nome} (Máx: {r.altura}U)</option>
+              ))}
+            </select>
+
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Nome do Dispositivo</label>
+            <input type="text" placeholder="Ex: OLT Huawei C320" value={nomeDisp} onChange={(e) => setNomeDisp(e.target.value)} required style={{ width: '100%', padding: '9px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Fabricante</label>
+            <select value={fabricanteDisp} onChange={(e) => setFabricanteDisp(e.target.value)} style={{ width: '100%', padding: '9px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }}>
+              {fabricantes.map(f => <option key={f} value={f}>{f}</option>)}
+            </select>
+
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Tipo de Dispositivo</label>
+            <select value={tipoDisp} onChange={(e) => setTipoDisp(e.target.value)} style={{ width: '100%', padding: '9px', marginBottom: '10px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }}>
+              {tiposDispositivos.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Posição U Inicial</label>
+                <input type="number" min="1" value={posU} onChange={(e) => setPosU(e.target.value)} required style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Altura (Us)</label>
+                <input type="number" min="1" max="10" value={alturaU} onChange={(e) => setAlturaU(e.target.value)} required style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+              </div>
+            </div>
+
+            <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Face do Rack</label>
+            <select value={faceDisp} onChange={(e) => setFaceDisp(e.target.value)} style={{ width: '100%', padding: '9px', marginBottom: '20px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }}>
+              <option value="frontal">Frontal</option>
+              <option value="traseira">Traseira</option>
+            </select>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button type="button" onClick={() => setModalDispositivoAberto(false)} style={{ background: 'transparent', border: 'none', color: theme.textMuted, cursor: 'pointer', fontSize: '14px' }}>Cancelar</button>
+              <button type="submit" style={{ background: '#007bff', border: 'none', color: '#fff', padding: '8px 14px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>Adicionar</button>
+            </div>
+          </form>
+        </div>
+      )}
+
     </div>
   );
 }
@@ -1477,7 +3110,6 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
   const [anotacoes, setAnotacoes] = useState('');
 
   const [listaContatos, setListaContatos] = useState([{ nome: '', funcao: '', telefone: '', ultimaInsp: '' }]);
-  const [contatosChaveSalvo, setContatosChaveSalvo] = useState(false);
 
   const [chaveUltimaInsp, setChaveUltimaInsp] = useState('');
 
@@ -1574,7 +3206,6 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         }
 
         if (data.chave_ultima_insp !== undefined) setChaveUltimaInsp(data.chave_ultima_insp);
-        if (data.contatos_chave_salvo === true) setContatosChaveSalvo(true);
 
         if (data.statusAtivos) {
           const filtrados = { ...data.statusAtivos };
@@ -2236,34 +3867,24 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <h3 style={{ fontSize: '18px', margin: 0, color: '#4dabf7' }}>📞 Contatos e 🔑 Chaves do POP</h3>
               <div style={{ display: 'flex', gap: '6px' }}>
-                <button type="button" disabled={contatosChaveSalvo === true} onClick={() => setListaContatos([...listaContatos, { nome: '', funcao: '', telefone: '', ultimaInsp: '' }])} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
+                <button type="button" onClick={() => setListaContatos([...listaContatos, { nome: '', funcao: '', telefone: '', ultimaInsp: '' }])} style={{ background: '#007bff', border: 'none', color: '#fff', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
                   + Adicionar Contato
                 </button>
-                {contatosChaveSalvo === true ? (
-                  <button type="button" onClick={() => {
-                    setContatosChaveSalvo(false);
-                  }} style={{ background: '#6c757d', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
-                    EDITAR
-                  </button>
-                ) : (
-                  <button type="button" onClick={async () => {
-                    await salvarNoFirebase({
-                      listaContatos,
-                      chave_ultima_insp: chaveUltimaInsp,
-                      contatos_chave_salvo: true
-                    });
-                    setContatosChaveSalvo(true);
-                    alert("Contatos e Chave salvos com sucesso!");
-                  }} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
-                    SALVAR
-                  </button>
-                )}
+                <button type="button" onClick={() => {
+                  salvarNoFirebase({
+                    listaContatos,
+                    chave_ultima_insp: chaveUltimaInsp
+                  });
+                  alert("Contatos e Chave salvos com sucesso!");
+                }} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+                  Salvar Contatos/Chave
+                </button>
               </div>
             </div>
 
             {listaContatos.map((contato, idx) => (
               <div key={idx} style={{ background: theme.cardBg, padding: '12px', borderRadius: '4px', marginBottom: '10px', border: `1px solid ${theme.border}`, position: 'relative' }}>
-                {listaContatos.length > 1 && !contatosChaveSalvo && (
+                {listaContatos.length > 1 && (
                   <button type="button" onClick={() => {
                     const novaLista = listaContatos.filter((_, i) => i !== idx);
                     setListaContatos(novaLista);
@@ -2272,7 +3893,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 <p style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold', color: '#4dabf7' }}>Contato {idx + 1}</p>
                 <div style={{ marginBottom: '8px' }}>
                   <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Nome do Responsável</label>
-                  <input type="text" placeholder="Nome do responsável" disabled={contatosChaveSalvo === true} value={contato.nome} onChange={(e) => {
+                  <input type="text" placeholder="Nome do responsável" value={contato.nome} onChange={(e) => {
                     const novaLista = [...listaContatos];
                     novaLista[idx].nome = e.target.value;
                     setListaContatos(novaLista);
@@ -2280,7 +3901,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 </div>
                 <div style={{ marginBottom: '8px' }}>
                   <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Função (Ex: Síndica, Gerente, Resp. POP)</label>
-                  <input type="text" placeholder="Ex: Síndica" disabled={contatosChaveSalvo === true} value={contato.funcao} onChange={(e) => {
+                  <input type="text" placeholder="Ex: Síndica" value={contato.funcao} onChange={(e) => {
                     const novaLista = [...listaContatos];
                     novaLista[idx].funcao = e.target.value;
                     setListaContatos(novaLista);
@@ -2288,7 +3909,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 </div>
                 <div style={{ marginBottom: '8px' }}>
                   <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Telefone</label>
-                  <input type="text" placeholder="(00) 00000-0000" disabled={contatosChaveSalvo === true} value={contato.telefone} onChange={(e) => {
+                  <input type="text" placeholder="(00) 00000-0000" value={contato.telefone} onChange={(e) => {
                     const novaLista = [...listaContatos];
                     novaLista[idx].telefone = e.target.value;
                     setListaContatos(novaLista);
@@ -2296,7 +3917,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data da Inspeção do Contato (dd/MM/aaaa)</label>
-                  <input type="text" placeholder="dd/MM/aaaa" disabled={contatosChaveSalvo === true} value={contato.ultimaInsp} onChange={(e) => {
+                  <input type="text" placeholder="dd/MM/aaaa" value={contato.ultimaInsp} onChange={(e) => {
                     const novaLista = [...listaContatos];
                     novaLista[idx].ultimaInsp = e.target.value;
                     setListaContatos(novaLista);
@@ -2312,7 +3933,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
             <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '10px', marginTop: '12px' }}>
               <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data da Inspeção da Chave (dd/MM/aaaa)</label>
-              <input type="text" placeholder="dd/MM/aaaa" disabled={contatosChaveSalvo === true} value={chaveUltimaInsp} onChange={(e) => setChaveUltimaInsp(e.target.value)} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
+              <input type="text" placeholder="dd/MM/aaaa" value={chaveUltimaInsp} onChange={(e) => setChaveUltimaInsp(e.target.value)} style={{ width: '100%', padding: '8px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
               {chaveUltimaInsp ? (
                 <p style={{ fontSize: '13px', color: '#4dabf7', margin: '4px 0 0 0', fontWeight: 'bold' }}>
                   Próxima Insp. Chave (3 meses): {calcularProximaInspecaoGeral(chaveUltimaInsp)}
@@ -2405,7 +4026,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 <div key={banco} style={{ background: theme.cardInner, padding: '14px', borderRadius: '6px', marginBottom: '15px', border: `1px solid ${theme.border}`, width: '100%', boxSizing: 'border-box' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <h4 style={{ margin: 0, color: '#4dabf7', fontSize: '15px' }}>Banco {getLetra(banco)}</h4>
-                    <select disabled={bModel.salvo === true} value={bModel.tipo} onChange={(e) => {
+                    <select value={bModel.tipo} onChange={(e) => {
                       const novoTipo = e.target.value;
                       setBancosBateria(prev => ({
                         ...prev,
@@ -2419,7 +4040,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
                   <div style={{ marginBottom: '10px' }}>
                     <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data Fabricação (dd/mm/aaaa ou se/aa)</label>
-                    <input type="text" disabled={bModel.salvo === true} placeholder="ex: 12/23 ou 10/05/2024" value={bModel.dataFabricacao} onChange={(e) => {
+                    <input type="text" placeholder="ex: 12/23 ou 10/05/2024" value={bModel.dataFabricacao} onChange={(e) => {
                       const val = e.target.value;
                       setBancosBateria(prev => ({
                         ...prev,
@@ -2436,7 +4057,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
                   <div style={{ marginBottom: '10px' }}>
                     <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data da Última Inspeção (dd/mm/aaaa)</label>
-                    <input type="text" disabled={bModel.salvo === true} placeholder="ex: 15/02/2026" value={bModel.dataUltimaInspecao} onChange={(e) => {
+                    <input type="text" placeholder="ex: 15/02/2026" value={bModel.dataUltimaInspecao} onChange={(e) => {
                       const val = e.target.value;
                       setBancosBateria(prev => ({
                         ...prev,
@@ -2455,7 +4076,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                       <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '4px' }}>Voltagens das Baterias</label>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                         {[0, 1, 2, 3].map((vIdx) => (
-                          <input key={vIdx} type="text" disabled={bModel.salvo === true} placeholder={`Bat ${vIdx + 1} (V)`} value={bModel.voltagens[vIdx]} onChange={(e) => {
+                          <input key={vIdx} type="text" placeholder={`Bat ${vIdx + 1} (V)`} value={bModel.voltagens[vIdx]} onChange={(e) => {
                             const val = e.target.value;
                             setBancosBateria(prev => {
                               const novasVolts = [...prev[banco].voltagens];
@@ -2471,33 +4092,24 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                     </div>
                   )}
 
-                  {bModel.salvo === true ? (
-                    <button type="button" onClick={() => {
-                      setBancosBateria(prev => ({ ...prev, [banco]: { ...prev[banco], salvo: false } }));
-                    }} className="no-print" style={{ width: '100%', padding: '9px', background: '#6c757d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}>
-                      EDITAR
-                    </button>
-                  ) : (
-                    <button type="button" onClick={async () => {
-                      const dadosParaSalvar = {
-                        [`bat_${banco}_tipo`]: bModel.tipo,
-                        [`bat_${banco}_fab`]: bModel.dataFabricacao,
-                        [`bat_${banco}_insp`]: bModel.dataUltimaInspecao,
-                        [`bat_${banco}_salvo`]: true
-                      };
-                      if (bModel.tipo !== 'Lítio') {
-                        dadosParaSalvar[`bat_${banco}_v1`] = bModel.voltagens[0];
-                        dadosParaSalvar[`bat_${banco}_v2`] = bModel.voltagens[1];
-                        dadosParaSalvar[`bat_${banco}_v3`] = bModel.voltagens[2];
-                        dadosParaSalvar[`bat_${banco}_v4`] = bModel.voltagens[3];
-                      }
-                      await salvarNoFirebase(dadosParaSalvar);
-                      setBancosBateria(prev => ({ ...prev, [banco]: { ...prev[banco], salvo: true } }));
-                      alert(`Banco ${getLetra(banco)} salvo com sucesso!`);
-                    }} className="no-print" style={{ width: '100%', padding: '9px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}>
-                      SALVAR
-                    </button>
-                  )}
+                  <button type="button" onClick={async () => {
+                    const dadosParaSalvar = {
+                      [`bat_${banco}_tipo`]: bModel.tipo,
+                      [`bat_${banco}_fab`]: bModel.dataFabricacao,
+                      [`bat_${banco}_insp`]: bModel.dataUltimaInspecao,
+                      [`bat_${banco}_salvo`]: true
+                    };
+                    if (bModel.tipo !== 'Lítio') {
+                      dadosParaSalvar[`bat_${banco}_v1`] = bModel.voltagens[0];
+                      dadosParaSalvar[`bat_${banco}_v2`] = bModel.voltagens[1];
+                      dadosParaSalvar[`bat_${banco}_v3`] = bModel.voltagens[2];
+                      dadosParaSalvar[`bat_${banco}_v4`] = bModel.voltagens[3];
+                    }
+                    await salvarNoFirebase(dadosParaSalvar);
+                    alert(`Banco ${getLetra(banco)} salvo com sucesso!`);
+                  }} className="no-print" style={{ width: '100%', padding: '9px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}>
+                    Salvar Banco {getLetra(banco)}
+                  </button>
                 </div>
               );
             })}
@@ -2525,7 +4137,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                   
                   <div style={{ marginBottom: '8px' }}>
                     <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Modelo (Ex: Elgin, Gree)</label>
-                    <input type="text" disabled={ar.salvo === true} placeholder="Modelo" value={ar.modelo} onChange={(e) => {
+                    <input type="text" placeholder="Modelo" value={ar.modelo} onChange={(e) => {
                       const val = e.target.value;
                       setCentraisAr(prev => ({ ...prev, [idx]: { ...prev[idx], modelo: val } }));
                     }} style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
@@ -2533,7 +4145,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
                   <div style={{ marginBottom: '8px' }}>
                     <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>BTUs (Ex: 12000, 18000)</label>
-                    <input type="text" disabled={ar.salvo === true} placeholder="BTUs" value={ar.btu} onChange={(e) => {
+                    <input type="text" placeholder="BTUs" value={ar.btu} onChange={(e) => {
                       const val = e.target.value;
                       setCentraisAr(prev => ({ ...prev, [idx]: { ...prev[idx], btu: val } }));
                     }} style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '14px' }} />
@@ -2541,7 +4153,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
                   <div style={{ marginBottom: '8px' }}>
                     <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data da Última Limpeza (dd/mm/aaaa)</label>
-                    <input type="text" disabled={ar.salvo === true} placeholder="dd/mm/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => {
+                    <input type="text" placeholder="dd/mm/aaaa" value={ar.dataUltimaLimpeza} onChange={(e) => {
                       const val = e.target.value;
                       setCentraisAr(prev => ({ ...prev, [idx]: { ...prev[idx], dataUltimaLimpeza: val } }));
                     }} style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '15px' }} />
@@ -2552,27 +4164,18 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                     )}
                   </div>
 
-                  {ar.salvo === true ? (
-                    <button type="button" onClick={() => {
-                      setCentraisAr(prev => ({ ...prev, [idx]: { ...prev[idx], salvo: false } }));
-                    }} className="no-print" style={{ width: '100%', padding: '9px', background: '#6c757d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', marginTop: '4px' }}>
-                      EDITAR
-                    </button>
-                  ) : (
-                    <button type="button" onClick={async () => {
-                      await salvarNoFirebase({
-                        [`ar_${idx}_mod`]: ar.modelo,
-                        [`ar_${idx}_btu`]: ar.btu,
-                        [`ar_${idx}_inst`]: ar.dataInstalacao,
-                        [`ar_${idx}_limp`]: ar.dataUltimaLimpeza,
-                        [`ar_${idx}_salvo`]: true
-                      });
-                      setCentraisAr(prev => ({ ...prev, [idx]: { ...prev[idx], salvo: true } }));
-                      alert(`Central ${getLetra(idx)} salva com sucesso!`);
-                    }} className="no-print" style={{ width: '100%', padding: '9px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', marginTop: '4px' }}>
-                      SALVAR
-                    </button>
-                  )}
+                  <button type="button" onClick={async () => {
+                    await salvarNoFirebase({
+                      [`ar_${idx}_mod`]: ar.modelo,
+                      [`ar_${idx}_btu`]: ar.btu,
+                      [`ar_${idx}_inst`]: ar.dataInstalacao,
+                      [`ar_${idx}_limp`]: ar.dataUltimaLimpeza,
+                      [`ar_${idx}_salvo`]: true
+                    });
+                    alert(`Central ${getLetra(idx)} salva com sucesso!`);
+                  }} className="no-print" style={{ width: '100%', padding: '9px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', marginTop: '4px' }}>
+                    Salvar Central {getLetra(idx)}
+                  </button>
                 </div>
               );
             })}
