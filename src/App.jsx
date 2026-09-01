@@ -2243,8 +2243,8 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                     chave_ultima_insp: chaveUltimaInsp
                   });
                   alert("Contatos e Chave salvos com sucesso!");
-                }} style={{ background: '#28a745', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
-                  Salvar Contatos/Chave
+                }} style={{ background: '#6c757d', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+                  EDITAR
                 </button>
               </div>
             </div>
@@ -2474,8 +2474,8 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                     }
                     await salvarNoFirebase(dadosParaSalvar);
                     alert(`Banco ${getLetra(banco)} salvo com sucesso!`);
-                  }} className="no-print" style={{ width: '100%', padding: '9px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}>
-                    Salvar Banco {getLetra(banco)}
+                  }} className="no-print" style={{ width: '100%', padding: '9px', background: '#6c757d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}>
+                    EDITAR
                   </button>
                 </div>
               );
@@ -2540,8 +2540,8 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                       [`ar_${idx}_salvo`]: true
                     });
                     alert(`Central ${getLetra(idx)} salva com sucesso!`);
-                  }} className="no-print" style={{ width: '100%', padding: '9px', background: '#28a745', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', marginTop: '4px' }}>
-                    Salvar Central {getLetra(idx)}
+                  }} className="no-print" style={{ width: '100%', padding: '9px', background: '#6c757d', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', marginTop: '4px' }}>
+                    EDITAR
                   </button>
                 </div>
               );
