@@ -1798,8 +1798,6 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
               <span class="negrito">Banco ${getLetra(banco)} (${bModel.tipo})</span><br>
               Data de Fabricação: ${fabExibicao}<br>
               <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+${anosTrocaCalculado} anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
-              Data da Última Inspeção: ${bModel.dataUltimaInspecao || 'N/A'}<br>
-              <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (6 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span>
               ${voltagensHtml}
             </div>
           `;
@@ -2381,32 +2379,45 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
             </div>
 
             {Array.from({ length: qtdBancos }, (_, i) => i + 1).map((banco) => {
-              const bModel = bancosBateria[banco] || { tipo: 'Chumbo', dataFabricacao: '', dataUltimaInspecao: '', voltagens: ['', '', '', ''], salvo: false };
-              const anosTrocaCalculado = (bModel.tipo && bModel.tipo.toLowerCase() === 'lítio') ? 8 : 2;
-              const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao, pop.nome, bModel.tipo);
-              const resSub = statusData(proxSub);
-              const vencidoSub = resSub && resSub.status === 'vencido';
+  const bModel = bancosBateria[banco] || { tipo: 'Chumbo', dataFabricacao: '', voltagens: ['', '', '', ''], salvo: false };
+  const anosTrocaCalculado = (bModel.tipo && bModel.tipo.toLowerCase() === 'lítio') ? 8 : 2;
+  const proxSub = calcularProximaSubstituicaoBateria(bModel.dataFabricacao, pop.nome, bModel.tipo);
+  const resSub = statusData(proxSub);
+  const vencidoSub = resSub && resSub.status === 'vencido';
+  const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
 
-              const proxInsp = calcularProximaInspecaoBateria(bModel.dataUltimaInspecao);
-              const resInsp = statusData(proxInsp);
-              const vencidoInsp = resInsp && resInsp.status === 'vencido';
-              const { textoExato } = parseDataFabricacaoBateria(bModel.dataFabricacao);
+  return (
+    <div key={banco} style={{ background: theme.cardInner, padding: '14px', borderRadius: '6px', marginBottom: '15px', border: `1px solid ${theme.border}`, width: '100%', boxSizing: 'border-box' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <h4 style={{ margin: 0, color: '#4dabf7', fontSize: '15px' }}>Banco {getLetra(banco)}</h4>
+        <select disabled={bModel.salvo === true} value={bModel.tipo} onChange={(e) => {
+          const novoTipo = e.target.value;
+          setBancosBateria(prev => ({
+            ...prev,
+            [banco]: { ...prev[banco], tipo: novoTipo }
+          }));
+        }} style={{ padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '13px' }}>
+          <option value="Chumbo">Chumbo</option>
+          <option value="Lítio">Lítio</option>
+        </select>
+      </div>
 
-              return (
-                <div key={banco} style={{ background: theme.cardInner, padding: '14px', borderRadius: '6px', marginBottom: '15px', border: `1px solid ${theme.border}`, width: '100%', boxSizing: 'border-box' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <h4 style={{ margin: 0, color: '#4dabf7', fontSize: '15px' }}>Banco {getLetra(banco)}</h4>
-                    <select disabled={bModel.salvo === true} value={bModel.tipo} onChange={(e) => {
-                      const novoTipo = e.target.value;
-                      setBancosBateria(prev => ({
-                        ...prev,
-                        [banco]: { ...prev[banco], tipo: novoTipo }
-                      }));
-                    }} style={{ padding: '6px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, borderRadius: '4px', fontSize: '13px' }}>
-                      <option value="Chumbo">Chumbo</option>
-                      <option value="Lítio">Lítio</option>
-                    </select>
-                  </div>
+      <div style={{ marginBottom: '10px' }}>
+        <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data Fabricação (dd/mm/aaaa ou se/aa)</label>
+        <input type="text" disabled={bModel.salvo === true} placeholder="ex: 12/23 ou 10/05/2024" value={bModel.dataFabricacao} onChange={(e) => {
+          const val = e.target.value;
+          setBancosBateria(prev => ({
+            ...prev,
+            [banco]: { ...prev[banco], dataFabricacao: val }
+          }));
+        }} style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '15px' }} />
+        {textoExato && <p style={{ fontSize: '12px', color: '#4dabf7', margin: '3px 0 0 0' }}>Leitura: {textoExato}</p>}
+        {proxSub && (
+          <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '13px', margin: '4px 0 0 0', color: vencidoSub ? undefined : '#28a745', fontWeight: 'bold' }}>
+            Próxima Substituição (+{anosTrocaCalculado} anos): {proxSub} {vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}
+          </p>
+        )}
+      </div>
 
                   {bModel.tipo !== 'Lítio' && (
                     <div style={{ marginBottom: '12px' }}>
