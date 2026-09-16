@@ -576,7 +576,7 @@ function App() {
                 const { textoExato } = parseDataFabricacaoBateria(fab);
                 const fabExibicao = textoExato ? `${fab} (${textoExato})` : (fab || 'N/A');
                 let infoVencimento = [];
-                if (resSub && resSub.status === 'vencido') infoVencimento.push(`Troca: ${proxSub} (VENCIDO há ${resSub.dias}d)`);
+                if (resSub && resSub.status === 'vencido') infoVencimento.push(`<span class="vermelho">Troca: ${proxSub} (VENCIDO há ${resSub.dias}d)</span>`);
 
                 bateriasVencidasHtml += `<br>  • Banco ${getLetra(b)} (${tipoB}) - Fab: ${fabExibicao} | ${infoVencimento.join(' | ')}`;
               }
