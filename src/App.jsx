@@ -168,20 +168,6 @@ const calcularProximaInspecaoGeral = (dataUltimaInspecaoStr) => {
   } catch (e) { return ''; }
 };
 
-const calcularProximaInspecaoBateria = (dataUltimaInspecaoStr) => {
-  try {
-    const parts = (dataUltimaInspecaoStr || '').split('/');
-    if (parts.length === 3) {
-      const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1 + 6;
-      const year = parseInt(parts[2], 10) + Math.floor(month / 12);
-      const adjustedMonth = month % 12;
-      const date = new Date(year, adjustedMonth, day);
-      return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
-    }
-    return '';
-  } catch (e) { return ''; }
-};
 
 const calcularProximaLimpezaAr = (dataUltimaLimpezaStr, mesesIntervalo) => {
   try {
@@ -797,8 +783,6 @@ function App() {
                 banco: `Banco ${getLetra(i)}`, 
                 fabricacao: fab, 
                 proximaSubstituicao: calcularProximaSubstituicaoBateria(fab, popNome, tipoBat),
-                ultimaInspecao: ultimaInsp,
-                proximaInspecao: calcularProximaInspecaoBateria(ultimaInsp)
               });
             }
           }
@@ -1126,9 +1110,7 @@ function App() {
                       <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: '0 0 4px 0', color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
                         Troca: {item.proximaSubstituicao} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
                       </p>
-                      <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Data de Inspeção: {item.ultimaInspecao || 'N/A'}</p>
-                      <p className={vencidoInsp ? 'alerta-vencido' : alertaInspAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencidoInsp ? undefined : alertaInspAmanha ? undefined : '#28a745' }}>
-                        Próxima Inspeção (6 meses): {item.proximaInspecao || 'N/A'} {vencidoInsp ? `(Expirado há ${resInsp.dias}d)` : alertaInspAmanha ? `(${resInsp.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
+                      
                       </p>
                     </div>
                   );
@@ -2443,23 +2425,6 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                   </div>
 
                   <div style={{ marginBottom: '10px' }}>
-                    <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data Fabricação (dd/mm/aaaa ou se/aa)</label>
-                    <input type="text" disabled={bModel.salvo === true} placeholder="ex: 12/23 ou 10/05/2024" value={bModel.dataFabricacao} onChange={(e) => {
-                      const val = e.target.value;
-                      setBancosBateria(prev => ({
-                        ...prev,
-                        [banco]: { ...prev[banco], dataFabricacao: val }
-                      }));
-                    }} style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '15px' }} />
-                    {textoExato && <p style={{ fontSize: '12px', color: '#4dabf7', margin: '3px 0 0 0' }}>Leitura: {textoExato}</p>}
-                    {proxSub && (
-                      <p className={vencidoSub ? 'alerta-vencido' : ''} style={{ fontSize: '13px', margin: '4px 0 0 0', color: vencidoSub ? undefined : '#28a745', fontWeight: 'bold' }}>
-                        Próxima Substituição (+{anosTrocaCalculado} anos): {proxSub} {vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}
-                      </p>
-                    )}
-                  </div>
-
-                  <div style={{ marginBottom: '10px' }}>
                     <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data da Última Inspeção (dd/mm/aaaa)</label>
                     <input type="text" disabled={bModel.salvo === true} placeholder="ex: 15/02/2026" value={bModel.dataUltimaInspecao} onChange={(e) => {
                       const val = e.target.value;
@@ -2507,7 +2472,6 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                       const dadosParaSalvar = {
                         [`bat_${banco}_tipo`]: bModel.tipo,
                         [`bat_${banco}_fab`]: bModel.dataFabricacao,
-                        [`bat_${banco}_insp`]: bModel.dataUltimaInspecao,
                         [`bat_${banco}_salvo`]: true
                       };
                       if (bModel.tipo !== 'Lítio') {
