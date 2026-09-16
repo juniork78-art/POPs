@@ -510,11 +510,11 @@ function App() {
           h1 { color: #d9534f; margin: 0; font-size: 20px; text-transform: uppercase; }
           h2 { color: #333; font-size: 16px; margin-top: 25px; border-bottom: 2px solid #007bff; padding-bottom: 4px; text-transform: uppercase; background: #eef2f5; padding-left: 8px; }
           h3 { color: #0056b3; font-size: 14px; margin: 12px 0 4px 0; text-transform: uppercase; }
-          p { margin: 4px 0; font-size: 12px; }
+          p { margin: 4px 0; font-size: 15px; }
           .negrito { font-weight: bold; }
           .vermelho { color: #d9534f; font-weight: bold; }
           .bloco-pop { background: #fdfdfd; border: 1px solid #ddd; padding: 10px 14px; margin-bottom: 10px; border-radius: 4px; border-left: 4px solid #d9534f; }
-          .incidente-item { background: #fff5f5; border-left: 3px solid #d9534f; padding: 6px 10px; margin: 4px 0; font-size: 12px; }
+          .incidente-item { background: #fff5f5; border-left: 3px solid #d9534f; padding: 6px 10px; margin: 4px 0; font-size: 15px; }
         </style>
       </head>
       <body>
