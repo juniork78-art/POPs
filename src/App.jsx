@@ -1111,7 +1111,6 @@ function App() {
                         Troca: {item.proximaSubstituicao} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
                       </p>
                       
-                      </p>
                     </div>
                   );
                 })}
