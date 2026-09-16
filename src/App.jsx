@@ -504,17 +504,18 @@ function App() {
       <head>
         <title>Relatório de Itens Vencidos</title>
         <style>
-          body { font-family: Arial, sans-serif; padding: 25px; color: #000; line-height: 1.5; }
+          body { font-family: Arial, sans-serif; padding: 25px; color: #000; line-height: 1.6; font-size: 22px !important; }
           .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #d9534f; padding-bottom: 12px; margin-bottom: 20px; }
           .header-left { display: flex; align-items: center; gap: 15px; }
-          h1 { color: #d9534f; margin: 0; font-size: 20px; text-transform: uppercase; }
-          h2 { color: #333; font-size: 16px; margin-top: 25px; border-bottom: 2px solid #007bff; padding-bottom: 4px; text-transform: uppercase; background: #eef2f5; padding-left: 8px; }
-          h3 { color: #0056b3; font-size: 14px; margin: 12px 0 4px 0; text-transform: uppercase; }
-          p { margin: 4px 0; font-size: 15px; }
+          h1 { color: #d9534f; margin: 0; font-size: 28px !important; text-transform: uppercase; }
+          h2 { color: #333; font-size: 24px !important; margin-top: 25px; border-bottom: 2px solid #007bff; padding-bottom: 4px; text-transform: uppercase; background: #eef2f5; padding-left: 8px; }
+          h3 { color: #0056b3; font-size: 22px !important; margin: 12px 0 4px 0; text-transform: uppercase; }
+          p, div, span { font-size: 22px !important; }
+          p { margin: 8px 0; }
           .negrito { font-weight: bold; }
-          .vermelho { color: #d9534f; font-weight: bold; }
-          .bloco-pop { background: #fdfdfd; border: 1px solid #ddd; padding: 10px 14px; margin-bottom: 10px; border-radius: 4px; border-left: 4px solid #d9534f; }
-          .incidente-item { background: #fff5f5; border-left: 3px solid #d9534f; padding: 6px 10px; margin: 4px 0; font-size: 15px; }
+          .vermelho { color: #d9534f !important; font-weight: bold; }
+          .bloco-pop { background: #fdfdfd; border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 4px; border-left: 4px solid #d9534f; }
+          .incidente-item { background: #fff5f5; border-left: 3px solid #d9534f; padding: 10px; margin: 6px 0; font-size: 22px !important; }
         </style>
       </head>
       <body>
