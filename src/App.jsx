@@ -574,17 +574,12 @@ function App() {
               const proxSub = calcularProximaSubstituicaoBateria(fab, nome, tipoB);
               const resSub = statusData(proxSub);
 
-              const inspBat = dados[`bat_${b}_insp`];
-              const proxInspB = calcularProximaInspecaoBateria(inspBat);
-              const resInspB = statusData(proxInspB);
-
-              if ((resSub && resSub.status === 'vencido') || (resInspB && resInspB.status === 'vencido')) {
+              if (resSub && resSub.status === 'vencido') {
                 qtdBateriasVencidas++;
                 const { textoExato } = parseDataFabricacaoBateria(fab);
                 const fabExibicao = textoExato ? `${fab} (${textoExato})` : (fab || 'N/A');
                 let infoVencimento = [];
                 if (resSub && resSub.status === 'vencido') infoVencimento.push(`Troca: ${proxSub} (VENCIDO há ${resSub.dias}d)`);
-                if (resInspB && resInspB.status === 'vencido') infoVencimento.push(`Insp. (6m): ${proxInspB} (VENCIDO há ${resInspB.dias}d)`);
 
                 bateriasVencidasHtml += `<br>  • Banco ${getLetra(b)} (${tipoB}) - Fab: ${fabExibicao} | ${infoVencimento.join(' | ')}`;
               }
@@ -1797,10 +1792,6 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
           const resSub = statusData(proxSub);
           const vencidoSub = resSub && resSub.status === 'vencido';
 
-          const proxInsp = calcularProximaInspecaoBateria(bModel.dataUltimaInspecao);
-          const resInsp = statusData(proxInsp);
-          const vencidoInsp = resInsp && resInsp.status === 'vencido';
-
           const voltagensHtml = bModel.tipo !== 'Lítio' 
             ? `<br>Voltagens das Baterias: [ Bat 1: ${bModel.voltagens[0] || '-'}V ] [ Bat 2: ${bModel.voltagens[1] || '-'}V ] [ Bat 3: ${bModel.voltagens[2] || '-'}V ] [ Bat 4: ${bModel.voltagens[3] || '-'}V ]` 
             : '';
@@ -2034,8 +2025,6 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                 <span class="negrito">Banco ${getLetra(banco)} (${bModel.tipo})</span><br>
                 Data de Fabricação: ${fabExibicao}<br>
                 <span class="${vencidoSub ? 'vermelho' : ''}">Próxima Substituição (+${anosTrocaCalculado} anos): ${proxSub || 'N/A'} ${vencidoSub ? `(Expirado há ${resSub.dias} dias)` : ''}</span><br>
-                Data da Última Inspeção: ${bModel.dataUltimaInspecao || 'N/A'}<br>
-                <span class="${vencidoInsp ? 'vermelho' : ''}">Próxima Inspeção de Bateria (6 meses): ${proxInsp || 'N/A'} ${vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}</span>
                 ${voltagensHtml}
               </div>
             `;
