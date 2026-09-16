@@ -776,7 +776,6 @@ function App() {
           for (let i = 1; i <= qtdBancos; i++) {
             const fab = data[`bat_${i}_fab`] || '';
             const tipoBat = data[`bat_${i}_tipo`] || 'Chumbo';
-            const ultimaInsp = data[`bat_${i}_insp`] || '';
             if (fab) {
               listaBateriasTemp.push({ 
                 popNome, 
