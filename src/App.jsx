@@ -445,12 +445,6 @@ function App() {
           if (resSub && resSub.status === 'vencido') {
             temAlgoVencido = true;
           }
-          const inspBat = dadosPop[`bat_${b}_insp`];
-          const proxInspB = calcularProximaInspecaoBateria(inspBat);
-          const resInspB = statusData(proxInspB);
-          if (resInspB && resInspB.status === 'vencido') {
-            temAlgoVencido = true;
-          }
         }
       }
 
