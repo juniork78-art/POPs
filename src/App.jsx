@@ -2424,22 +2424,6 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
                     </select>
                   </div>
 
-                  <div style={{ marginBottom: '10px' }}>
-                    <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '3px' }}>Data da Última Inspeção (dd/mm/aaaa)</label>
-                    <input type="text" disabled={bModel.salvo === true} placeholder="ex: 15/02/2026" value={bModel.dataUltimaInspecao} onChange={(e) => {
-                      const val = e.target.value;
-                      setBancosBateria(prev => ({
-                        ...prev,
-                        [banco]: { ...prev[banco], dataUltimaInspecao: val }
-                      }));
-                    }} style={{ width: '100%', padding: '9px', background: theme.inputBg, border: `1px solid ${theme.border}`, color: theme.inputText, boxSizing: 'border-box', fontSize: '15px' }} />
-                    {proxInsp && (
-                      <p className={vencidoInsp ? 'alerta-vencido' : ''} style={{ fontSize: '13px', margin: '4px 0 0 0', color: vencidoInsp ? undefined : '#28a745', fontWeight: 'bold' }}>
-                        Próxima Inspeção de Bateria (6 meses): {proxInsp} {vencidoInsp ? `(Expirado há ${resInsp.dias} dias)` : ''}
-                      </p>
-                    )}
-                  </div>
-
                   {bModel.tipo !== 'Lítio' && (
                     <div style={{ marginBottom: '12px' }}>
                       <label style={{ display: 'block', fontSize: '13px', color: theme.textMuted, marginBottom: '4px' }}>Voltagens das Baterias</label>
