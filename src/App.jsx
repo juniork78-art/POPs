@@ -16,6 +16,9 @@ import {
   onSnapshot 
 } from 'firebase/firestore';
 // Favicon da aplicação — ícone de rack de servidores ao lado de "NIIP POPs" na aba do navegador.
+
+const calcularProximaInspecaoBateria = () => '';
+
 (() => {
   const faviconSvg = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
