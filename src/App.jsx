@@ -2479,7 +2479,19 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
 
   
 
-  const popsFiltrados = listaPops.filter(p => (isPedro ? p.endereco.toLowerCase().endsWith('- pbs') : true) && (p.nome.toLowerCase().includes(busca.toLowerCase()) || p.endereco.toLowerCase().includes(busca.toLowerCase())));
+  const usuario = (tecnico || '').toLowerCase();
+
+  const popsPermitidosDuilio = ['amaterasu', 'telesto', 'terra', 'demeter'];
+
+  const popsFiltrados = listaPops.filter(p => {
+    const nomePop = p.nome.toLowerCase();
+
+    if (usuario.includes('duilio')) {
+      return popsPermitidosDuilio.includes(nomePop);
+    }
+
+    return (isPedro ? p.endereco.toLowerCase().endsWith('- pbs') : true);
+  }).filter(p => p.nome.toLowerCase().includes(busca.toLowerCase()) || p.endereco.toLowerCase().includes(busca.toLowerCase()));
 
 
   const temIncidenteVencido = (nomePop) => {
