@@ -612,7 +612,16 @@ function App() {
 
     if (!usuarioLogado) return true;
 
-    const isPedro = usuarioLogado.toLowerCase().includes('pedro');
+    const usuario = usuarioLogado.toLowerCase();
+
+    // Gestor Duilio - acesso somente aos POPs definidos
+    if (usuario.includes('duilio')) {
+      const popsDuilio = ['amaterasu', 'telesto', 'terra', 'demeter'];
+
+      return popsDuilio.includes(nomePop.toLowerCase());
+    }
+
+    const isPedro = usuario.includes('pedro');
 
     if (!isPedro) return true;
 
