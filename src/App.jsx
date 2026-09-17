@@ -1603,7 +1603,7 @@ function App() {
 
         ultimosCheckIns={ultimosCheckIns}
 
-        listaPops={listaPops}
+        listaPops={listaPops.filter(pop => popPertenceAoUsuario(pop.nome))}
 
         onSelectPop={(novoPop) => setPopSelecionado(novoPop)}
 
