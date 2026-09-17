@@ -319,19 +319,25 @@ function App() {
   const popPertenceAoUsuario = (nomePop) => {
     if (!usuarioLogado) return true;
     const isPedro = usuarioLogado.toLowerCase().includes('pedro');
-    if (!isPedro) return true;
-    const popObj = listaPops.find(p => p.nome.toLowerCase() === nomePop.toLowerCase() || (nomePop.toLowerCase() === 'odin' && p.nome.toLowerCase() === 'balder') || (nomePop.toLowerCase() === 'odim' && p.nome.toLowerCase() === 'balder'));
-    if (popObj) return popObj.endereco.toLowerCase().endsWith('- pbs');
-    return false;
-  };
+    const isDuilio = usuarioLogado.toLowerCase().includes('duilio');
 
-  const obterListaTodasCidades = () => {
-    const cidadesSet = new Set();
-    listaPops.forEach(pop => {
-      if (!popPertenceAoUsuario(pop.nome)) return;
-      const sigla = obterSiglaPop(pop.nome) || 'GERAL';
-      cidadesSet.add(sigla);
-    });
+    const popObj = listaPops.find(p => p.nome.toLowerCase() === nomePop.toLowerCase() || (nomePop.toLowerCase() === 'odin' && p.nome.toLowerCase() === 'balder') || (nomePop.toLowerCase() === 'odim' && p.nome.toLowerCase() === 'balder'));
+    
+    if (isPedro) {
+      if (popObj) return popObj.endereco.toLowerCase().endsWith('- pbs');
+      return false;
+    }
+    
+    if (isDuilio) {
+      if (popObj) {
+        const end = popObj.endereco.toLowerCase();
+        return end.endsWith('- itg') || end.endsWith('- sda') || end.endsWith('- cna') || end.endsWith('- sga');
+      }
+      return false;
+    }
+
+    return true;
+  };
     return Array.from(cidadesSet).sort();
   };
 
@@ -1286,9 +1292,17 @@ function TelaListaPops({ tecnico, listaPops, ultimosCheckIns, cronogramaLimpezas
   const [passwordInput, setPasswordInput] = useState('');
   const [mostrarSenhaGerenciar, setMostrarSenhaGerenciar] = useState(false);
   const isPedro = tecnico.toLowerCase().includes('pedro');
-  
-  const popsFiltrados = listaPops.filter(p => (isPedro ? p.endereco.toLowerCase().endsWith('- pbs') : true) && (p.nome.toLowerCase().includes(busca.toLowerCase()) || p.endereco.toLowerCase().includes(busca.toLowerCase())));
+  const isDuilio = tecnico.toLowerCase().includes('duilio');
 
+  const popsFiltrados = listaPops.filter(p => {
+    const end = p.endereco.toLowerCase();
+    const matchBusca = p.nome.toLowerCase().includes(busca.toLowerCase()) || end.includes(busca.toLowerCase());
+    
+    if (isPedro) return end.endsWith('- pbs') && matchBusca;
+    if (isDuilio) return (end.endsWith('- itg') || end.endsWith('- sda') || end.endsWith('- cna') || end.endsWith('- sga')) && matchBusca;
+    return matchBusca;
+  });
+  
   const temIncidenteVencido = (nomePop) => {
     let n = nomePop.toLowerCase();
     if (n === 'odin' || n === 'odim') n = 'balder';
@@ -2070,7 +2084,16 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
   };
 
   const isPedro = tecnico.toLowerCase().includes('pedro');
-  const popsFiltradosMenu = listaPops.filter(p => (isPedro ? p.endereco.toLowerCase().endsWith('- pbs') : true) && (p.nome.toLowerCase().includes(buscaPopLateral.toLowerCase()) || p.endereco.toLowerCase().includes(buscaPopLateral.toLowerCase())));
+  const isDuilio = gestor.toLowerCase().includes('duilio');
+
+  const popsFiltradosMenu = listaPops.filter(p => {
+    const end = p.endereco.toLowerCase();
+    const matchBusca = p.nome.toLowerCase().includes(buscaPopLateral.toLowerCase()) || end.includes(buscaPopLateral.toLowerCase());
+    
+    if (isPedro) return end.endsWith('- pbs') && matchBusca;
+    if (isDuilio) return (end.endsWith('- itg') || end.endsWith('- sda') || end.endsWith('- cna') || end.endsWith('- sga')) && matchBusca;
+    return matchBusca;
+  });
 
   return (
     <div className="container-movel" style={{ backgroundColor: theme.bg, color: theme.textMain, minHeight: '100vh', width: '100%', margin: 0, padding: '15px 10px', fontFamily: 'sans-serif', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
