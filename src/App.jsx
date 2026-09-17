@@ -2003,7 +2003,7 @@ function App() {
 
                         <p style={{ margin: '0 0 4px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', paddingRight: '15px', fontSize: '14px' }}>POP: {nomeExibicao}</p>
 
-                        <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Técnico: {item.tecnico}</p>
+                        <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Gestor: {item.tecnico}</p>
 
                         <p style={{ margin: '0 0 4px 0', color: theme.textMuted }}>Data: {item.dataHora}</p>
 
