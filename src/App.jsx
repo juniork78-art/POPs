@@ -2832,7 +2832,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
   const isDuandys = tecnico.toLowerCase().includes('duandys');
 
-  const cargoLabel = isDuandys ? "Gestor" : "Técnico";
+  const cargoLabel = "Gestor";
 
   const nomeTecnicoLogado = tecnico.split('@')[0].replace('.', ' ').toUpperCase();
 
