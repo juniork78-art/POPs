@@ -2003,7 +2003,7 @@ function App() {
 
                         <p style={{ margin: '0 0 4px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', paddingRight: '15px', fontSize: '14px' }}>POP: {nomeExibicao}</p>
 
-                        <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>Gestor: {item.tecnico}</p>
+                        <p style={{ margin: '0 0 4px 0', color: theme.textMain }}>{['duandys', 'duilio'].includes((item.tecnico || '').trim().toLowerCase()) ? 'Gestor' : 'Técnico'}: {item.tecnico}</p>
 
                         <p style={{ margin: '0 0 4px 0', color: theme.textMuted }}>Data: {item.dataHora}</p>
 
@@ -2832,7 +2832,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
   const isDuandys = tecnico.toLowerCase().includes('duandys');
 
-  const cargoLabel = "Gestor";
+  const cargoLabel = ['duandys', 'duilio'].includes(tecnico.split('@')[0].toLowerCase()) ? "Gestor" : "Técnico";
 
   const nomeTecnicoLogado = tecnico.split('@')[0].replace('.', ' ').toUpperCase();
 
