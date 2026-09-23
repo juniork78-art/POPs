@@ -879,7 +879,7 @@ function App() {
 
         const nomeLower = pop.nome.toLowerCase();
 
-        const interAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : (nomeLower === 'apolo' ? 12 : 8);
+        const interAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : (nomeLower === 'apolo' || nomeLower === 'marduk' ? 12 : 8);
 
         for (let a = 1; a <= qtdA; a++) {
 
@@ -1134,7 +1134,7 @@ function App() {
 
             const nomeLower = nome.toLowerCase();
 
-            const interAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : 8;
+            const interAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : (nomeLower === 'apolo' || nomeLower === 'marduk' ? 12 : 8);
 
             let aresVencidosHtml = '';
 
@@ -1449,7 +1449,7 @@ function App() {
 
           const nomeLower = popNome.toLowerCase();
 
-          const intervaloAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : (nomeLower === 'apolo' ? 12 : 8);
+          const intervaloAr = (nomeLower === 'helius' || nomeLower === 'limos' || nomeLower === 'fanes') ? 5 : (nomeLower === 'apolo' || nomeLower === 'marduk' ? 12 : 8);
 
           for (let i = 1; i <= qtdAr; i++) {
 
@@ -2912,7 +2912,7 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
   const nomePopLower = pop.nome.toLowerCase();
 
-  const intervaloAr = (nomePopLower === 'helius' || nomePopLower === 'limos' || nomePopLower === 'fanes') ? 5 : (nomePopLower === 'apolo' ? 12 : 8);
+  const intervaloAr = (nomePopLower === 'helius' || nomePopLower === 'limos' || nomePopLower === 'fanes') ? 5 : (nomePopLower === 'apolo' || nomePopLower === 'marduk' ? 12 : 8);
 
   const [qtdAr, setQtdAr] = useState(1);
 
