@@ -455,14 +455,25 @@ const consolidarInspecoes = (historico) => {
   });
 };
 
-const manterCheckInMaisRecentePorPop = (historico) => {
+const checkInsUnicosPorPop = (historico) => {
   const vistos = new Set();
   return consolidarInspecoes(historico).filter(item => {
     const nome = chavePop(item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome);
     if (!nome || vistos.has(nome)) return false;
     vistos.add(nome);
     return true;
-  }).map(({ indiceOriginal, ...registro }) => registro);
+  });
+};
+
+const manterCheckInMaisRecentePorPop = (historico) => {
+  return checkInsUnicosPorPop(historico).map(({ indiceOriginal, ...registro }) => registro);
+};
+
+const substituirCheckInDoPop = (historico, novoRegistro) => {
+  const popAtual = chavePop(novoRegistro.popNome || novoRegistro.pop || novoRegistro.nomePop || novoRegistro.nome_pop || novoRegistro.nome);
+  return [novoRegistro, ...historico.filter(item =>
+    chavePop(item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome) !== popAtual
+  )];
 };
 
 function App() {
@@ -484,7 +495,7 @@ function App() {
   const [dadosGeraisPops, setDadosGeraisPops] = useState({});
 
   const checkInsConsolidados = useMemo(
-    () => consolidarInspecoes(ultimosCheckIns),
+    () => checkInsUnicosPorPop(ultimosCheckIns),
     [ultimosCheckIns]
   );
 
@@ -1674,13 +1685,8 @@ function App() {
             const ref = doc(db, "historico_global", "checkins");
             const snap = await transacao.get(ref);
             const registros = Array.isArray(snap.data()?.lista) ? snap.data().lista : [];
-            const jaExiste = registros.some(item =>
-              chavePop(item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome) === nomeNormalizado &&
-              item.dataHora === registroCorrigido.dataHora &&
-              !registroCorrigido.registradoEm
-            );
-            const atualizados = jaExiste ? registros : [registroCorrigido, ...registros];
-            if (!jaExiste) transacao.set(ref, { lista: atualizados });
+            const atualizados = substituirCheckInDoPop(registros, registroCorrigido);
+            transacao.set(ref, { lista: atualizados });
             return atualizados;
           });
 
@@ -2022,13 +2028,9 @@ function App() {
 
                     const res = statusData(item.proximaInspecao);
 
-                    const registroMaisRecente = checkInsConsolidados.findIndex(c =>
-                      chavePop(c.popNome || c.pop || c.nomePop || c.nome_pop || c.nome) === chavePop(nomeDoPop)
-                    ) === idx;
+                    const vencido = res && res.status === 'vencido';
 
-                    const vencido = registroMaisRecente && res && res.status === 'vencido';
-
-                    const alertaAmanha = registroMaisRecente && res && (res.status === 'amanha' || res.status === 'hoje');
+                    const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
 
 
                     return (
@@ -2043,7 +2045,7 @@ function App() {
 
                         <p style={{ margin: '0 0 4px 0', color: theme.textMuted }}>Data: {item.dataHora}</p>
 
-                        <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: registroMaisRecente ? (vencido || alertaAmanha ? undefined : '#28a745') : theme.textMuted }}>
+                        <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido || alertaAmanha ? undefined : '#28a745' }}>
 
                           Próx. Insp (3 meses): {item.proximaInspecao} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
 
