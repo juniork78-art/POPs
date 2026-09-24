@@ -446,7 +446,13 @@ const consolidarInspecoes = (historico) => {
       proximaInspecao: data ? calcularProximaInspecaoGeral(item.dataHora) : item.proximaInspecao
     };
   });
-  return lista.sort((a, b) => (dataInspecaoValida(b.dataHora)?.getTime() || 0) - (dataInspecaoValida(a.dataHora)?.getTime() || 0));
+  return lista.sort((a, b) => {
+    // Check-ins novos seguem a ordem em que foram registrados, mesmo com data manual antiga.
+    if (a.registradoEm || b.registradoEm) {
+      return (b.registradoEm || 0) - (a.registradoEm || 0);
+    }
+    return (dataInspecaoValida(b.dataHora)?.getTime() || 0) - (dataInspecaoValida(a.dataHora)?.getTime() || 0);
+  });
 };
 
 const manterCheckInMaisRecentePorPop = (historico) => {
@@ -1601,7 +1607,8 @@ function App() {
         const idx = lista.findIndex(item =>
           chavePop(item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome) ===
             chavePop(registro.popNome || registro.pop || registro.nomePop || registro.nome_pop || registro.nome) &&
-          item.dataHora === registro.dataHora && item.tecnico === registro.tecnico
+          item.dataHora === registro.dataHora && item.tecnico === registro.tecnico &&
+          (registro.registradoEm == null || item.registradoEm === registro.registradoEm)
         );
         if (idx < 0) throw new Error('O registro já foi removido. Atualize a página.');
         transacao.set(ref, { lista: lista.filter((_, i) => i !== idx) });
@@ -1669,7 +1676,8 @@ function App() {
             const registros = Array.isArray(snap.data()?.lista) ? snap.data().lista : [];
             const jaExiste = registros.some(item =>
               chavePop(item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome) === nomeNormalizado &&
-              item.dataHora === registroCorrigido.dataHora
+              item.dataHora === registroCorrigido.dataHora &&
+              !registroCorrigido.registradoEm
             );
             const atualizados = jaExiste ? registros : [registroCorrigido, ...registros];
             if (!jaExiste) transacao.set(ref, { lista: atualizados });
@@ -2037,7 +2045,7 @@ function App() {
 
                         <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: registroMaisRecente ? (vencido || alertaAmanha ? undefined : '#28a745') : theme.textMuted }}>
 
-                          Próx. Insp (3 meses): {item.proximaInspecao} {!registroMaisRecente ? '(Registro anterior)' : vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
+                          Próx. Insp (3 meses): {item.proximaInspecao} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
 
                         </p>
 
@@ -3744,6 +3752,8 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
         popNome: pop.nome,
 
         dataHora: dataInspecaoFinal,
+
+        registradoEm: Date.now(),
 
         tecnico: tecnicoOriginal,
 
