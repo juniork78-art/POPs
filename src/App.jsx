@@ -1,4 +1,4 @@
- import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 import { auth, db } from './firebase';
 
@@ -28,7 +28,9 @@ import {
 
   setDoc, 
 
-  onSnapshot 
+  onSnapshot,
+
+  runTransaction
 
 } from 'firebase/firestore';
 
@@ -307,19 +309,17 @@ const calcularProximaInspecaoGeral = (dataUltimaInspecaoStr) => {
 
   try {
 
-    const parts = (dataUltimaInspecaoStr || '').split('/');
+    const dataInspecao = dataInspecaoValida(dataUltimaInspecaoStr);
 
-    if (parts.length === 3) {
+    if (dataInspecao) {
 
-      const day = parseInt(parts[0], 10);
+      const dia = dataInspecao.getDate();
 
-      const month = parseInt(parts[1], 10) - 1 + 3;
+      const date = new Date(dataInspecao.getFullYear(), dataInspecao.getMonth() + 3, 1);
 
-      const year = parseInt(parts[2], 10) + Math.floor(month / 12);
+      const ultimoDiaDoMes = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 
-      const adjustedMonth = month % 12;
-
-      const date = new Date(year, adjustedMonth, day);
+      date.setDate(Math.min(dia, ultimoDiaDoMes));
 
       return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
 
@@ -423,6 +423,42 @@ const popsIniciaisPadrao = [
 ];
 
 
+// O menu de check-ins exibe somente inspeções finalizadas na tela do POP.
+const chavePop = (valor) => {
+  const nome = String(valor || '').trim().toLowerCase();
+  return nome === 'odin' || nome === 'odim' ? 'balder' : nome;
+};
+
+const dataInspecaoValida = (valor) => {
+  const partes = String(valor || '').match(/^(\d{2})\/(\d{2})\/(\d{4})(?!\d)/);
+  if (!partes) return null;
+  const [, dia, mes, ano] = partes;
+  const data = new Date(Number(ano), Number(mes) - 1, Number(dia));
+  return data.getFullYear() === Number(ano) && data.getMonth() === Number(mes) - 1 && data.getDate() === Number(dia) ? data : null;
+};
+
+const consolidarInspecoes = (historico) => {
+  const lista = historico.map((item, indiceOriginal) => {
+    const data = dataInspecaoValida(item.dataHora);
+    return {
+      ...item,
+      indiceOriginal,
+      proximaInspecao: data ? calcularProximaInspecaoGeral(item.dataHora) : item.proximaInspecao
+    };
+  });
+  return lista.sort((a, b) => (dataInspecaoValida(b.dataHora)?.getTime() || 0) - (dataInspecaoValida(a.dataHora)?.getTime() || 0));
+};
+
+const manterCheckInMaisRecentePorPop = (historico) => {
+  const vistos = new Set();
+  return consolidarInspecoes(historico).filter(item => {
+    const nome = chavePop(item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome);
+    if (!nome || vistos.has(nome)) return false;
+    vistos.add(nome);
+    return true;
+  }).map(({ indiceOriginal, ...registro }) => registro);
+};
+
 function App() {
 
   const [usuarioLogado, setUsuarioLogado] = useState(null);
@@ -440,6 +476,11 @@ function App() {
   const [cronogramaChaves, setCronogramaChaves] = useState([]);
 
   const [dadosGeraisPops, setDadosGeraisPops] = useState({});
+
+  const checkInsConsolidados = useMemo(
+    () => consolidarInspecoes(ultimosCheckIns),
+    [ultimosCheckIns]
+  );
 
   const [loadingAuth, setLoadingAuth] = useState(true);
 
@@ -723,11 +764,16 @@ function App() {
 
     };
 
-    if (ultimosCheckIns) {
+    if (checkInsConsolidados) {
 
-      ultimosCheckIns.forEach(c => {
+      const popsVistos = new Set();
+      checkInsConsolidados.forEach(c => {
 
         const nomePop = c.popNome || c.pop || c.nomePop || c.nome_pop || c.nome;
+
+        const chave = chavePop(nomePop);
+        if (popsVistos.has(chave)) return;
+        popsVistos.add(chave);
 
         if (nomePop) processarItem(nomePop, `POP: ${nomePop.toUpperCase()} - Data de inspeção expirada`, c.proximaInspecao);
 
@@ -808,7 +854,7 @@ function App() {
 
       const dadosPop = dadosGeraisPops[pop.nome] || {};
 
-      const checkInPop = ultimosCheckIns.find(c => {
+      const checkInPop = checkInsConsolidados.find(c => {
 
         let n = (c.popNome || c.pop || '').toLowerCase();
 
@@ -1279,7 +1325,7 @@ function App() {
 
     }
 
-  }, [usuarioLogado, dadosCarregados, ultimosCheckIns, cronogramaLimpezas, cronogramaBaterias, cronogramaContatos, cronogramaChaves]);
+  }, [usuarioLogado, dadosCarregados, checkInsConsolidados, cronogramaLimpezas, cronogramaBaterias, cronogramaContatos, cronogramaChaves]);
 
 
   useEffect(() => {
@@ -1319,22 +1365,17 @@ function App() {
       });
 
 
-      const unsubCheckins = onSnapshot(doc(db, "historico_global", "checkins"), async (snap) => {
+      const unsubCheckins = onSnapshot(doc(db, "historico_global", "checkins"), (snap) => {
 
         if (snap.exists() && snap.data().lista) {
 
           let listaOriginal = snap.data().lista;
-
-          let precisaAtualizar = false;
-
 
           const listaAtualizada = listaOriginal.map(item => {
 
             let nomePop = item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '';
 
             if (nomePop.toLowerCase() === 'odin' || nomePop.toLowerCase() === 'odim') {
-
-              precisaAtualizar = true;
 
               return {
 
@@ -1357,13 +1398,9 @@ function App() {
 
           setUltimosCheckIns(listaAtualizada);
 
+        } else {
 
-          if (precisaAtualizar) {
-
-            await setDoc(doc(db, "historico_global", "checkins"), { lista: listaAtualizada });
-
-          }
-
+          setUltimosCheckIns([]);
         }
 
       });
@@ -1527,29 +1564,17 @@ function App() {
 
     if (!confirmacao) return;
 
-    const vistos = new Set();
-
-    const novaLista = [];
-
-    for (const item of ultimosCheckIns) {
-
-      let nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '').toLowerCase().trim();
-
-      if (nomeDoPop === 'odin' || nomeDoPop === 'odim') nomeDoPop = 'balder';
-
-      if (nomeDoPop && !vistos.has(nomeDoPop)) {
-
-        vistos.add(nomeDoPop);
-
-        novaLista.push({ ...item, pop: nomeDoPop, popName: nomeDoPop, popNome: nomeDoPop });
-
-      }
-
+    try {
+      await runTransaction(db, async (transacao) => {
+        const ref = doc(db, "historico_global", "checkins");
+        const snap = await transacao.get(ref);
+        const lista = Array.isArray(snap.data()?.lista) ? snap.data().lista : [];
+        const novaLista = manterCheckInMaisRecentePorPop(lista);
+        transacao.set(ref, { lista: novaLista });
+      });
+    } catch (e) {
+      alert('Não foi possível limpar o histórico: ' + e.message);
     }
-
-    setUltimosCheckIns(novaLista);
-
-    await setDoc(doc(db, "historico_global", "checkins"), { lista: novaLista });
 
   };
 
@@ -1566,13 +1591,21 @@ function App() {
 
     }
 
-    const novaLista = ultimosCheckIns.filter((_, idx) => idx !== idxOriginal);
-
-    setUltimosCheckIns(novaLista);
-
     try {
-
-      await setDoc(doc(db, "historico_global", "checkins"), { lista: novaLista });
+      const registro = ultimosCheckIns[idxOriginal];
+      if (!registro) throw new Error('Registro não encontrado. Atualize a página.');
+      await runTransaction(db, async (transacao) => {
+        const ref = doc(db, "historico_global", "checkins");
+        const snap = await transacao.get(ref);
+        const lista = Array.isArray(snap.data()?.lista) ? snap.data().lista : [];
+        const idx = lista.findIndex(item =>
+          chavePop(item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome) ===
+            chavePop(registro.popNome || registro.pop || registro.nomePop || registro.nome_pop || registro.nome) &&
+          item.dataHora === registro.dataHora && item.tecnico === registro.tecnico
+        );
+        if (idx < 0) throw new Error('O registro já foi removido. Atualize a página.');
+        transacao.set(ref, { lista: lista.filter((_, i) => i !== idx) });
+      });
 
       alert('Check-in removido com sucesso!');
 
@@ -1601,7 +1634,7 @@ function App() {
 
         tecnico={usuarioLogado} 
 
-        ultimosCheckIns={ultimosCheckIns}
+        ultimosCheckIns={checkInsConsolidados}
 
         listaPops={listaPops.filter(pop => popPertenceAoUsuario(pop.nome))}
 
@@ -1630,29 +1663,20 @@ function App() {
           };
 
 
-          let novaLista = [...ultimosCheckIns];
-
-          if (forcarCheckin) novaLista = [registroCorrigido, ...ultimosCheckIns];
-
-          else {
-
-            const idx = novaLista.findIndex(item => {
-
-              let pName = (item.popNome || item.pop || '').toLowerCase();
-
-              if (pName === 'odin' || pName === 'odim') pName = 'balder';
-
-              return pName === nomeNormalizado && item.dataHora === registroCorrigido.dataHora;
-
-            });
-
-            if (idx === -1) novaLista = [registroCorrigido, ...ultimosCheckIns];
-
-          }
+          const novaLista = await runTransaction(db, async (transacao) => {
+            const ref = doc(db, "historico_global", "checkins");
+            const snap = await transacao.get(ref);
+            const registros = Array.isArray(snap.data()?.lista) ? snap.data().lista : [];
+            const jaExiste = registros.some(item =>
+              chavePop(item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome) === nomeNormalizado &&
+              item.dataHora === registroCorrigido.dataHora
+            );
+            const atualizados = jaExiste ? registros : [registroCorrigido, ...registros];
+            if (!jaExiste) transacao.set(ref, { lista: atualizados });
+            return atualizados;
+          });
 
           setUltimosCheckIns(novaLista);
-
-          await setDoc(doc(db, "historico_global", "checkins"), { lista: novaLista });
 
         }}
 
@@ -1684,7 +1708,7 @@ function App() {
 
         listaPops={listaPops} 
 
-        ultimosCheckIns={ultimosCheckIns}
+        ultimosCheckIns={checkInsConsolidados}
 
         cronogramaLimpezas={cronogramaLimpezas}
 
@@ -1962,7 +1986,7 @@ function App() {
 
                   <h4 style={{ color: theme.textMuted, fontSize: '15px', margin: 0 }}>Últimos Check-ins</h4>
 
-                  {ultimosCheckIns.length > 0 && (
+                  {checkInsConsolidados.length > 0 && (
 
                     <button onClick={apagarCheckinsAntigos} style={{ background: '#dc3545', border: 'none', color: '#fff', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Apagar Antigos</button>
 
@@ -1970,13 +1994,13 @@ function App() {
 
                 </div>
 
-                {ultimosCheckIns.length === 0 ? (
+                {checkInsConsolidados.length === 0 ? (
 
                   <p style={{ color: theme.textMuted, fontSize: '14px' }}>Nenhum check-in registrado.</p>
 
                 ) : (
 
-                  ultimosCheckIns.map((item, idx) => {
+                  checkInsConsolidados.map((item, idx) => {
 
                     let nomeDoPop = (item.popNome || item.pop || item.nomePop || item.nome_pop || item.nome || '');
 
@@ -1990,16 +2014,20 @@ function App() {
 
                     const res = statusData(item.proximaInspecao);
 
-                    const vencido = res && res.status === 'vencido';
+                    const registroMaisRecente = checkInsConsolidados.findIndex(c =>
+                      chavePop(c.popNome || c.pop || c.nomePop || c.nome_pop || c.nome) === chavePop(nomeDoPop)
+                    ) === idx;
 
-                    const alertaAmanha = res && (res.status === 'amanha' || res.status === 'hoje');
+                    const vencido = registroMaisRecente && res && res.status === 'vencido';
+
+                    const alertaAmanha = registroMaisRecente && res && (res.status === 'amanha' || res.status === 'hoje');
 
 
                     return (
 
                       <div key={idx} style={{ background: theme.cardInner, padding: '10px', borderRadius: '6px', marginBottom: '8px', fontSize: '14px', border: `1px solid ${theme.border}`, position: 'relative' }}>
 
-                        <button onClick={() => apagarCheckInIndividual(idx)} style={{ position: 'absolute', top: '8px', right: '8px', background: 'transparent', border: 'none', color: '#ff4d4d', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer' }}>✕</button>
+                        <button onClick={() => apagarCheckInIndividual(item.indiceOriginal)} style={{ position: 'absolute', top: '8px', right: '8px', background: 'transparent', border: 'none', color: '#ff4d4d', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer' }}>✕</button>
 
                         <p style={{ margin: '0 0 4px 0', color: '#4dabf7', fontWeight: 'bold', textTransform: 'uppercase', paddingRight: '15px', fontSize: '14px' }}>POP: {nomeExibicao}</p>
 
@@ -2007,9 +2035,9 @@ function App() {
 
                         <p style={{ margin: '0 0 4px 0', color: theme.textMuted }}>Data: {item.dataHora}</p>
 
-                        <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: vencido ? undefined : alertaAmanha ? undefined : '#28a745' }}>
+                        <p className={vencido ? 'alerta-vencido' : alertaAmanha ? 'alerta-amanha' : ''} style={{ margin: 0, color: registroMaisRecente ? (vencido || alertaAmanha ? undefined : '#28a745') : theme.textMuted }}>
 
-                          Próx. Insp (3 meses): {item.proximaInspecao} {vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
+                          Próx. Insp (3 meses): {item.proximaInspecao} {!registroMaisRecente ? '(Registro anterior)' : vencido ? `(Expirado há ${res.dias}d)` : alertaAmanha ? `(${res.status === 'hoje' ? 'Vence hoje' : 'Vence amanhã'})` : ''}
 
                         </p>
 
@@ -3155,6 +3183,8 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
 
       console.error("Erro ao salvar:", e);
 
+      throw e;
+
     }
 
   };
@@ -3563,6 +3593,11 @@ function TelaInspecao({ pop, tecnico, ultimosCheckIns, listaPops, onSelectPop, o
     if (tipoData === 'manual' && dataManualInspecao.trim() !== '') {
 
       const dataFormatada = dataManualInspecao.trim();
+
+      if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dataFormatada) || !dataInspecaoValida(dataFormatada)) {
+        alert('Informe uma data válida no formato dd/MM/aaaa.');
+        return;
+      }
 
       dataInspecaoFinal = `${dataFormatada} (Manual)`;
 
